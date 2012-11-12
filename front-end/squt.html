@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Squt</title>
+    
+    <link rel="stylesheet" type="text/css" href="squt.css" />
+	<link rel="stylesheet" href="lib/codemirror-2.35/lib/codemirror.css">
+	
+    <script type="text/javascript" src="lib/d3.v2.js"></script>
+	
+	<script src="lib/codemirror-2.35/lib/codemirror.js"></script>
+	<script src="lib/codemirror-2.35/mode/mysql/mysql.js"></script>
+	
+  </head>
+  <body>
+	
+	<div id="panel">
+		<textarea id="query">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
+FROM Contrat co, Contrat co2, EtabPost e
+WHERE co.typeContrat='C' AND co.numeroContrat > 0
+AND co.codeEntite = e.codeEntite
+ORDER BY co.dateContrat;</textarea>
+		<button id="OK">OK</button>
+	</div>
+    <script type="text/javascript" src="squt.js"></script>
+  </body>
+</html>

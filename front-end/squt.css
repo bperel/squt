@@ -1,0 +1,68 @@
+body {
+	margin: 0;
+}
+
+.invisible {
+	display: none;
+}
+
+div#panel {
+	width: 400px;
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	bottom: 10px;
+}
+
+div#panel textarea.query {
+	height: 300px;
+	width: 100%;
+	font-family: Courier;
+}
+
+pre#query {
+	white-space: normal;
+}
+
+svg#graph {
+	margin: 8px 300px 0px 8px;
+	outline:1px solid gray;
+}
+
+path.link {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+circle.filtered {
+	stroke: red;
+	stroke-width: 3px;
+}
+
+circle.sort {
+	background:url("images/sort.svg") no-repeat;		
+}
+
+rect.table {
+  fill: #fff;
+  stroke: #333;
+  stroke-width: 1.5px;
+}
+
+rect.alias {
+  fill: #ccc;
+  stroke: #333;
+  stroke-width: 1.5px;
+}
+
+text {
+  font: 12px Courier;
+  pointer-events: none;
+}
+
+text.shadow {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-opacity: .8;
+}
