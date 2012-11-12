@@ -1,0 +1,3 @@
+[submodule "parser/DBIx-MyParse-0.88"]
+	path = parser/DBIx-MyParse-0.88
+	url = https://github.com/ducksmanager/DBIx-MyParse.git

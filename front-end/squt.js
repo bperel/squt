@@ -13,7 +13,7 @@ var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
  
 
 var drag = d3.behavior.drag()
-	//.origin(Object)
+	.origin(Object)
 	.on("drag", position);
 
 var svg = d3.select("body").append("svg:svg")
@@ -193,8 +193,12 @@ function positionAll(elements) {
 }
 
 function position(d, i, a, x, y) {
+	if (x == undefined && isNaN(d3.event.x) && !isNaN(d3.event.dx)) {
+		x = parseInt(d3.select(this).attr("x")) + d3.event.dx;
+		y = parseInt(d3.select(this).attr("y")) + d3.event.dy;
+	}
 	x = x == undefined ? d3.event.x : x;
-	y = y == undefined ? d3.event.y  : y;
+	y = y == undefined ? d3.event.y : y;
 	
 	if (this instanceof SVGImageElement) {
 		ground.attr("x", x)
