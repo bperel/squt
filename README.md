@@ -1,4 +1,4 @@
-## squt
+## squt (it's like SQL, but cUTe)
 
 squt is a JavaScript and Perl library aiming at graphically representing SQL queries in a graph form.
 
