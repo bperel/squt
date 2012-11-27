@@ -37,9 +37,14 @@ svg.append("defs").selectAll("marker")
 d3.select("#OK").on("click",function(d,i) {
 	
 	d3.json(
-	  "analyze.php?query="+editor.getValue(),
+	  "analyze.php?query="+editor.getValue().replace(/\n/g,' '),
 	  function (jsondata) {
 		console.log(jsondata);
+		tables= [];
+		tableAliases={};
+		fields= {};
+		links= [];
+		linksToOutput=[];
 		
 		for (var tableName in jsondata) {
 			tables[tableName]=({'name':tableName});
