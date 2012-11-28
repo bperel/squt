@@ -27,12 +27,8 @@ if ($debug) {
 	print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
 	print "\n====================================\n";
 }
-open FILE, ">result.json" or die $!;
 
 print $json->pretty->encode( \%sqlv_tables );
-print FILE $json->pretty->encode( \%sqlv_tables );
-
-close FILE;
 
 if ($debug) {
 	print "\n Tables : \n\n";
