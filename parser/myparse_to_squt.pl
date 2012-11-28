@@ -18,30 +18,33 @@ if ($debug) {
 	print Dumper $query;
 }
 
-foreach my $table (@{$query->getTables()}) {
-	handleTableOrJoin($table);
+if ($query->getCommand() eq "SQLCOM_ERROR") {
+	$sqlv_tables{"Error"}=$query->getErrstr();
 }
+else {
 
-if ($debug) {
-	print "\n====================================\n";
-	print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
-	print "\n====================================\n";
-}
-
-print $json->pretty->encode( \%sqlv_tables );
-
-if ($debug) {
-	print "\n Tables : \n\n";
-}
-
-while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
+	foreach my $table (@{$query->getTables()}) {
+		handleTableOrJoin($table);
+	}
+	
 	if ($debug) {
-		print Dumper $tableAliases;
+		print "\n====================================\n";
+		print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
+		print "\n====================================\n";
+	}
+	
+	
+	if ($debug) {
+		print "\n Tables : \n\n";
+	}
+	
+	while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
+		if ($debug) {
+			print Dumper $tableAliases;
+		}
 	}
 }
-#printsqlv();
-
-print "\n";
+print $json->pretty->encode( \%sqlv_tables );
 
 sub handleTableOrJoin {
 	my $item = $_[0];
@@ -63,7 +66,7 @@ sub handleTableOrJoin {
 		}
 
 		
-		$sqlv_tables{$table->getTableName()}{$table->getAlias()} = \%sqlv_table_alias_fields;
+		$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()} = \%sqlv_table_alias_fields;
 		
 		print "\n";
 	}
