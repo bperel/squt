@@ -63,7 +63,6 @@ sub handleTableOrJoin {
 			}
 		}
 		if ($query->getWhere() != undef) {
-			#print Dumper @{$query->getWhere()->getArguments};
 			handleCondOrFunc(0,$table->getAlias(), $query->getWhere()->getArguments, \%sqlv_table_alias_fields);
 		}
 

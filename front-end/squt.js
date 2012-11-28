@@ -9,6 +9,7 @@ var w = 960,
     h = 500;
 
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
+	lineWrapping: true
 });
  
 

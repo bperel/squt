@@ -1,3 +1,6 @@
 [submodule "parser/DBIx-MyParse-0.88"]
 	path = parser/DBIx-MyParse-0.88
 	url = https://github.com/ducksmanager/DBIx-MyParse.git
+[submodule "front-end/lib/codemirror"]
+	path = front-end/lib/codemirror
+	url = https://github.com/marijnh/CodeMirror.git
