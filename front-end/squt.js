@@ -41,15 +41,20 @@ d3.select("#OK").on("click",function(d,i) {
 	  "analyze.php?query="+editor.getValue().replace(/\n/g,' '),
 	  function (jsondata) {
 		console.log(jsondata);
+		if (jsondata.Error) {
+			d3.select('#log').text(jsondata.Error);
+			svg.selectAll('image,g').remove();
+			return;
+		}
 		tables= [];
 		tableAliases={};
 		fields= {};
 		links= [];
 		linksToOutput=[];
 		
-		for (var tableName in jsondata) {
+		for (var tableName in jsondata.Tables) {
 			tables[tableName]=({'name':tableName});
-			var tableInfo = jsondata[tableName];
+			var tableInfo = jsondata.Tables[tableName];
 			for (var tableAlias in tableInfo) {
 				tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
 				var actions=tableInfo[tableAlias];
