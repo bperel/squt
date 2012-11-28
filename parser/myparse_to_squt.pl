@@ -1,36 +1,47 @@
 # Use example : 
-# perl parse.pl "$(<requete.sql)"
-eval{require "DBIx-MyParse-0.88/lib/DBIx/MyParse.pm"}
+# perl myparse_to_squt.pl "$(<requete.sql)"
+#eval{require "DBIx-MyParse-0.88/lib/DBIx/MyParse.pm"}
 
 use strict;
 use DBIx::MyParse;
 use Data::Dumper;
 use JSON::PP;
 my $json = JSON::PP->new->ascii->pretty->allow_nonref;
+my $debug = 0;
 
-our $parser = DBIx::MyParse->new( database => "test" );
+our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
 our $query = $parser->parse($ARGV[0]);
 our %sqlv_tables;
 
-print "Dumped:\n";
-print Dumper $query;
+if ($debug) {
+	print "Dumped:\n";
+	print Dumper $query;
+}
 
 foreach my $table (@{$query->getTables()}) {
 	handleTableOrJoin($table);
 }
 
-print "\n====================================\n";
-print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
-print "\n====================================\n";
-
+if ($debug) {
+	print "\n====================================\n";
+	print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
+	print "\n====================================\n";
+}
 open FILE, ">result.json" or die $!;
+
+print $json->pretty->encode( \%sqlv_tables );
 print FILE $json->pretty->encode( \%sqlv_tables );
+
 close FILE;
 
-print "\n Tables : \n\n";
+if ($debug) {
+	print "\n Tables : \n\n";
+}
 
 while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
-	print Dumper $tableAliases;
+	if ($debug) {
+		print Dumper $tableAliases;
+	}
 }
 #printsqlv();
 
@@ -70,23 +81,35 @@ sub handleTableOrJoin {
 
 sub handleCondOrFunc($$\@\%) {
 	my ($i,$tableAlias,$whereArguments,$sqlv_table_alias_fields) = @_;
-	print " "x$i."---- WHERE ----\n";
+	
+	if ($debug) {
+		print " "x$i."---- WHERE ----\n";
+	}
 	my $fieldname;
 	my $value;
 	my $j=0;
 	foreach my $whereArgument (@$whereArguments) {
-		print " "x$i.$j++."(".$whereArgument->getType().")\n";
+		
+		if ($debug) {
+			print " "x$i.$j++."(".$whereArgument->getType().")\n";
+		}
 		if ($whereArgument->getType() eq "FUNC_ITEM") {
-			print "\n"." "x$i.$whereArgument->getType()."\n";
-			print " "x$i.$whereArgument->getFuncType()."\n";
+			
+			if ($debug) {
+				print "\n"." "x$i.$whereArgument->getType()."\n";
+				print " "x$i.$whereArgument->getFuncType()."\n";
+			}
 			handleCondOrFunc($i+1,$tableAlias, $whereArgument->getArguments, $sqlv_table_alias_fields);
 		}
 		elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
 			if ($whereArgument->getTableName() eq $tableAlias) {
-				print "\n"." "x$i.$whereArgument->getType()."\n";
-				print " "x$i."Champ ".$whereArgument->getFieldName()."\n";
-				print " "x$i.Dumper $whereArgument;
-				print " "x$i."--------------\n";
+				
+				if ($debug) {
+					print "\n"." "x$i.$whereArgument->getType()."\n";
+					print " "x$i."Champ ".$whereArgument->getFieldName()."\n";
+					print " "x$i.Dumper $whereArgument;
+					print " "x$i."--------------\n";
+				}
 				$fieldname=$whereArgument->getFieldName();
 			}
 			elsif ($fieldname ne undef) {
@@ -95,8 +118,11 @@ sub handleCondOrFunc($$\@\%) {
 		}
 		elsif ($whereArgument->getType() eq 'INT_ITEM' || $whereArgument->getType() eq 'DECIMAL_ITEM'|| $whereArgument->getType() eq 'REAL_ITEM'
 			|| $whereArgument->getType() eq 'STRING_ITEM') {
-			print "\n"." "x$i.$whereArgument->getType()."\n";
-			print " "x$i."Valeur fixe ".$whereArgument->getValue()."\n";
+			
+			if ($debug) {
+				print "\n"." "x$i.$whereArgument->getType()."\n";
+				print " "x$i."Valeur fixe ".$whereArgument->getValue()."\n";
+			}
 			$value=$whereArgument->getValue();
 		}
 		#	foreach my $sub_item (@{$whereArgument->getCondItems()}) {
