@@ -12,6 +12,6 @@ $query = str_replace('"','\"',str_replace("\n"," ",$_GET['query']));
 error_reporting(E_ALL);
 
 $path_to_perl = ($os == 'Windows' ? $PATH_TO_CYGWIN.'\\bin\\' : '');
-echo shell_exec($path_to_perl.'perl "/usr/src/squt/parser/myparse_to_squt.pl" "'.$query.'"');
+echo shell_exec($path_to_perl.'perl "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'"');
 
 ?>
