@@ -14,10 +14,20 @@ div#panel {
 	bottom: 10px;
 }
 
-div#panel textarea.query {
-	height: 300px;
-	width: 100%;
+div#panel textarea#log {
+	height: 100px;
 	font-family: Courier;
+}
+
+.CodeMirror {
+	border: 1px solid gray;
+	padding: 2px;
+}
+
+div#panel textarea#log, .CodeMirror {
+	width: 100%;
+	margin: 0.2em;
+	background-color: white;
 }
 
 pre#query {
