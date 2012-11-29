@@ -51,6 +51,9 @@ sub handleTableOrJoin {
 			}
 		}
 		foreach my $orderByItem (@{$query->getOrder()}) {
+			if ($orderByItem->getTableName() eq undef) {
+				$sqlv_tables{"Warning"}{"No alias"}{$orderByItem->getFieldName()}=1;
+			}
 			if ($orderByItem->getTableName() eq $table->getAlias()) {
 				$sqlv_table_alias_fields{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
 			}

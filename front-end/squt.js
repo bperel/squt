@@ -51,6 +51,19 @@ d3.select("#OK").on("click",function(d,i) {
 			svg.selectAll('image,g').remove();
 			return;
 		}
+		if (jsondata.Warning) {
+			var warningText=[];
+			for (var warnType in jsondata.Warning) {
+				switch (warnType) {
+					case 'No alias':
+						for (var i in jsondata.Warning[warnType]) {
+							warningText.push("WARNING - No named alias for "+ i+" : field will be ignored");
+						break;
+					}
+				}
+			}
+			d3.select('#log').text(warningText.join("\n"));
+		}
 		tables= [];
 		tableAliases={};
 		fields= {};
