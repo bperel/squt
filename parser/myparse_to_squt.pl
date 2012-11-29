@@ -31,15 +31,9 @@ else {
 		print "\n====================================\n";
 		print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
 		print "\n====================================\n";
-	}
-	
-	
-	if ($debug) {
+		
 		print "\n Tables : \n\n";
-	}
-	
-	while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
-		if ($debug) {
+		while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
 			print Dumper $tableAliases;
 		}
 	}
@@ -64,11 +58,8 @@ sub handleTableOrJoin {
 		if ($query->getWhere() != undef) {
 			handleCondOrFunc(0,$table->getAlias(), $query->getWhere()->getArguments, \%sqlv_table_alias_fields);
 		}
-
 		
 		$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()} = \%sqlv_table_alias_fields;
-		
-		print "\n";
 	}
 	else {
 		foreach my $sub_item (@{$item->getJoinItems()}) {
