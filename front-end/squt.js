@@ -41,6 +41,11 @@ d3.select("#OK").on("click",function(d,i) {
 	  "analyze.php?query="+editor.getValue().replace(/\n/g,' '),
 	  function (jsondata) {
 		console.log(jsondata);
+		if (jsondata == null) {
+			d3.select('#log').text("Error ! Make sure your paths are properly configured");
+			svg.selectAll('image,g').remove();
+			return;
+		}
 		if (jsondata.Error) {
 			d3.select('#log').text(jsondata.Error);
 			svg.selectAll('image,g').remove();
