@@ -71,18 +71,18 @@ d3.select("#OK").on("click",function(d,i) {
 							fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullname:tableAlias+"."+field, filtered: false, sort: false};
 						}
 						switch(type) {
-							case 'o': // output
+							case 'OUTPUT':
 								linksToOutput.push(tableAlias+"."+field);
 							break;
-							case '?': // condition
-								if (data.indexOf(".") != -1) { // jointure
+							case 'CONDITION':
+								if (data.indexOf(".") != -1) { // join
 									links.push({source: tableAlias+"."+field, target: data});
 								}
 								else { 
 									fields[tableAlias+"."+field]['filtered']=true;
 								}
 							break;
-							case '^': // tri
+							case 'SORT':
 								fields[tableAlias+"."+field]['sort']=data;
 							break;
 						}

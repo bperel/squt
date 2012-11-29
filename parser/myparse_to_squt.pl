@@ -47,12 +47,12 @@ sub handleTableOrJoin {
 		my $table=$item;
 		foreach my $item (@{$query->getSelectItems()}) {
 			if ($item->getTableName() eq $table->getAlias()) {
-				$sqlv_table_alias_fields{"o"}{$item->getFieldName()}=$item->getAlias() || $item->getFieldName();
+				$sqlv_table_alias_fields{"OUTPUT"}{$item->getFieldName()}=$item->getAlias() || $item->getFieldName();
 			}
 		}
 		foreach my $orderByItem (@{$query->getOrder()}) {
 			if ($orderByItem->getTableName() eq $table->getAlias()) {
-				$sqlv_table_alias_fields{"^"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
+				$sqlv_table_alias_fields{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
 			}
 		}
 		if ($query->getWhere() != undef) {
@@ -119,6 +119,6 @@ sub handleCondOrFunc($$\@\%) {
 		#	}
 	}
 	if ($fieldname ne undef && $value ne undef) {
-		$sqlv_table_alias_fields->{"?"}{$fieldname}=$value;
+		$sqlv_table_alias_fields->{"CONDITION"}{$fieldname}=$value;
 	}
 }
