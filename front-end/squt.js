@@ -47,7 +47,7 @@ d3.select("#OK").on("click",function(d,i) {
 			return;
 		}
 		if (jsondata.Error) {
-			d3.select('#log').text(jsondata.Error);
+			d3.select('#log').text("ERROR - " + jsondata.Error);
 			svg.selectAll('image,g').remove();
 			return;
 		}
@@ -57,7 +57,7 @@ d3.select("#OK").on("click",function(d,i) {
 				switch (warnType) {
 					case 'No alias':
 						for (var i in jsondata.Warning[warnType]) {
-							warningText.push("WARNING - No named alias for "+ i+" : field will be ignored");
+							warningText.push("WARNING - No named alias for " + i + " : field will be ignored");
 						break;
 					}
 				}

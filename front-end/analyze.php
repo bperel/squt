@@ -10,8 +10,16 @@ elseif(preg_match('/Mac/',$agent)) $os = 'Mac';
 else $os = 'UnKnown';
 
 $query = str_replace('"','\"',str_replace("\n"," ",$_GET['query']));
+$path_to_perl = ($os == 'Windows' ? $PATH_TO_CYGWIN.'/bin/' : '');
 
-$path_to_perl = ($os == 'Windows' ? $PATH_TO_CYGWIN.'\\bin\\' : '');
-echo shell_exec($path_to_perl.'perl "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'"');
+if (!file_exists($ERROR_OUTPUT)) {
+	echo 'Error - The file '.$ERROR_OUTPUT.' has not been found in the /front-end directory.';
+	exit(0);
+}
+
+ob_start();
+$command = '"'.$path_to_perl.'perl" "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'" 2> '.$ERROR_OUTPUT;
+$result = shell_exec($command);
+echo $result ? $result : json_encode(array('Error'=>file_get_contents($ERROR_OUTPUT)));
 
 ?>
