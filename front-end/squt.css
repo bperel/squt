@@ -34,6 +34,10 @@ pre#query {
 	white-space: normal;
 }
 
+.queryexample {
+	display: none;
+}
+
 svg#graph {
 	margin: 8px 300px 0px 8px;
 	outline:1px solid gray;

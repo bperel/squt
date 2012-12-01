@@ -7,6 +7,7 @@ use DBIx::MyParse;
 use Data::Dumper;
 use JSON::PP;
 my $json = JSON::PP->new->ascii->pretty->allow_nonref;
+$Data::Dumper::Indent = 1;
 my $debug = 0;
 
 our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
@@ -22,51 +23,58 @@ if ($query->getCommand() eq "SQLCOM_ERROR") {
 	$sqlv_tables{"Error"}=$query->getErrstr();
 }
 else {
-
 	foreach my $table (@{$query->getTables()}) {
 		handleTableOrJoin($table);
-	}
-	
-	if ($debug) {
-		print "\n====================================\n";
-		print $json->pretty->encode( \%sqlv_tables ); # pretty-printing
-		print "\n====================================\n";
-		
-		print "\n Tables : \n\n";
-		while ((my $tableName, my $tableAliases) = each (%sqlv_tables)) {
-			print Dumper $tableAliases;
-		}
 	}
 }
 print $json->pretty->encode( \%sqlv_tables );
 
 sub handleTableOrJoin {
 	my $item = $_[0];
+	my $table = undef;
 	if ($item->getType() eq "TABLE_ITEM") {
 		my %sqlv_table_alias_fields;
-		my $table=$item;
+		$table=$item;
 		foreach my $item (@{$query->getSelectItems()}) {
 			if ($item->getTableName() eq $table->getAlias()) {
 				$sqlv_table_alias_fields{"OUTPUT"}{$item->getFieldName()}=$item->getAlias() || $item->getFieldName();
 			}
 		}
-		foreach my $orderByItem (@{$query->getOrder()}) {
-			if ($orderByItem->getTableName() eq undef) {
-				$sqlv_tables{"Warning"}{"No alias"}{$orderByItem->getFieldName()}=1;
-			}
-			if ($orderByItem->getTableName() eq $table->getAlias()) {
-				$sqlv_table_alias_fields{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
+		if ($query->getOrder() != undef) {
+			foreach my $orderByItem (@{$query->getOrder()}) {
+				if ($orderByItem->getTableName() eq undef) {
+					$sqlv_tables{"Warning"}{"No alias"}{$orderByItem->getFieldName()}=1;
+				}
+				if ($orderByItem->getTableName() eq $table->getAlias()) {
+					$sqlv_table_alias_fields{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
+				}
 			}
 		}
 		if ($query->getWhere() != undef) {
 			handleCondOrFunc(0,$table->getAlias(), $query->getWhere()->getArguments, \%sqlv_table_alias_fields);
 		}
-		
-		$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()} = \%sqlv_table_alias_fields;
+		if ($table ne undef) {
+			$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()} = \%sqlv_table_alias_fields;
+		}
 	}
-	else {
+	elsif ($item->getType() eq "JOIN_ITEM") {
+		my $two_tables = 1;
 		foreach my $sub_item (@{$item->getJoinItems()}) {
 			handleTableOrJoin($sub_item);
+			if ($sub_item->getType() ne "TABLE_ITEM") {
+				$two_tables = 0;			
+			}
+		}
+		my $joinCond = $item->getJoinCond();
+		if ($joinCond ne undef && $two_tables) {
+			if ($joinCond->getType() eq "FUNC_ITEM") {
+				$table = @{$item->getJoinItems()}[0];
+				my $table2 = @{$item->getJoinItems()}[1];
+				my $field1 = @{$joinCond->getArguments()}[0];
+				my $field2 = @{$joinCond->getArguments()}[1];
+				
+				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}=$table2->getAlias.".".$field2->getFieldName();
+			}	
 		}
 	}
 }
@@ -91,7 +99,7 @@ sub handleCondOrFunc($$\@\%) {
 				print "\n"." "x$i.$whereArgument->getType()."\n";
 				print " "x$i.$whereArgument->getFuncType()."\n";
 			}
-			handleCondOrFunc($i+1,$tableAlias, $whereArgument->getArguments, $sqlv_table_alias_fields);
+			handleCondOrFunc($i+1,$tableAlias, $whereArgument->getArguments(), $sqlv_table_alias_fields);
 		}
 		elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
 			if ($whereArgument->getTableName() eq $tableAlias) {

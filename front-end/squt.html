@@ -16,14 +16,18 @@
   <body>
 	
 	<div id="panel">
-		<textarea id="query">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
-FROM Contrat co, Contrat co2, EtabPost e
-WHERE co.typeContrat='C' AND co.numeroContrat > 0
-AND co.codeEntite = e.codeEntite
-ORDER BY co.dateContrat;</textarea>
+		<textarea id="query">SELECT co.numeroContrat AS Numero, e.libelleEntite 
+FROM Contrat co 
+INNER JOIN EtabPost e ON co.coEntite = e.coEntite</textarea>
 		<button id="OK">OK</button>
 		<textarea id="log" readonly="readonly"></textarea>
 	</div>
+	
+	<div class="queryexample">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
+FROM Contrat co, Contrat co2, EtabPost e
+WHERE co.typeContrat='C' AND co.numeroContrat > 0
+AND co.codeEntite = e.codeEntite
+ORDER BY co.dateContrat;</div>
     <script type="text/javascript" src="squt.js"></script>
   </body>
 </html>

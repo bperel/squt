@@ -20,6 +20,12 @@ if (!file_exists($ERROR_OUTPUT)) {
 ob_start();
 $command = '"'.$path_to_perl.'perl" "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'" 2> '.$ERROR_OUTPUT;
 $result = shell_exec($command);
-echo $result ? $result : json_encode(array('Error'=>file_get_contents($ERROR_OUTPUT)));
+$error_output = file_get_contents($ERROR_OUTPUT);
+if (!empty($error_output)) {
+	echo json_encode(array('Error'=>file_get_contents($ERROR_OUTPUT)));
+}
+else {
+	echo $result;
+}
 
 ?>

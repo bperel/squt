@@ -64,6 +64,9 @@ d3.select("#OK").on("click",function(d,i) {
 			}
 			d3.select('#log').text(warningText.join("\n"));
 		}
+		else {
+			d3.select('#log').text("");
+		}
 		tables= [];
 		tableAliases={};
 		fields= {};
@@ -89,6 +92,10 @@ d3.select("#OK").on("click",function(d,i) {
 							break;
 							case 'CONDITION':
 								if (data.indexOf(".") != -1) { // join
+									if (fields[data] == undefined) { // In case the joined table isn't referenced elsewhere
+										var tableAliasAndField=data.split('.');
+										fields[data]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullname:data, filtered: false, sort: false};
+									}
 									links.push({source: tableAlias+"."+field, target: data});
 								}
 								else { 
