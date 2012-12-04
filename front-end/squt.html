@@ -27,14 +27,14 @@
 	</div>
 	
 	<div class="samplequery" name="samplequery1" title="Simplest query ever">SELECT b.a FROM b;</div>
-	<div class="samplequery" name="samplequery2" title="Multiple FROMs with table linking condition">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
-FROM Contrat co, Contrat co2, EtabPost e
-WHERE co.typeContrat='C' AND co.numeroContrat > 0
-AND co.codeEntite = e.codeEntite
-ORDER BY co.dateContrat;</div>
-	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT co.numeroContrat AS Numero, e.libelleEntite 
+	<div class="samplequery" name="samplequery2" title="Multiple FROMs with table linking condition">SELECT co.contractID AS ID, co.contractOrigin, co2.aaa, comp.companyName
+FROM Contract co, Contract co2, Company comp
+WHERE co.contractType='C' AND co.contractID > 0
+AND co.companyCode = comp.companyCode
+ORDER BY co.contractDate;</div>
+	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT co.contractID AS ID, comp.companyName 
 FROM Contrat co 
-INNER JOIN EtabPost e ON co.coEntite = e.coEntite;</div>
+INNER JOIN Company comp ON co.companyCode = comp.companyCode;</div>
 
 
     <script type="text/javascript" src="squt.js"></script>
