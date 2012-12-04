@@ -291,10 +291,8 @@ function position(d, i, a, x, y) {
 		  								+ALIAS_BOX_MARGIN.left;})
 	  .attr("y", y+ALIAS_BOX_MARGIN.top)
 	  .attr("width",function(ta,j) { return ALIAS_NAME_PADDING.left 
-		  								  + Math.max(ta.name.length*CHAR_WIDTH 
-				  								   + ALIAS_NAME_PADDING.right,
-	
-				  								     CIRCLE_RADIUS/2 + SORT_SIDE);
+		  								  + Math.max(ta.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
+		  										  	 CIRCLE_RADIUS/2 + SORT_SIDE);
 	  							   })
 	  .attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
 	  
@@ -308,7 +306,7 @@ function position(d, i, a, x, y) {
 	  .attr("cx", function(f) { return relatedAliases.filter(function(a) { return a.name == f.tableAlias; }).attr("x");})
 	  .attr("cy", function(f, i) { return y +FIELD_PADDING.top
 		  									+FIELD_LINEHEIGHT*i
-		  									+CIRCLE_RADIUS/2});
+		  									-CIRCLE_RADIUS/2});
 		
 	
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
