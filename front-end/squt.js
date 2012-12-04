@@ -1,3 +1,20 @@
+var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
+	lineWrapping: true
+});
+
+var query_examples=d3.selectAll('.samplequery').each(function() {
+	d3.select('#query_sample')
+		.on("change",function(d,i) {
+			var queryname = d3.select(this[this.selectedIndex]).attr('name');
+			if (queryname != "dummy") {
+				editor.setValue(d3.select('.samplequery[name="'+queryname+'"]').text());
+			}
+		})
+		.append("option")
+			.text(d3.select(this).attr("title"))
+			.attr("name",d3.select(this).attr("name"));
+});
+
 var tables= [];
 var tableAliases={};
 var fields= {};
@@ -7,10 +24,6 @@ var linksToOutput=[];
 
 var w = 960,
     h = 500;
-
-var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
-	lineWrapping: true
-});
  
 
 var drag = d3.behavior.drag()
@@ -57,7 +70,8 @@ d3.select("#OK").on("click",function(d,i) {
 				switch (warnType) {
 					case 'No alias':
 						for (var i in jsondata.Warning[warnType]) {
-							warningText.push("WARNING - No named alias for " + i + " : field will be ignored");
+							var field_location=jsondata.Warning[warnType][i];
+							warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
 						break;
 					}
 				}

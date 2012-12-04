@@ -18,7 +18,7 @@ if (!file_exists($ERROR_OUTPUT_FILE)) {
 }
 
 ob_start();
-$command = '"'.$path_to_perl.'perl" "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'" 2> '.$ERROR_OUTPUT;
+$command = '"'.$path_to_perl.'perl" "'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" "'.$query.'" 2> '.$ERROR_OUTPUT_FILE;
 $result = shell_exec($command);
 $error_output = file_get_contents($ERROR_OUTPUT_FILE);
 if (!empty($error_output)) {

@@ -15,19 +15,28 @@
   </head>
   <body>
 	
-	<div id="panel">
-		<textarea id="query">SELECT co.numeroContrat AS Numero, e.libelleEntite 
-FROM Contrat co 
-INNER JOIN EtabPost e ON co.coEntite = e.coEntite</textarea>
+	<div id="panel">Load a sample query
+		<select id="query_sample">
+			<option name="dummy">Pick a query</option>
+		</select>
+		<br />
+		or type a custom one :<br />
+		<textarea id="query"></textarea>
 		<button id="OK">OK</button>
 		<textarea id="log" readonly="readonly"></textarea>
 	</div>
 	
-	<div class="queryexample">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
+	<div class="samplequery" name="samplequery1" title="Simplest query ever">SELECT b.a FROM b;</div>
+	<div class="samplequery" name="samplequery2" title="Multiple FROMs with table linking condition">SELECT co.numeroContrat AS NUMERO, co.origineContrat, co2.aaa, e.codeEntite
 FROM Contrat co, Contrat co2, EtabPost e
 WHERE co.typeContrat='C' AND co.numeroContrat > 0
 AND co.codeEntite = e.codeEntite
 ORDER BY co.dateContrat;</div>
+	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT co.numeroContrat AS Numero, e.libelleEntite 
+FROM Contrat co 
+INNER JOIN EtabPost e ON co.coEntite = e.coEntite;</div>
+
+
     <script type="text/javascript" src="squt.js"></script>
   </body>
 </html>

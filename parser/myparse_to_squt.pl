@@ -36,6 +36,9 @@ sub handleTableOrJoin {
 		my %sqlv_table_alias_fields;
 		$table=$item;
 		foreach my $item (@{$query->getSelectItems()}) {
+			if ($item->getTableName() eq undef) {
+				setWarning("No alias",$item->getFieldName(),"SELECT");
+			}
 			if ($item->getTableName() eq $table->getAlias()) {
 				$sqlv_table_alias_fields{"OUTPUT"}{$item->getFieldName()}=$item->getAlias() || $item->getFieldName();
 			}
@@ -43,7 +46,7 @@ sub handleTableOrJoin {
 		if ($query->getOrder() != undef) {
 			foreach my $orderByItem (@{$query->getOrder()}) {
 				if ($orderByItem->getTableName() eq undef) {
-					$sqlv_tables{"Warning"}{"No alias"}{$orderByItem->getFieldName()}=1;
+					setWarning("No alias",$orderByItem->getFieldName(),"ORDER");
 				}
 				if ($orderByItem->getTableName() eq $table->getAlias()) {
 					$sqlv_table_alias_fields{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
@@ -102,6 +105,9 @@ sub handleCondOrFunc($$\@\%) {
 			handleCondOrFunc($i+1,$tableAlias, $whereArgument->getArguments(), $sqlv_table_alias_fields);
 		}
 		elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
+			if ($whereArgument->getTableName() eq undef) {
+				setWarning("No alias",$whereArgument->getFieldName(),"WHERE or JOIN");
+			}
 			if ($whereArgument->getTableName() eq $tableAlias) {
 				
 				if ($debug) {
@@ -132,4 +138,11 @@ sub handleCondOrFunc($$\@\%) {
 	if ($fieldname ne undef && $value ne undef) {
 		$sqlv_table_alias_fields->{"CONDITION"}{$fieldname}=$value;
 	}
+}
+
+sub setWarning {
+	my $warning_type = $_[0];
+	my $concerned_field = $_[1];
+	my $extra_info = $_[2];
+	$sqlv_tables{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
 }
