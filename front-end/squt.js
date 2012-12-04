@@ -69,8 +69,8 @@ d3.select("#OK").on("click",function(d,i) {
 						for (var i in jsondata.Warning[warnType]) {
 							var field_location=jsondata.Warning[warnType][i];
 							warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
-						break;
-					}
+						}
+					break;
 				}
 			}
 			d3.select('#log').text(warningText.join("\n"));
