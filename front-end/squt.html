@@ -27,12 +27,12 @@
 	</div>
 	
 	<div class="samplequery" name="samplequery1" title="Simplest query ever">SELECT b.a FROM b;</div>
-	<div class="samplequery" name="samplequery2" title="Multiple FROMs with table linking condition">SELECT co.contractID AS ID, co.contractOrigin, co2.aaa, comp.companyName
-FROM Contract co, Contract co2, Company comp
+	<div class="samplequery" name="samplequery2" title="Multiple FROMs with table linking condition">SELECT co.contractID AS ID, co.contractOrigin, comp.companyName
+FROM Contract co, Company comp
 WHERE co.contractType='C' AND co.contractID > 0
 AND co.companyCode = comp.companyCode
 ORDER BY co.contractDate;</div>
-	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT co.contractID AS ID, comp.companyName 
+	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT comp.companyName, co.contractID AS ID 
 FROM Contrat co 
 INNER JOIN Company comp ON co.companyCode = comp.companyCode;</div>
 
