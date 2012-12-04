@@ -21,9 +21,6 @@ var fields= {};
 		 
 var links= [];
 var linksToOutput=[];
-
-var w = 960,
-    h = 500;
  
 
 var drag = d3.behavior.drag()
@@ -32,8 +29,8 @@ var drag = d3.behavior.drag()
 
 var svg = d3.select("body").append("svg:svg")
 	.attr("id","graph")
-	.attr("width", w)
-	.attr("height", h);
+	.attr("width", W)
+	.attr("height", H);
 	
 svg.append("defs").selectAll("marker")
     .data(["internal", "output"])
@@ -147,8 +144,8 @@ function buildGraph() {
 	  .attr("xlink:href", "images/ground.svg")
 	  .attr("width", 40)
 	  .attr("height", 40)
-	  .attr("x",w-45)
-	  .attr("y",h-45)
+	  .attr("x",W-45)
+	  .attr("y",H-45)
 	  .call(drag);
 	  
 	tableBoxes = svg.append("svg:g").selectAll("rect.table")
@@ -157,8 +154,6 @@ function buildGraph() {
 		.attr("class","table")
 		.attr("name", function(d) { return d.name;})
 		.attr("width", function(d) { return 120;/*12+d.name.length*7;*/})
-		.attr("rx", 4)
-		.attr("ry", 4)
 		.call(drag);
 		
 	tableText = svg.append("svg:g").selectAll("g")
@@ -185,16 +180,18 @@ function buildGraph() {
 	field = svg.append("svg:g").selectAll("circle")
 		.data(d3.values(fields))
 	  .enter().append("svg:circle")
-		.attr("r",6)
-		.attr("class",function(d) { return (d.filtered === true ? "filtered" : "")+" "+(d.sort === true ? "sort" : "");});
+		.attr("r",CIRCLE_RADIUS)
+		.attr("class",function(d) { return (d.filtered === true ? "filtered" : "")+" "
+										  +(d.sort 	   === true ? "sort" 	 : "");
+								  });
 		
 	fieldOrder = svg.append("svg:g").selectAll("image.order")
 		.data(d3.values(fields).filter(function(f) { return f.sort;}))
 	  .enter().append("svg:image")
 	    .attr("xlink:href", function(f) { return "images/sort_"+f.sort+".svg";})
 	    .attr("class", "order")
-		.attr("width",30)
-		.attr("height",30);
+		.attr("width",SORT_SIDE)
+		.attr("height",SORT_SIDE);
 	  
 	fieldText = svg.append("svg:g").selectAll("g")
 		.data(d3.values(fields))
@@ -263,44 +260,55 @@ function position(d, i, a, x, y) {
 	  .attr("x", this.x = x)
 	  .attr("y", this.y = y)
 	  .attr("height", function(t) { 
-		return 35+field.filter(function(f) { 
+		return MIN_TABLE_HEIGHT+field.filter(function(f) { 
 			return tableAlias.filter(function(ta) { 
 				f.tableAlias == ta.name && ta.table == d.name}); 
-		})[0].length * 20;
+		})[0].length * FIELD_LINEHEIGHT;
 	});
 	
 	var tableWidth=parseInt(d3.select(this).attr("width"));
 	var tableHeight=parseInt(d3.select(this).attr("height"));
 	  
 	tableText.filter(function(tt) { return tt.name == d.name; })
-	  .attr("x", x+3)
-	  .attr("y", y+12);
+	  .attr("x", x+TABLE_NAME_PADDING.left)
+	  .attr("y", y+TABLE_NAME_PADDING.top);
 	  
 	tableSeparator.filter(function(ts) { return ts.name == d.name; })
 	  .attr("x1", x)
 	  .attr("x2", x+parseInt(d3.select('rect[name="'+d.name+'"]').attr('width')))
-	  .attr("y1", y+20)
-	  .attr("y2", y+20);
+	  .attr("y1", y+LINE_SEPARATOR_TOP)
+	  .attr("y2", y+LINE_SEPARATOR_TOP);
 	  
 	relatedAliases
-	  .attr("x", function(ta,j) { return x+tableWidth+j*ta.name.length*20+10;})
-	  .attr("y", y+12);
+	  .attr("x", function(ta,j) { return x+tableWidth
+		  								+(j==0 ? 0 : (j-1)*ta.name.length*CHAR_WIDTH)
+		  								+ALIAS_NAME_PADDING.left;})
+	  .attr("y", y+ALIAS_NAME_PADDING.top);
 	  
 	tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })
-	  .attr("x", function(ta,j) { return x+tableWidth+j*ta.name.length*20;})
-	  .attr("y", y+20)
-	  .attr("width",function(ta,j) { return ta.name.length*20;})
-	  .attr("height",tableHeight-20);
+	  .attr("x", function(ta,j) { return x+tableWidth
+										+(j==0 ? 0 : (j-1)*ta.name.length*CHAR_WIDTH)
+		  								+ALIAS_BOX_MARGIN.left;})
+	  .attr("y", y+ALIAS_BOX_MARGIN.top)
+	  .attr("width",function(ta,j) { return ALIAS_NAME_PADDING.left 
+		  								  + Math.max(ta.name.length*CHAR_WIDTH 
+				  								   + ALIAS_NAME_PADDING.right,
+	
+				  								     CIRCLE_RADIUS/2 + SORT_SIDE);
+	  							   })
+	  .attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
 	  
 	  
 	fieldText.filter(function(f) { return isFieldInTable(f,d);})
-	  .attr("x", x+5)
-	  .attr("y", function(f, i) { return (y || 0) +35+20*i});
+	  .attr("x", x+FIELD_PADDING.left)
+	  .attr("y", function(f, i) { return y + FIELD_PADDING.top + FIELD_LINEHEIGHT*i});
 		
 	
 	field.filter(function(f) { return isFieldInTable(f,d);})
 	  .attr("cx", function(f) { return relatedAliases.filter(function(a) { return a.name == f.tableAlias; }).attr("x");})
-	  .attr("cy", function(f, i) { return (y || 0) +30+20*i});
+	  .attr("cy", function(f, i) { return y +FIELD_PADDING.top
+		  									+FIELD_LINEHEIGHT*i
+		  									+CIRCLE_RADIUS/2});
 		
 	
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
