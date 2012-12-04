@@ -75,6 +75,11 @@ text {
   pointer-events: none;
 }
 
+text.outputname {
+  font-size: 14px;
+  font-weight: bold;
+}
+
 text.shadow {
   stroke: #fff;
   stroke-width: 3px;

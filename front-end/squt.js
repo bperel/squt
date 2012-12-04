@@ -99,7 +99,7 @@ d3.select("#OK").on("click",function(d,i) {
 						}
 						switch(type) {
 							case 'OUTPUT':
-								linksToOutput.push(tableAlias+"."+field);
+								linksToOutput.push({fieldName: tableAlias+"."+field, outputName: data});
 							break;
 							case 'CONDITION':
 								if (data.indexOf(".") != -1) { // join
@@ -133,7 +133,7 @@ d3.select("#OK").on("click",function(d,i) {
 
 });
 
-var ground, table, tableText, tableSeparator, tableAlias, field, fieldOrder, fieldText, path, pathToOutput;
+var ground, table, tableText, tableSeparator, tableAlias, field, fieldOrder, fieldText, path, pathToOutput, outputTexts;
 
 function buildGraph() {	
 
@@ -208,21 +208,43 @@ function buildGraph() {
 	pathToOutput = svg.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
+	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("class", function(d) { return "output link "; })
 		.attr("marker-end", "url(#output)");
-		
+
+	outputTexts = svg.append("svg:g").selectAll("g")
+		.data(linksToOutput)
+	  .enter().append("svg:text")
+	    .attr("class","outputname")
+		.append("textPath")
+		  .attr("xlink:href",function(d,i) { return "#outputpath"+i;})
+		    .attr({"startOffset":20})
+		    .append("tspan")
+		      .attr("dy",-5)
+		      .text(function(d) { return d.outputName; });
+	
 	tableBoxes.call(function(d) {positionAll(d);});
 }
 
 
-function positionFieldPathsToOutput(d,i,x,y) {
-  pathToOutput.filter(function(fieldName) {
-    var currentTableAlias = fieldName.substring(0,fieldName.indexOf("."));
-	return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] && tableAliases[currentTableAlias].table == d.name;})[0].length > 0;
-  }).attr("d", getPathToOutput);
+function positionFieldPathsToOutput(d,i) {
+  pathToOutput.filter(function(field) {
+    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
+	return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
+												&& tableAliases[currentTableAlias].table == d.name;
+							})[0].length > 0;
+  }).attr("d", function(d) { return getPathToOutput(d);});
+  
+  outputTexts.filter(function(field) {
+    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
+	return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
+												&& tableAliases[currentTableAlias].table == d.name;
+							})[0].length > 0;
+  }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
 }
 
-function getPathToOutput(fieldName) {
+function getPathToOutput(fieldInfo) {
+	var fieldName = fieldInfo.fieldName;
 	var source=field.filter(function(f) { 
 		return f.fullname == fieldName; 
 	});
@@ -314,7 +336,7 @@ function position(d, i, a, x, y) {
 	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullname == a.fullname; }).attr("cy"))-15;});
 		
 	
-	positionFieldPathsToOutput.call(this, d,i);
+	positionFieldPathsToOutput(d,i);
 	
 	path.attr("d", function(d) {
 	  var source=field.filter(function(f) { return d.source == f.fullname; });
