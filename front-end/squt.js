@@ -31,9 +31,11 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("id","graph")
 	.attr("width", W)
 	.attr("height", H);
+
+svg.append("defs");
 	
-svg.append("defs").selectAll("marker")
-    .data(["internal", "output"])
+d3.select("defs").append("svg:g").selectAll("marker")
+    .data(["output"])
   .enter().append("marker")
     .attr("id", String)
     .attr("viewBox", "0 -5 10 10")
@@ -44,6 +46,27 @@ svg.append("defs").selectAll("marker")
     .attr("orient", "auto")
   .append("path")
     .attr("d", "M0,-5L10,0L0,5");
+
+d3.select("defs").append("svg:g").selectAll("marker")
+      .data(["solidlink1","solidlink2"])
+    .enter().append("marker")
+      .attr("id", String)
+      .attr("class","solidlink")
+      .attr("refX", function(d,i) {
+    	  if (d == "solidlink1") {
+    		  return -4;
+    	  }
+    	  else {
+    		  return 14;
+    	  }
+      })
+      .attr("refY", 2.5)
+      .attr("markerWidth", 100)
+      .attr("markerHeight", 100)
+      .attr("orient", "auto")
+      .append("rect")
+        .attr("width",10)
+        .attr("height",5);
 
 d3.select("#OK").on("click",function(d,i) {
 	
@@ -107,7 +130,7 @@ d3.select("#OK").on("click",function(d,i) {
 										var tableAliasAndField=data.split('.');
 										fields[data]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullname:data, filtered: false, sort: false};
 									}
-									links.push({source: tableAlias+"."+field, target: data});
+									links.push({source: tableAlias+"."+field, target: data, type: "innerjoin"});
 								}
 								else { 
 									fields[tableAlias+"."+field]['filtered']=true;
@@ -138,7 +161,7 @@ var ground, table, tableText, tableSeparator, tableAlias, field, fieldOrder, fie
 function buildGraph() {	
 
 	//cleanup
-	svg.selectAll('image,g').remove();
+	svg.selectAll('image,svg>g').remove();
 	
 	ground = svg.append("svg:image")
 	  .attr("xlink:href", "images/ground.svg")
@@ -200,10 +223,20 @@ function buildGraph() {
 		.text(function(d) { return d.name; });
 		
 
-	path = svg.append("svg:g").selectAll("path.internal")
+	path = svg.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
-		.attr("class", function(d) { return "internal link " + d.type; });;
+		.attr("class", "link")
+		.attr("marker-start", function(d) { 
+			if (d.type == "innerjoin") {
+				return "url(#solidlink1)";
+			}
+		})
+		.attr("marker-end", function(d) { 
+			if (d.type == "innerjoin") {
+				return "url(#solidlink2)";
+			}
+		});
 
 	pathToOutput = svg.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)

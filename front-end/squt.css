@@ -43,6 +43,11 @@ svg#graph {
 	outline:1px solid gray;
 }
 
+marker.solidlink {
+	fill: gray;
+	opacity: 0.9;
+}
+
 path.link {
   fill: none;
   stroke: #000;
