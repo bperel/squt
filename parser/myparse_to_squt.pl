@@ -75,8 +75,11 @@ sub handleTableOrJoin {
 				my $table2 = @{$item->getJoinItems()}[1];
 				my $field1 = @{$joinCond->getArguments()}[0];
 				my $field2 = @{$joinCond->getArguments()}[1];
-				
-				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}=$table2->getAlias.".".$field2->getFieldName();
+				my $joinType = $item->getJoinType();
+				if ($joinType eq undef) {
+					$joinType = "JOIN_TYPE_STRAIGHT";
+				}
+				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{$table2->getAlias.".".$field2->getFieldName()}=$joinType;
 			}	
 		}
 	}
@@ -136,7 +139,7 @@ sub handleCondOrFunc($$\@\%) {
 		#	}
 	}
 	if ($fieldname ne undef && $value ne undef) {
-		$sqlv_table_alias_fields->{"CONDITION"}{$fieldname}=$value;
+		$sqlv_table_alias_fields->{"CONDITION"}{$fieldname}{$value}="JOIN_TYPE_STRAIGHT";
 	}
 }
 

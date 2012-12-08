@@ -125,15 +125,24 @@ d3.select("#OK").on("click",function(d,i) {
 								linksToOutput.push({fieldName: tableAlias+"."+field, outputName: data});
 							break;
 							case 'CONDITION':
-								if (data.indexOf(".") != -1) { // join
-									if (fields[data] == undefined) { // In case the joined table isn't referenced elsewhere
-										var tableAliasAndField=data.split('.');
-										fields[data]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullname:data, filtered: false, sort: false};
+								for (var otherField in data) {
+									if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
+										if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
+											var tableAliasAndField=otherField.split('.');
+											fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullname:otherField, filtered: false, sort: false};
+										}
+										var joinType=null;
+										switch(data[otherField]) {
+											case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
+											case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
+											case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
+											case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
+										}
+										links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
 									}
-									links.push({source: tableAlias+"."+field, target: data, type: "innerjoin"});
-								}
-								else { 
-									fields[tableAlias+"."+field]['filtered']=true;
+									else { 
+										fields[tableAlias+"."+field]['filtered']=true;
+									}
 								}
 							break;
 							case 'SORT':
@@ -228,7 +237,7 @@ function buildGraph() {
 	  .enter().append("svg:path")
 		.attr("class", "link")
 		.attr("marker-start", function(d) { 
-			if (d.type == "innerjoin") {
+			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
 				return "url(#solidlink1)";
 			}
 		})
