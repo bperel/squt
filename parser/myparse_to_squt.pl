@@ -8,10 +8,10 @@ use Data::Dumper;
 use JSON::PP;
 my $json = JSON::PP->new->ascii->pretty->allow_nonref;
 $Data::Dumper::Indent = 1;
-my $debug = 0;
 
 our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
 our $query = $parser->parse($ARGV[0]);
+our $debug = $ARGV[1] eq "debug";
 our %sqlv_tables;
 
 if ($debug) {

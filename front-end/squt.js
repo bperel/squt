@@ -15,6 +15,8 @@ var query_examples=d3.selectAll('.samplequery').each(function() {
 			.attr("name",d3.select(this).attr("name"));
 });
 
+var is_debug=extractUrlParams()['debug'] !== undefined;
+
 var tables= [];
 var tableAliases={};
 var fields= {};
@@ -69,9 +71,18 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("height",5);
 
 d3.select("#OK").on("click",function(d,i) {
-	
+	var url="analyze.php?query="+editor.getValue().replace(/\n/g,' ');
+	if (is_debug) {
+		d3.text(
+			url+"&debug=1",
+			function(data) {
+				d3.select('#log').text(data);
+			}
+		);
+		return;
+	}
 	d3.json(
-	  "analyze.php?query="+editor.getValue().replace(/\n/g,' '),
+	  url,	  
 	  function (jsondata) {
 		console.log(jsondata);
 		if (jsondata == null) {
@@ -396,4 +407,15 @@ function position(d, i, a, x, y) {
 
 function isFieldInTable(field,table) {
 	return tableAliases[field.tableAlias] && tableAliases[field.tableAlias].table == table.name;
+}
+
+
+function extractUrlParams(){	
+	var t = location.search.substring(1).split('&');
+	var f = [];
+	for (var i=0; i<t.length; i++){
+		var x = t[ i ].split('=');
+		f[x[0]]=(x[1] == undefined ? null : x[1]);
+	}
+	return f;
 }
