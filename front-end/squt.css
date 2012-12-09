@@ -75,6 +75,12 @@ rect.alias {
   stroke-width: 1.5px;
 }
 
+ellipse.function {
+  fill: #fff;
+  stroke: #333;
+  stroke-width: 1.5px;	
+}
+
 text {
   font: 12px Courier;
   pointer-events: none;

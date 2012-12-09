@@ -9,8 +9,8 @@
 	
     <script type="text/javascript" src="lib/d3/d3.v2.js"></script>
 	
-	<script src="lib/codemirror/lib/codemirror.js"></script>
-	<script src="lib/codemirror/mode/mysql/mysql.js"></script>
+	<script type="text/javascript" src="lib/codemirror/lib/codemirror.js"></script>
+	<script type="text/javascript" src="lib/codemirror/mode/mysql/mysql.js"></script>
 	
   </head>
   <body>
@@ -35,6 +35,10 @@ ORDER BY co.contractDate;</div>
 	<div class="samplequery" name="samplequery3" title="FROM with INNER JOIN condition">SELECT comp.companyName, co.contractID AS ID 
 FROM Contrat co 
 INNER JOIN Company comp ON co.companyCode = comp.companyCode;</div>
+	<div class="samplequery" name="samplequery4" title="1st-level FUNCTION in output">SELECT co.ContractID AS ID, CONCAT(p.firstName, p.lastName) AS PersonFullName
+FROM ContractID co
+INNER JOIN Person p ON co.personInChargeID = p.ID
+WHERE co.isActive = 1;</div>
 
 
     <script type="text/javascript" src="squt_constants.js"></script>

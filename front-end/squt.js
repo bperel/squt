@@ -17,12 +17,14 @@ var query_examples=d3.selectAll('.samplequery').each(function() {
 
 var is_debug=extractUrlParams()['debug'] !== undefined;
 
-var tables= [];
-var tableAliases={};
-var fields= {};
+var tables= [],
+	tableAliases={},
+	fields= {},
 		 
-var links= [];
-var linksToOutput=[];
+	links=[],
+	functions=[],
+	linksToFunctions=[],
+	linksToOutput=[];
  
 
 var drag = d3.behavior.drag()
@@ -112,11 +114,13 @@ d3.select("#OK").on("click",function(d,i) {
 		else {
 			d3.select('#log').text("");
 		}
-		tables= [];
-		tableAliases={};
-		fields= {};
-		links= [];
-		linksToOutput=[];
+		tables= 	 	 [],
+		tableAliases=	 {},
+		fields= 	 	 {},
+		links= 			 [],
+		functions=		 [],
+		linksToFunctions=[],
+		linksToOutput=	 [];
 		
 		for (var tableName in jsondata.Tables) {
 			tables[tableName]=({'name':tableName});
@@ -133,7 +137,22 @@ d3.select("#OK").on("click",function(d,i) {
 						}
 						switch(type) {
 							case 'OUTPUT':
-								linksToOutput.push({fieldName: tableAlias+"."+field, outputName: data});
+								for (var functionId in data) {
+									var outputAlias = data[functionId];
+									if (functionId == -1) { // Directly to output
+										linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
+									}
+									else { // Through a function
+										if (functions[functionId] == undefined) {
+											functions[functionId]={functionId: functionId, 
+																   name: jsondata.Functions[functionId]["name"],
+																   alias: jsondata.Functions[functionId]["alias"]};
+											linksToOutput.push({type: "function", functionId: functionId, outputName: functions[functionId]["alias"]});
+										}
+										linksToFunctions.push({fieldName: tableAlias+"."+field, functionId: functionId});
+									}
+								}
+								
 							break;
 							case 'CONDITION':
 								for (var otherField in data) {
@@ -176,7 +195,20 @@ d3.select("#OK").on("click",function(d,i) {
 
 });
 
-var ground, table, tableText, tableSeparator, tableAlias, field, fieldOrder, fieldText, path, pathToOutput, outputTexts;
+var ground, 
+	table, 
+	tableText, 
+	tableSeparator, 
+	tableAlias, 
+	field, 
+	fieldOrder, 
+	fieldText,
+	funcText,
+	
+	path, 
+	pathToFunction,
+	pathToOutput, 
+	outputTexts;
 
 function buildGraph() {	
 
@@ -207,8 +239,7 @@ function buildGraph() {
 	tableSeparator = svg.append("svg:g").selectAll("line")
 		.data(d3.values(tables))
 	  .enter().append("svg:line")
-		.attr("stroke", "black")
-		.call(drag);
+		.attr("stroke", "black");
 		
 	tableAlias = svg.append("svg:g").selectAll("g")
 		.data(d3.values(tableAliases))
@@ -242,7 +273,19 @@ function buildGraph() {
 		.attr("name",function(d) { return d.tableAlias+"."+d.name; })
 		.text(function(d) { return d.name; });
 		
-
+	func = svg.append("svg:g").selectAll("ellipse.function")
+		.data(d3.values(functions))
+	  .enter().append("svg:ellipse")
+		.attr("class","function")
+		.attr("name", function(d) { return d.name;})
+		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
+		
+	funcText = svg.append("svg:g").selectAll("g")
+		.data(d3.values(functions))
+	  .enter().append("svg:text")
+		.text(function(d) { return d.name; });
+	
+	
 	path = svg.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
@@ -257,6 +300,12 @@ function buildGraph() {
 				return "url(#solidlink2)";
 			}
 		});
+
+	pathToFunction = svg.append("svg:g").selectAll("path.tofunction")
+		.data(linksToFunctions)
+	  .enter().append("svg:path")
+	    .attr("id", function(d,i) { return "pathtofunction"+i;})
+		.attr("class", function(d) { return "link tofunction"; });
 
 	pathToOutput = svg.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
@@ -280,32 +329,45 @@ function buildGraph() {
 }
 
 
-function positionFieldPathsToOutput(d,i) {
-  pathToOutput.filter(function(field) {
-    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
-	return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
-												&& tableAliases[currentTableAlias].table == d.name;
-							})[0].length > 0;
+function positionFieldPathsToOutput(d) {
+  pathToOutput.filter(function(fieldOrFunction) {
+	if (fieldOrFunction == "field") {
+		var field = fieldOrFunction;
+	    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
+		return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
+													&& tableAliases[currentTableAlias].table == d.name;
+								})[0].length > 0;
+	}
+	else return true;
   }).attr("d", function(d) { return getPathToOutput(d);});
   
-  outputTexts.filter(function(field) {
-    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
-	return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
-												&& tableAliases[currentTableAlias].table == d.name;
-							})[0].length > 0;
+  outputTexts.filter(function(fieldOrFunction) {
+	if (fieldOrFunction == "field") {
+	    var currentTableAlias = fieldOrFunction.fieldName.substring(0,fieldOrFunction.fieldName.indexOf("."));
+		return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
+													&& tableAliases[currentTableAlias].table == d.name;
+								})[0].length > 0;
+	}
+	else return true;
   }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
 }
 
-function getPathToOutput(fieldInfo) {
-	var fieldName = fieldInfo.fieldName;
-	var source=field.filter(function(f) { 
-		return f.fullname == fieldName; 
-	});
+function getPathToOutput(info) {
+	if (info.type == "field") {
+		var source=field.filter(function(f) { 
+			return f.fullname == info.fieldName; 
+		});
+		var source_y=source.attr("cy");
+	}
+	else {
+		var source=func.filter(function(f) { return info.functionId == f.functionId; });
+		var source_y=parseFloat(source.attr("cy")) + FUNCTION_BOX_RY;
+	}
 	  
 	var dx = ground.attr("x") - source.attr("cx"),
-		dy = ground.attr("y") - source.attr("cy"),
+		dy = ground.attr("y") - source_y,
 		dr = Math.sqrt(dx * dx + dy * dy);
-	return "M" + source.attr("cx") + "," + source.attr("cy") + "A" + dr + "," + dr + " 0 0,1 " + (parseInt(ground.attr("x"))+parseInt(ground.attr("width"))/2) + "," + ground.attr("y");
+	return "M" + source.attr("cx") + "," + source_y + "A" + dr + "," + dr + " 0 0,1 " + (parseInt(ground.attr("x"))+parseInt(ground.attr("width"))/2) + "," + ground.attr("y");
 }
 
 function positionAll(elements) {
@@ -350,7 +412,7 @@ function position(d, i, a, x, y) {
 	  
 	tableSeparator.filter(function(ts) { return ts.name == d.name; })
 	  .attr("x1", x)
-	  .attr("x2", x+parseInt(d3.select('rect[name="'+d.name+'"]').attr('width')))
+	  .attr("x2", function(ts) { return x+parseInt(d3.select('rect[name="'+ts.name+'"]').attr('width'));})
 	  .attr("y1", y+LINE_SEPARATOR_TOP)
 	  .attr("y2", y+LINE_SEPARATOR_TOP);
 	  
@@ -387,9 +449,16 @@ function position(d, i, a, x, y) {
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
 	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullname == a.fullname; }).attr("cx"));})
 	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullname == a.fullname; }).attr("cy"))-15;});
-		
+
+
+	funcText.filter(function(func) { return i==0; })
+	  .attr("x", function(func,j) { return (j+1)*100 - func.name.length*CHAR_WIDTH/2;})
+	  .attr("y", 100);
 	
-	positionFieldPathsToOutput(d,i);
+	func.filter(function(func) { return i==0; })
+	  .attr("cx", function(func,j) { return (j+1)*100;})
+	  .attr("cy", 100)
+	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; });
 	
 	path.attr("d", function(d) {
 	  var source=field.filter(function(f) { return d.source == f.fullname; });
@@ -403,6 +472,22 @@ function position(d, i, a, x, y) {
 		  dr = Math.sqrt(dx * dx + dy * dy);
 	  return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
 	});
+	
+	pathToFunction.attr("d", function(d) {
+	  var source=field.filter(function(f) { return d.fieldName == f.fullname; });
+	  var target=func.filter(function(f) { return d.functionId == f.functionId; });
+	
+	  
+	  var x = [source.attr("cx") || 0, target.attr("cx") || 0];
+	  var y = [source.attr("cy") || 0, target.attr("cy") - FUNCTION_BOX_RY || 0];
+ 	
+	  var dx = x[1] - x[0],
+		  dy = y[1] - y[0],
+		  dr = Math.sqrt(dx * dx + dy * dy);
+	  return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
+	});		
+	
+	positionFieldPathsToOutput(d);
 }
 
 function isFieldInTable(field,table) {

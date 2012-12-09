@@ -29,19 +29,14 @@ else {
 }
 print $json->pretty->encode( \%sqlv_tables );
 
+
 sub handleTableOrJoin {
 	my $item = $_[0];
-	my $table = undef;
 	if ($item->getType() eq "TABLE_ITEM") {
 		my %sqlv_table_alias_fields;
-		$table=$item;
-		foreach my $item (@{$query->getSelectItems()}) {
-			if ($item->getTableName() eq undef) {
-				setWarning("No alias",$item->getFieldName(),"SELECT");
-			}
-			if ($item->getTableName() eq $table->getAlias()) {
-				$sqlv_table_alias_fields{"OUTPUT"}{$item->getFieldName()}=$item->getAlias() || $item->getFieldName();
-			}
+		my $table=$item;
+		foreach my $selectItem (@{$query->getSelectItems()}) {
+			handleSelectItem($selectItem,$table->getAlias(), -1, \%sqlv_table_alias_fields);
 		}
 		if ($query->getOrder() != undef) {
 			foreach my $orderByItem (@{$query->getOrder()}) {
@@ -71,7 +66,7 @@ sub handleTableOrJoin {
 		my $joinCond = $item->getJoinCond();
 		if ($joinCond ne undef && $two_tables) {
 			if ($joinCond->getType() eq "FUNC_ITEM") {
-				$table = @{$item->getJoinItems()}[0];
+				my $table = @{$item->getJoinItems()}[0];
 				my $table2 = @{$item->getJoinItems()}[1];
 				my $field1 = @{$joinCond->getArguments()}[0];
 				my $field2 = @{$joinCond->getArguments()}[1];
@@ -81,6 +76,32 @@ sub handleTableOrJoin {
 				}
 				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{$table2->getAlias.".".$field2->getFieldName()}=$joinType;
 			}	
+		}
+	}
+}
+
+sub handleSelectItem($$$\%) {
+	my ($item,$tableAlias,$functionId,$sqlv_table_alias_fields) = @_;
+	if ($item->getType() eq 'FIELD_ITEM') {
+		if ($item->getTableName() eq undef) {
+			setWarning("No alias",$item->getFieldName(),"SELECT");
+		}
+		if ($item->getTableName() eq $tableAlias) {
+			$sqlv_table_alias_fields->{"OUTPUT"}{$item->getFieldName()}{$functionId}=$item->getAlias() 
+																				  || $item->getFieldName();
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+	elsif ($item->getType() eq 'FUNC_ITEM') {
+		my $functionAlias=$item->getAlias();
+		my $functionId = \$item;
+		$sqlv_tables{"Functions"}{$functionId}{"name"}=$item->getFuncName();
+		$sqlv_tables{"Functions"}{$functionId}{"alias"}=$functionAlias;
+		foreach my $argument (@{$item->getArguments()}) {
+			handleSelectItem($argument,$tableAlias,$functionId,$sqlv_table_alias_fields);
 		}
 	}
 }
