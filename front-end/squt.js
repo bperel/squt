@@ -27,9 +27,17 @@ var tables= [],
 	linksToOutput=[];
  
 
-var drag = d3.behavior.drag()
+var dragTable = d3.behavior.drag()
 	.origin(Object)
-	.on("drag", position);
+	.on("drag", positionTable),
+
+	dragFunction = d3.behavior.drag()
+	.origin(Object)
+	.on("drag", positionFunction),
+
+	dragGround = d3.behavior.drag()
+	.origin(Object)
+	.on("drag", positionGround);
 
 var svg = d3.select("body").append("svg:svg")
 	.attr("id","graph")
@@ -133,7 +141,7 @@ d3.select("#OK").on("click",function(d,i) {
 					for (var field in actionFields) {
 						var data=actionFields[field];
 						if (fields[tableAlias+"."+field] == undefined) {
-							fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullname:tableAlias+"."+field, filtered: false, sort: false};
+							fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
 						}
 						switch(type) {
 							case 'OUTPUT':
@@ -159,7 +167,7 @@ d3.select("#OK").on("click",function(d,i) {
 									if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
 										if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
 											var tableAliasAndField=otherField.split('.');
-											fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullname:otherField, filtered: false, sort: false};
+											fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
 										}
 										var joinType=null;
 										switch(data[otherField]) {
@@ -219,9 +227,7 @@ function buildGraph() {
 	  .attr("xlink:href", "images/ground.svg")
 	  .attr("width", 40)
 	  .attr("height", 40)
-	  .attr("x",W-45)
-	  .attr("y",H-45)
-	  .call(drag);
+	  .call(dragGround);
 	  
 	tableBoxes = svg.append("svg:g").selectAll("rect.table")
 		.data(d3.values(tables))
@@ -229,7 +235,7 @@ function buildGraph() {
 		.attr("class","table")
 		.attr("name", function(d) { return d.name;})
 		.attr("width", function(d) { return 120;/*12+d.name.length*7;*/})
-		.call(drag);
+		.call(dragTable);
 		
 	tableText = svg.append("svg:g").selectAll("g")
 		.data(d3.values(tables))
@@ -278,7 +284,8 @@ function buildGraph() {
 	  .enter().append("svg:ellipse")
 		.attr("class","function")
 		.attr("name", function(d) { return d.name;})
-		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
+		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
+		.call(dragFunction);
 		
 	funcText = svg.append("svg:g").selectAll("g")
 		.data(d3.values(functions))
@@ -325,37 +332,58 @@ function buildGraph() {
 		      .attr("dy",-5)
 		      .text(function(d) { return d.outputName; });
 	
-	tableBoxes.call(function(d) {positionAll(d);});
+	// Initial positions
+	positionGround.call(ground,null,null,null,false);
+	tableBoxes.each(function(d,i) {
+		positionTable.call(this,d,i);
+	});
+	func.each(function(d,i) {
+		positionFunction.call(this,d,i);
+	});
 }
 
+function filterFunction(fieldOrFunction, origin, d) {
+  if (origin == "all")
+	return true;
+  if (origin == "field") {
+	return fieldOrFunction.fieldName == d.fullName;
+  }
+  if (origin == "function") {
+	 return fieldOrFunction.functionId == d.functionId;
+  }
+}
 
-function positionFieldPathsToOutput(d) {
-  pathToOutput.filter(function(fieldOrFunction) {
-	if (fieldOrFunction == "field") {
-		var field = fieldOrFunction;
-	    var currentTableAlias = field.fieldName.substring(0,field.fieldName.indexOf("."));
-		return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
-													&& tableAliases[currentTableAlias].table == d.name;
-								})[0].length > 0;
-	}
-	else return true;
+function positionPathsToOutput(origin,d) {
+  pathToOutput.filter(function(link) {
+	return filterFunction(link,origin,d);
   }).attr("d", function(d) { return getPathToOutput(d);});
   
-  outputTexts.filter(function(fieldOrFunction) {
-	if (fieldOrFunction == "field") {
-	    var currentTableAlias = fieldOrFunction.fieldName.substring(0,fieldOrFunction.fieldName.indexOf("."));
-		return tableAlias.filter(function(ta) { return tableAliases[currentTableAlias] 
-													&& tableAliases[currentTableAlias].table == d.name;
-								})[0].length > 0;
-	}
-	else return true;
+  outputTexts.filter(function(link) {
+	return filterFunction(link,origin,d);
   }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
+}
+
+function positionPathsToFunctions(origin,d) {
+	pathToFunction.filter(function(link) {
+	  return filterFunction(link,origin,d);
+	}).attr("d", function(d) {
+		var source=field.filter(function(f) { return d.fieldName == f.fullName; });
+	    var target=func.filter(function(f) { return d.functionId == f.functionId; });
+	
+	    var x = [source.attr("cx") || 0, target.attr("cx") || 0];
+	    var y = [source.attr("cy") || 0, target.attr("cy") - FUNCTION_BOX_RY || 0];
+ 	
+	    var dx = x[1] - x[0],
+		    dy = y[1] - y[0],
+		    dr = Math.sqrt(dx * dx + dy * dy);
+	    return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
+	});
 }
 
 function getPathToOutput(info) {
 	if (info.type == "field") {
 		var source=field.filter(function(f) { 
-			return f.fullname == info.fieldName; 
+			return f.fullName == info.fieldName; 
 		});
 		var source_y=source.attr("cy");
 	}
@@ -370,19 +398,11 @@ function getPathToOutput(info) {
 	return "M" + source.attr("cx") + "," + source_y + "A" + dr + "," + dr + " 0 0,1 " + (parseInt(ground.attr("x"))+parseInt(ground.attr("width"))/2) + "," + ground.attr("y");
 }
 
-function positionAll(elements) {
-	elements.each(function(d,i) {
-	  position.call(this,d,i, "",12+i*200, 0);
-	});
-}
+function positionTable(d, i) {
+	var drawFunctionLinks = d3.event != null;
 
-function position(d, i, a, x, y) {
-	if (x == undefined && isNaN(d3.event.x) && !isNaN(d3.event.dx)) {
-		x = parseInt(d3.select(this).attr("x")) + d3.event.dx;
-		y = parseInt(d3.select(this).attr("y")) + d3.event.dy;
-	}
-	x = x == undefined ? d3.event.x : x;
-	y = y == undefined ? d3.event.y : y;
+	var x = d3.event == null ? 12+i*200 : (parseInt(d3.select(this).attr("x"))+d3.event.dx);
+	var y = d3.event == null ? 0 : (parseInt(d3.select(this).attr("y"))+d3.event.dy);
 	
 	if (this instanceof SVGImageElement) {
 		ground.attr("x", x)
@@ -443,26 +463,22 @@ function position(d, i, a, x, y) {
 	  .attr("cx", function(f) { return relatedAliases.filter(function(a) { return a.name == f.tableAlias; }).attr("x");})
 	  .attr("cy", function(f, i) { return y +FIELD_PADDING.top
 		  									+FIELD_LINEHEIGHT*i
-		  									-CIRCLE_RADIUS/2});
+		  									-CIRCLE_RADIUS/2})
+	  .each(function(f) {
+		if (drawFunctionLinks) 
+		  positionPathsToFunctions("field", f);
+		positionPathsToOutput("field", f);
+	  });
 		
 	
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
-	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullname == a.fullname; }).attr("cx"));})
-	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullname == a.fullname; }).attr("cy"))-15;});
+	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cx"));})
+	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cy"))-15;});
 
-
-	funcText.filter(function(func) { return i==0; })
-	  .attr("x", function(func,j) { return (j+1)*100 - func.name.length*CHAR_WIDTH/2;})
-	  .attr("y", 100);
-	
-	func.filter(function(func) { return i==0; })
-	  .attr("cx", function(func,j) { return (j+1)*100;})
-	  .attr("cy", 100)
-	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; });
 	
 	path.attr("d", function(d) {
-	  var source=field.filter(function(f) { return d.source == f.fullname; });
-	  var target=field.filter(function(f) { return d.target == f.fullname; });
+	  var source=field.filter(function(f) { return d.source == f.fullName; });
+	  var target=field.filter(function(f) { return d.target == f.fullName; });
 	
 	  var x = [source.attr("cx") || 0, target.attr("cx") || 0];
 	  var y = [source.attr("cy") || 0, target.attr("cy") || 0];
@@ -472,22 +488,40 @@ function position(d, i, a, x, y) {
 		  dr = Math.sqrt(dx * dx + dy * dy);
 	  return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
 	});
+}
+
+function positionFunction(d, i) {
+	var x=d3.event == null ? (i+1)*100 : (parseInt(d3.select(this).attr("cx"))+d3.event.dx);
+	var y=d3.event == null ? 100 : (parseInt(d3.select(this).attr("cy"))+d3.event.dy);
 	
-	pathToFunction.attr("d", function(d) {
-	  var source=field.filter(function(f) { return d.fieldName == f.fullname; });
-	  var target=func.filter(function(f) { return d.functionId == f.functionId; });
+	funcText.filter(function(func) { return func.functionId == d.functionId; })
+	  .attr("x", function(func) { return x - func.name.length*CHAR_WIDTH/2;})
+	  .attr("y", y);
 	
-	  
-	  var x = [source.attr("cx") || 0, target.attr("cx") || 0];
-	  var y = [source.attr("cy") || 0, target.attr("cy") - FUNCTION_BOX_RY || 0];
- 	
-	  var dx = x[1] - x[0],
-		  dy = y[1] - y[0],
-		  dr = Math.sqrt(dx * dx + dy * dy);
-	  return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
-	});		
+	func.filter(function(func) { return func.functionId == d.functionId; })
+	  .attr("cx", x)
+	  .attr("cy", y)
+	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
+	  .each(function(func) {
+		positionPathsToFunctions("function",func);
+		positionPathsToOutput("function",func);
+	  });
 	
-	positionFieldPathsToOutput(d);
+}
+
+function positionGround(d, i) {
+	var drawLinks = d3.event != null;
+	
+	var x=d3.event == null ? W-45 : (parseInt(d3.select(this).attr("x"))+d3.event.dx);
+	var y=d3.event == null ? H-45 : (parseInt(d3.select(this).attr("y"))+d3.event.dy);
+	
+	ground
+	  .attr("x", x)
+	  .attr("y", y);
+
+	if (drawLinks) {
+		positionPathsToOutput("all");
+	}
 }
 
 function isFieldInTable(field,table) {
