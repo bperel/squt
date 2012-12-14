@@ -1,5 +1,5 @@
 # Use example : 
-# perl myparse_to_squt.pl "$(<requete.sql)"
+# perl myparse_to_squt.pl "SELECT b.a FROM b"
 #eval{require "DBIx-MyParse-0.88/lib/DBIx/MyParse.pm"}
 
 use strict;
