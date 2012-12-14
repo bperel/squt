@@ -419,8 +419,11 @@ function positionTable(d, i) {
 	  .attr("height", function(t) { 
 		return MIN_TABLE_HEIGHT+field.filter(function(f) { 
 			return tableAlias.filter(function(ta) { 
-				f.tableAlias == ta.name && ta.table == d.name}); 
-		})[0].length * FIELD_LINEHEIGHT;
+				return f.tableAlias == ta.name;
+			}).filter(function(ta) { 
+				return ta.table == d.name;
+			}).data().length > 0;
+		}).data().length * FIELD_LINEHEIGHT;
 	});
 	
 	var tableWidth=parseInt(d3.select(this).attr("width"));
