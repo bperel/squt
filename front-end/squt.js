@@ -412,6 +412,7 @@ function positionTable(d, i) {
 	}
 	
 	var relatedAliases = tableAlias.filter(function(ta) { return ta.table == d.name});
+	var relatedAliasesBoxes = tableAliasBoxes.filter(function(ta) { return ta.table == d.name});
 	
 	d3.select(this)
 	  .attr("x", this.x = x)
@@ -440,15 +441,30 @@ function positionTable(d, i) {
 	  .attr("y2", y+LINE_SEPARATOR_TOP);
 	  
 	relatedAliases
-	  .attr("x", function(ta,j) { return x+tableWidth
-		  								+(j==0 ? 0 : (j-1)*ta.name.length*CHAR_WIDTH)
-		  								+ALIAS_NAME_PADDING.left;})
+	  .attr("x", function(ta,j) { 
+		  if (j == 0) {
+			  return x+tableWidth+ALIAS_NAME_PADDING.left;
+		  }
+		  else {
+			  var previousAlias = relatedAliases.filter(function(ta2,j2) { 
+									return j2 === j-1; 
+								  });
+			  return parseInt(previousAlias.attr("x"))
+			  		+previousAlias.data()[0].name.length*CHAR_WIDTH
+			  		+ALIAS_NAME_PADDING.right
+			  		+ALIAS_NAME_PADDING.left;
+		  }
+	  })
 	  .attr("y", y+ALIAS_NAME_PADDING.top);
 	  
-	tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })
-	  .attr("x", function(ta,j) { return x+tableWidth
-										+(j==0 ? 0 : (j-1)*ta.name.length*CHAR_WIDTH)
-		  								+ALIAS_BOX_MARGIN.left;})
+	relatedAliasesBoxes
+	  .attr("x", function(ta,j) { 
+		return parseInt(relatedAliases.filter(function(ta2,j2) {
+										        return j === j2; 
+										      })
+											.attr("x"))
+			   -ALIAS_NAME_PADDING.left;
+	  })
 	  .attr("y", y+ALIAS_BOX_MARGIN.top)
 	  .attr("width",function(ta,j) { return ALIAS_NAME_PADDING.left 
 		  								  + Math.max(ta.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
