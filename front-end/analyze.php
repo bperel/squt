@@ -22,9 +22,15 @@ $command = '"'.$path_to_perl.'perl" '
 		  .'"'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" '
 		  .'"'.$query.'" '
 		  .($is_debug ? '"debug" ':'')
-		  .'2> '.$ERROR_OUTPUT_FILE;
+		  .'1> '.$ERROR_OUTPUT_FILE;
 
-$result = shell_exec($command);
+if ($os == 'Windows') {
+	$WshShell = new COM("WScript.Shell");
+	$result = $WshShell->Exec($command)->StdOut->ReadAll;
+}
+else {
+	$result = shell_exec($command);
+}
 $error_output = file_get_contents($ERROR_OUTPUT_FILE);
 if (!empty($error_output)) {
 	echo json_encode(array('Error'=>file_get_contents($ERROR_OUTPUT_FILE)));
