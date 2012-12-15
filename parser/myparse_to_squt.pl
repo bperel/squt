@@ -97,7 +97,7 @@ sub handleSelectItem($$$\%) {
 	}
 	elsif ($item->getType() eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
-		my $functionId = \$item;
+		my $functionId = scalar keys %{$sqlv_tables{"Functions"}};
 		$sqlv_tables{"Functions"}{$functionId}{"name"}=$item->getFuncName();
 		$sqlv_tables{"Functions"}{$functionId}{"alias"}=$functionAlias;
 		foreach my $argument (@{$item->getArguments()}) {
