@@ -42,7 +42,11 @@ var dragTable = d3.behavior.drag()
 var svg = d3.select("body").append("svg:svg")
 	.attr("id","graph")
 	.attr("width", W)
-	.attr("height", H);
+	.attr("height", H)
+	.call(d3.behavior.zoom()
+		.on("zoom",function() {
+			svg.select("svg>g").attr("transform", "translate(" +  d3.event.translate[0] + "," + d3.event.translate[1] + ") scale(" +  d3.event.scale + ")"); 	
+		}));
 
 svg.append("defs");
 	
@@ -222,14 +226,15 @@ function buildGraph() {
 
 	//cleanup
 	svg.selectAll('image,svg>g').remove();
+	var g = svg.append("svg:g");
 	
-	ground = svg.append("svg:image")
+	ground = g.append("svg:image")
 	  .attr("xlink:href", "images/ground.svg")
 	  .attr("width", 40)
 	  .attr("height", 40)
 	  .call(dragGround);
 	  
-	tableBoxes = svg.append("svg:g").selectAll("rect.table")
+	tableBoxes = g.append("svg:g").selectAll("rect.table")
 		.data(d3.values(tables))
 	  .enter().append("svg:rect")
 		.attr("class","table")
@@ -237,27 +242,27 @@ function buildGraph() {
 		.attr("width", function(d) { return 120;/*12+d.name.length*7;*/})
 		.call(dragTable);
 		
-	tableText = svg.append("svg:g").selectAll("g")
+	tableText = g.append("svg:g").selectAll("g")
 		.data(d3.values(tables))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 		
-	tableSeparator = svg.append("svg:g").selectAll("line")
+	tableSeparator = g.append("svg:g").selectAll("line")
 		.data(d3.values(tables))
 	  .enter().append("svg:line")
 		.attr("stroke", "black");
 		
-	tableAlias = svg.append("svg:g").selectAll("g")
+	tableAlias = g.append("svg:g").selectAll("g")
 		.data(d3.values(tableAliases))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 		
-	tableAliasBoxes = svg.append("svg:g").selectAll("g")
+	tableAliasBoxes = g.append("svg:g").selectAll("g")
 		.data(d3.values(tableAliases))
 	  .enter().append("svg:rect")
 		.attr("class","alias")
 		
-	field = svg.append("svg:g").selectAll("circle")
+	field = g.append("svg:g").selectAll("circle")
 		.data(d3.values(fields))
 	  .enter().append("svg:circle")
 		.attr("r",CIRCLE_RADIUS)
@@ -265,7 +270,7 @@ function buildGraph() {
 										  +(d.sort 	   === true ? "sort" 	 : "");
 								  });
 		
-	fieldOrder = svg.append("svg:g").selectAll("image.order")
+	fieldOrder = g.append("svg:g").selectAll("image.order")
 		.data(d3.values(fields).filter(function(f) { return f.sort;}))
 	  .enter().append("svg:image")
 	    .attr("xlink:href", function(f) { return "images/sort_"+f.sort+".svg";})
@@ -273,13 +278,13 @@ function buildGraph() {
 		.attr("width",SORT_SIDE)
 		.attr("height",SORT_SIDE);
 	  
-	fieldText = svg.append("svg:g").selectAll("g")
+	fieldText = g.append("svg:g").selectAll("g")
 		.data(d3.values(fields))
 	  .enter().append("svg:text")
 		.attr("name",function(d) { return d.tableAlias+"."+d.name; })
 		.text(function(d) { return d.name; });
 		
-	func = svg.append("svg:g").selectAll("ellipse.function")
+	func = g.append("svg:g").selectAll("ellipse.function")
 		.data(d3.values(functions))
 	  .enter().append("svg:ellipse")
 		.attr("class","function")
@@ -287,13 +292,13 @@ function buildGraph() {
 		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
 		.call(dragFunction);
 		
-	funcText = svg.append("svg:g").selectAll("g")
+	funcText = g.append("svg:g").selectAll("g")
 		.data(d3.values(functions))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 	
 	
-	path = svg.append("svg:g").selectAll("path.join")
+	path = g.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
 		.attr("class", "link")
@@ -308,20 +313,20 @@ function buildGraph() {
 			}
 		});
 
-	pathToFunction = svg.append("svg:g").selectAll("path.tofunction")
+	pathToFunction = g.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
 		.attr("class", function(d) { return "link tofunction"; });
 
-	pathToOutput = svg.append("svg:g").selectAll("path.output")
+	pathToOutput = g.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("class", function(d) { return "output link "; })
 		.attr("marker-end", "url(#output)");
 
-	outputTexts = svg.append("svg:g").selectAll("g")
+	outputTexts = g.append("svg:g").selectAll("g")
 		.data(linksToOutput)
 	  .enter().append("svg:text")
 	    .attr("class","outputname")
