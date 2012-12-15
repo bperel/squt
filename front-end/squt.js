@@ -433,18 +433,18 @@ function positionTable(d, i) {
 	var relatedAliases = tableAlias.filter(function(ta) { return ta.table == d.name});
 	var relatedAliasesBoxes = tableAliasBoxes.filter(function(ta) { return ta.table == d.name});
 	
+	var tableFields = field.filter(function(f) { return isFieldInTable(f, d); });
+	
 	d3.select(this)
 	  .attr("x", this.x = x)
 	  .attr("y", this.y = y)
-	  .attr("height", function(t) { 
-		return MIN_TABLE_HEIGHT+field.filter(function(f) { 
-			return tableAlias.filter(function(ta) { 
-				return f.tableAlias == ta.name;
-			}).filter(function(ta) { 
-				return ta.table == d.name;
-			}).data().length > 0;
-		}).data().length * FIELD_LINEHEIGHT;
-	});
+	  .attr("height", MIN_TABLE_HEIGHT+tableFields.data().length * FIELD_LINEHEIGHT)
+	  .attr("width", TABLE_NAME_PADDING.left
+			  		+CHAR_WIDTH*d3.max([d.name.length,
+			  		                    d3.max(tableFields.data(), function(f) { 
+			  		                    	return f.name.length; 
+			  		                    })
+			  		                   ]));
 	
 	var tableWidth=parseInt(d3.select(this).attr("width"));
 	var tableHeight=parseInt(d3.select(this).attr("height"));
@@ -497,7 +497,7 @@ function positionTable(d, i) {
 	  .attr("y", function(f, i) { return y + FIELD_PADDING.top + FIELD_LINEHEIGHT*i});
 		
 	
-	field.filter(function(f) { return isFieldInTable(f,d);})
+	tableFields
 	  .attr("cx", function(f) { return relatedAliases.filter(function(a) { return a.name == f.tableAlias; }).attr("x");})
 	  .attr("cy", function(f, i) { return y +FIELD_PADDING.top
 		  									+FIELD_LINEHEIGHT*i

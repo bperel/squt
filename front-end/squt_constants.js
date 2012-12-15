@@ -1,7 +1,7 @@
 var W = 960,
     H = 500;
 
-var CHAR_WIDTH=7;
+var CHAR_WIDTH=8;
 
 var CIRCLE_RADIUS 	   		 = 6,
 	SORT_SIDE	  	   		 = 30,
