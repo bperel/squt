@@ -22,7 +22,10 @@ $command = '"'.$path_to_perl.'perl" '
 		  .'"'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" '
 		  .'"'.$query.'" '
 		  .($is_debug ? '"debug" ':'')
-		  .'1> '.$ERROR_OUTPUT_FILE;
+		  .'2> '.$ERROR_OUTPUT_FILE;
+if ($is_debug) {
+	echo $command."\n\n";
+}
 
 if ($os == 'Windows') {
 	$WshShell = new COM("WScript.Shell");
