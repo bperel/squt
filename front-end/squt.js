@@ -145,6 +145,7 @@ d3.select("#OK").on("click",function(d,i) {
 		fields= 	 	 {},
 		links= 			 [],
 		functions=		 [],
+		constants=		 [],
 		linksToFunctions=[],
 		linksToOutput=	 [];
 		
@@ -163,19 +164,13 @@ d3.select("#OK").on("click",function(d,i) {
 						}
 						switch(type) {
 							case 'OUTPUT':
-								for (var functionId in data) {
-									var outputAlias = data[functionId];
-									if (functionId == -1) { // Directly to output
+								for (var functionAlias in data) {
+									var outputAlias = data[functionAlias];
+									if (functionAlias == -1) { // Directly to output
 										linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 									}
 									else { // Through a function
-										if (functions[functionId] == undefined) {
-											functions[functionId]={functionId: functionId, 
-																   name: jsondata.Functions[functionId]["name"],
-																   alias: jsondata.Functions[functionId]["alias"]};
-											linksToOutput.push({type: "function", functionId: functionId, outputName: functions[functionId]["alias"]});
-										}
-										linksToFunctions.push({fieldName: tableAlias+"."+field, functionId: functionId});
+										linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 									}
 								}
 								
@@ -206,6 +201,27 @@ d3.select("#OK").on("click",function(d,i) {
 							break;
 						}
 					}
+				}
+			}
+		}
+		
+		for (var functionAlias in jsondata.Functions) {
+			functions[functionAlias]={functionAlias: functionAlias, 
+								      name: jsondata.Functions[functionAlias]["name"]
+									 };
+			var functionDestination=jsondata.Functions[functionAlias]["to"];
+			if (functionDestination === "OUTPUT") {
+				linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
+			}
+			else {
+				linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
+			}
+			if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
+				var functionConstants = jsondata.Functions[functionAlias]["Constants"];
+				for (var constant in functionConstants) {
+					var constantId=constants.length;
+					constants.push({id: constantId, name: constant, functionAlias: functionAlias });
+					linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
 				}
 			}
 		}
@@ -310,6 +326,11 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
+
+	constantText = g.append("svg:g").selectAll("g")
+		.data(d3.values(constants))
+	  .enter().append("svg:text")
+		.text(function(d) { return d.name; });
 	
 	
 	path = g.append("svg:g").selectAll("path.join")
@@ -368,7 +389,8 @@ function filterFunction(fieldOrFunction, origin, d) {
 	return fieldOrFunction.fieldName == d.fullName;
   }
   if (origin == "function") {
-	 return fieldOrFunction.functionId == d.functionId;
+	 return fieldOrFunction.functionAlias == d.functionAlias 
+	 	 || fieldOrFunction.sourceFunctionId == d.functionAlias;
   }
 }
 
@@ -386,11 +408,25 @@ function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
 	  return filterFunction(link,origin,d);
 	}).attr("d", function(d) {
-		var source=field.filter(function(f) { return d.fieldName == f.fullName; });
-	    var target=func.filter(function(f) { return d.functionId == f.functionId; });
+		var source,
+			sourcePos;
+		if (d.fieldName !== undefined) {
+			source=field.filter(function(f) { return d.fieldName == f.fullName; });
+			sourcePos=[source.attr("cx") || 0, source.attr("cy") || 0];
+		}
+		else if (d.sourceFunctionId !== undefined) {
+			source=func.filter(function(f) { return d.sourceFunctionId == f.functionAlias; });
+			sourcePos=[source.attr("cx") || 0, parseInt(source.attr("cy") || 0)
+											 + parseInt(source.attr("ry"))];
+		}
+		else if (d.constantId !== undefined) {
+			source=constantText.filter(function(c) { return d.constantId == c.id; });
+			sourcePos=[source.attr("x") || 0, source.attr("y") || 0];
+		}
+	    var target=func.filter(function(f) { return d.functionAlias == f.functionAlias; });
 	
-	    var x = [source.attr("cx") || 0, target.attr("cx") || 0];
-	    var y = [source.attr("cy") || 0, target.attr("cy") - FUNCTION_BOX_RY || 0];
+	    var x = [sourcePos[0], target.attr("cx") || 0];
+	    var y = [sourcePos[1], target.attr("cy") - FUNCTION_BOX_RY || 0];
  	
 	    var dx = x[1] - x[0],
 		    dy = y[1] - y[0],
@@ -407,7 +443,7 @@ function getPathToOutput(info) {
 		var source_y=source.attr("cy");
 	}
 	else {
-		var source=func.filter(function(f) { return info.functionId == f.functionId; });
+		var source=func.filter(function(f) { return info.functionAlias == f.functionAlias; });
 		var source_y=parseFloat(source.attr("cy")) + FUNCTION_BOX_RY;
 	}
 	  
@@ -532,11 +568,15 @@ function positionFunction(d, i) {
 	var x=d3.event == null ? (i+1)*100 : (parseInt(d3.select(this).attr("cx"))+d3.event.dx);
 	var y=d3.event == null ? 100 : (parseInt(d3.select(this).attr("cy"))+d3.event.dy);
 	
-	funcText.filter(function(func) { return func.functionId == d.functionId; })
+	funcText.filter(function(func) { return func.functionAlias == d.functionAlias; })
 	  .attr("x", function(func) { return x - func.name.length*CHAR_WIDTH/2;})
 	  .attr("y", y);
+
+	constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
+	  .attr("x", function(c,j) { return x+30*j; })
+	  .attr("y", y-50);
 	
-	func.filter(function(func) { return func.functionId == d.functionId; })
+	func.filter(function(func) { return func.functionAlias == d.functionAlias; })
 	  .attr("cx", x)
 	  .attr("cy", y)
 	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
