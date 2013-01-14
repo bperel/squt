@@ -4,8 +4,9 @@ $samples=array();
 if (is_dir($sample_directory)) {
     if ($dh = opendir($sample_directory)) {
         while (($file = readdir($dh)) !== false) {
-            if ($file !== '.' && $file !== '..')
-        	$samples[]=$file;
+        	// Just take the .sql files
+            if (substr($file, -strlen(".sql")) === ".sql")
+        		$samples[]=$file;
         }
         closedir($dh);
     }

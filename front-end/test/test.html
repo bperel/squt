@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Squt parse tests</title>
+    <script type="text/javascript" src="../lib/d3/d3.v2.js"></script>
+    <script type="text/javascript">
+    	
+    </script>
+    <style type="text/css">
+		.hidden {
+			display: none;
+		}
+		
+		.test_result {
+			margin: 10px;
+		}
+		
+    	.test_success {
+			color: green;
+    	}
+		.test_fail {
+			color: red;
+    	}
+    </style>
+  </head>
+  <body>
+  	This page compares processed MySQL parse results with expected ones.
+  	<div class="test_pattern hidden">
+  		Test : <span class="test_name"></span>
+  		<div class="test_result">
+	  		<div class="test_success hidden">
+	  			Test succeeded.
+	  		</div>
+	  		<div class="test_fail hidden">
+	  			Test failed.
+	  			<br />
+	  			<table>
+	  				<tr>
+	  					<td>
+	  						Processed :
+	  					</td>
+	  					<td>
+	  						Expected :
+	  					</td>
+	  				</tr>
+	  				<tr>
+	  					<td>
+	  						<textarea rows="30" cols="50" class="processed"></textarea>
+	  					</td>
+	  					<td>
+	  						<textarea rows="30" cols="50" class="expected"></textarea>
+	  					</td>
+	  				</tr>
+	  			</table>
+	  		</div>
+	  	</div>
+  	</div>
+  	<script type="text/javascript">
+  		var queries;
+  		var current_query=-1;
+		var pattern = d3.select(".test_pattern.hidden").node();
+	  	d3.text("../list_samples.php",function(text) {
+	  		queries=text.split(/,/g);
+	  		if (queries.length > 0) {
+				current_query = 0;
+				test_next_query();
+	  		}
+	  	});
+	  	
+	  	function test_next_query() {
+	  		current_query++;
+	  		if (queries[current_query] === undefined)
+	  			return;
+			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
+			
+	  		var test_section=d3.select(pattern.cloneNode(true));
+			test_section.attr("class","test_pattern");
+			test_section.select(".test_name").text(sql_name);
+			document.body.appendChild(test_section.node());
+			d3.text(
+				"../querysamples/"+queries[current_query],
+				function (textquery) {
+					d3.json(
+						"../analyze.php?query="+textquery.replace(/\n/g,' '),
+						function (processed_json) {
+							d3.json(
+								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
+								function (expected_json) {
+									if (JSON.stringify(processed_json) === JSON.stringify(expected_json)) {
+										test_section.select(".test_success").attr("class","test_success");
+									}
+									else {	
+										test_section.select(".test_fail").attr("class","test_fail");
+										test_section.select(".processed").text(JSON.stringify(processed_json));
+										test_section.select(".expected" ).text(JSON.stringify(expected_json ));
+									}
+									test_next_query();
+								}
+							);
+						}
+					);
+				}
+			);
+	  	}
+  	</script>
+  </body>
+</html>
