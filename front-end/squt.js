@@ -1,3 +1,14 @@
+var w = 1280,
+	h = 800,
+	r = 6,
+	z = d3.scale.category20c();
+
+var force = d3.layout.force()
+			.gravity(0.05)
+			.charge(-150)
+			.linkDistance(100)
+			.size([w*2/3, h*2/3]);
+
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
 	lineWrapping: true
 });
@@ -39,13 +50,10 @@ var tables= [],
 	functions=[],
 	linksToFunctions=[],
 	linksToOutput=[];
- 
 
-var dragTable = d3.behavior.drag()
-	.origin(Object)
-	.on("drag", positionTable),
+var n=[],l=[];
 
-	dragFunction = d3.behavior.drag()
+var dragFunction = d3.behavior.drag()
 	.origin(Object)
 	.on("drag", positionFunction),
 
@@ -150,7 +158,7 @@ d3.select("#OK").on("click",function(d,i) {
 		linksToOutput=	 [];
 		
 		for (var tableName in jsondata.Tables) {
-			tables[tableName]=({'name':tableName});
+			tables[tableName]=({name:tableName});
 			var tableInfo = jsondata.Tables[tableName];
 			for (var tableAlias in tableInfo) {
 				tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
@@ -230,11 +238,24 @@ d3.select("#OK").on("click",function(d,i) {
 		for(var key in fields) {
 		  fields[key].id=i++;
 		};
+
+		n = d3.values(tables);
+		l = [];
+		for (var i in links) {
+			var sourceTableId = parseInt(fieldToTableId(links[i].source));
+			var targetTableId = parseInt(fieldToTableId(links[i].target));
+			if (l[sourceTableId+","+targetTableId]) {
+				l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: l[sourceTableId+","+targetTableId]+1};
+			}
+			else {
+				l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: 1};
+			}
+		}
+		l = d3.values(l);
 		
 		buildGraph();
 
 	  });
-
 });
 
 var ground, 
@@ -270,7 +291,7 @@ function buildGraph() {
 		.attr("class","table")
 		.attr("name", function(d) { return d.name;})
 		.attr("width", function(d) { return 120;/*12+d.name.length*7;*/})
-		.call(dragTable);
+		.call(force.drag);
 		
 	tableText = g.append("svg:g").selectAll("g")
 		.data(d3.values(tables))
@@ -374,12 +395,15 @@ function buildGraph() {
 	
 	// Initial positions
 	positionGround.call(ground,null,null,null,false);
-	tableBoxes.each(function(d,i) {
-		positionTable.call(this,d,i);
-	});
 	func.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
+	
+	force
+		.nodes(n)
+		.links(l)
+		.on("tick", tick)
+		.start();
 }
 
 function filterFunction(fieldOrFunction, origin, d) {
@@ -454,10 +478,8 @@ function getPathToOutput(info) {
 }
 
 function positionTable(d, i) {
-	var drawFunctionLinks = d3.event != null;
-
-	var x = d3.event == null ? 12+i*200 : (parseInt(d3.select(this).attr("x"))+d3.event.dx);
-	var y = d3.event == null ? 0 : (parseInt(d3.select(this).attr("y"))+d3.event.dy);
+	var x = d.x;
+	var y = d.y;
 	
 	if (this instanceof SVGImageElement) {
 		ground.attr("x", x)
@@ -539,8 +561,7 @@ function positionTable(d, i) {
 		  									+FIELD_LINEHEIGHT*i
 		  									-CIRCLE_RADIUS/2})
 	  .each(function(f) {
-		if (drawFunctionLinks) 
-		  positionPathsToFunctions("field", f);
+		positionPathsToFunctions("field", f);
 		positionPathsToOutput("field", f);
 	  });
 		
@@ -606,6 +627,13 @@ function isFieldInTable(field,table) {
 	return tableAliases[field.tableAlias] && tableAliases[field.tableAlias].table == table.name;
 }
 
+function fieldToTableId(fieldname) {
+	for (var i in n) {
+		if (isFieldInTable(fields[fieldname],n[i]))
+			return i;
+	}
+	return null;
+}
 
 function extractUrlParams(){	
 	var t = location.search.substring(1).split('&');
@@ -615,4 +643,11 @@ function extractUrlParams(){
 		f[x[0]]=(x[1] == undefined ? null : x[1]);
 	}
 	return f;
+}
+
+function tick() {
+	tableBoxes.each(function(d,i) {
+		positionTable.call(this,d,i);
+	});
+	console.log("tick");
 }
