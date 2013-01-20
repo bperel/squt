@@ -106,7 +106,6 @@
 		}
 	  	
 	  	function test_next_query() {
-	  		current_query++;
 	  		if (queries[current_query] === undefined)
 	  			return;
 			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
@@ -159,6 +158,7 @@
 										test_section.select(".processed").text(JSON.stringify(processed_json));
 										test_section.select(".expected" ).text(JSON.stringify(expected_json ));
 									}
+							  		current_query++;
 									test_next_query();
 								}
 							);
