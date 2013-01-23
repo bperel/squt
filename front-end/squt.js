@@ -99,7 +99,11 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("height",5);
 
 d3.select("#OK").on("click",function(d,i) {
-	var url="analyze.php?query="+editor.getValue().replace(/\n/g,' ');
+	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
+});
+
+function analyzeAndBuild(query) {
+	var url="analyze.php?query="+query;
 	if (is_debug) {
 		d3.text(
 			url+"&debug=1",
@@ -111,131 +115,133 @@ d3.select("#OK").on("click",function(d,i) {
 	}
 	d3.json(
 	  url,	  
-	  function (jsondata) {
-		console.log(jsondata);
-		if (jsondata == null) {
-			d3.select('#log').text("Error ! Make sure your paths are properly configured");
-			svg.selectAll('image,g').remove();
-			return;
-		}
-		if (jsondata.Error) {
-			d3.select('#log').text("ERROR - " + jsondata.Error);
-			svg.selectAll('image,g').remove();
-			return;
-		}
-		if (jsondata.Warning) {
-			var warningText=[];
-			for (var warnType in jsondata.Warning) {
-				switch (warnType) {
-					case 'No alias':
-						for (var i in jsondata.Warning[warnType]) {
-							var field_location=jsondata.Warning[warnType][i];
-							warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
-						}
-					break;
-				}
+	  analyzeAndBuildFromJson
+	  );
+}
+
+function analyzeAndBuildFromJson(jsondata) {
+	console.log(jsondata);
+	if (jsondata == null) {
+		d3.select('#log').text("Error ! Make sure your paths are properly configured");
+		svg.selectAll('image,g').remove();
+		return;
+	}
+	if (jsondata.Error) {
+		d3.select('#log').text("ERROR - " + jsondata.Error);
+		svg.selectAll('image,g').remove();
+		return;
+	}
+	if (jsondata.Warning) {
+		var warningText=[];
+		for (var warnType in jsondata.Warning) {
+			switch (warnType) {
+				case 'No alias':
+					for (var i in jsondata.Warning[warnType]) {
+						var field_location=jsondata.Warning[warnType][i];
+						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
+					}
+				break;
 			}
-			d3.select('#log').text(warningText.join("\n"));
 		}
-		else {
-			d3.select('#log').text("");
-		}
-		tables= 	 	 [],
-		tableAliases=	 {},
-		fields= 	 	 {},
-		links= 			 [],
-		functions=		 [],
-		constants=		 [],
-		linksToFunctions=[],
-		linksToOutput=	 [];
-		
-		for (var tableName in jsondata.Tables) {
-			tables[tableName]=({'name':tableName});
-			var tableInfo = jsondata.Tables[tableName];
-			for (var tableAlias in tableInfo) {
-				tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
-				var actions=tableInfo[tableAlias];
-				for (var type in actions) {
-					var actionFields=actions[type];
-					for (var field in actionFields) {
-						var data=actionFields[field];
-						if (fields[tableAlias+"."+field] == undefined) {
-							fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
-						}
-						switch(type) {
-							case 'OUTPUT':
-								for (var functionAlias in data) {
-									var outputAlias = data[functionAlias];
-									if (functionAlias == -1) { // Directly to output
-										linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
-									}
-									else { // Through a function
-										linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
-									}
+		d3.select('#log').text(warningText.join("\n"));
+	}
+	else {
+		d3.select('#log').text("");
+	}
+	tables= 	 	 [],
+	tableAliases=	 {},
+	fields= 	 	 {},
+	links= 			 [],
+	functions=		 [],
+	constants=		 [],
+	linksToFunctions=[],
+	linksToOutput=	 [];
+	
+	for (var tableName in jsondata.Tables) {
+		tables[tableName]=({'name':tableName});
+		var tableInfo = jsondata.Tables[tableName];
+		for (var tableAlias in tableInfo) {
+			tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
+			var actions=tableInfo[tableAlias];
+			for (var type in actions) {
+				var actionFields=actions[type];
+				for (var field in actionFields) {
+					var data=actionFields[field];
+					if (fields[tableAlias+"."+field] == undefined) {
+						fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
+					}
+					switch(type) {
+						case 'OUTPUT':
+							for (var functionAlias in data) {
+								var outputAlias = data[functionAlias];
+								if (functionAlias == -1) { // Directly to output
+									linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 								}
-								
-							break;
-							case 'CONDITION':
-								for (var otherField in data) {
-									if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-										if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
-											var tableAliasAndField=otherField.split('.');
-											fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
-										}
-										var joinType=null;
-										switch(data[otherField]) {
-											case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
-											case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
-											case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
-											case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
-										}
-										links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
-									}
-									else { 
-										fields[tableAlias+"."+field]['filtered']=true;
-									}
+								else { // Through a function
+									linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 								}
-							break;
-							case 'SORT':
-								fields[tableAlias+"."+field]['sort']=data;
-							break;
-						}
+							}
+							
+						break;
+						case 'CONDITION':
+							for (var otherField in data) {
+								if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
+									if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
+										var tableAliasAndField=otherField.split('.');
+										fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
+									}
+									var joinType=null;
+									switch(data[otherField]) {
+										case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
+										case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
+										case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
+										case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
+									}
+									links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
+								}
+								else { 
+									fields[tableAlias+"."+field]['filtered']=true;
+								}
+							}
+						break;
+						case 'SORT':
+							fields[tableAlias+"."+field]['sort']=data;
+						break;
 					}
 				}
 			}
 		}
-		
-		for (var functionAlias in jsondata.Functions) {
-			functions[functionAlias]={functionAlias: functionAlias, 
-								      name: jsondata.Functions[functionAlias]["name"]
-									 };
-			var functionDestination=jsondata.Functions[functionAlias]["to"];
-			if (functionDestination === "OUTPUT") {
-				linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
-			}
-			else {
-				linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
-			}
-			if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
-				var functionConstants = jsondata.Functions[functionAlias]["Constants"];
-				for (var constant in functionConstants) {
-					var constantId=constants.length;
-					constants.push({id: constantId, name: constant, functionAlias: functionAlias });
-					linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
-				}
+	}
+	
+	for (var functionAlias in jsondata.Functions) {
+		functions[functionAlias]={functionAlias: functionAlias, 
+							      name: jsondata.Functions[functionAlias]["name"]
+								 };
+		var functionDestination=jsondata.Functions[functionAlias]["to"];
+		if (functionDestination === "OUTPUT") {
+			linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
+		}
+		else {
+			linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
+		}
+		if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
+			var functionConstants = jsondata.Functions[functionAlias]["Constants"];
+			for (var constant in functionConstants) {
+				var constantId=constants.length;
+				constants.push({id: constantId, name: constant, functionAlias: functionAlias });
+				linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
 			}
 		}
+	}
 
-		var i=0;
-		for(var key in fields) {
-		  fields[key].id=i++;
-		};
-		
-		buildGraph();
+	var i=0;
+	for(var key in fields) {
+	  fields[key].id=i++;
+	};
+	
+	buildGraph();
 
-	  });
-
-});
+}
 
 var ground, 
 	table, 
