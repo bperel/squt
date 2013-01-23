@@ -3,6 +3,12 @@
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <title>Squt parse tests</title>
+    <script type="text/javascript">
+    	var jsErrors = [];
+	    window.onerror = function(errorMessage) {
+	      jsErrors.push(errorMessage);
+	    };
+    </script>
     <script type="text/javascript" src="../lib/d3/d3.v2.js"></script>
     <script type="text/javascript">
     	
@@ -14,26 +20,36 @@
 		
 		.test_result {
 			margin: 10px;
+			font-family: Courier;
 		}
 		
-    	.test_success {
+    	.success {
 			color: green;
     	}
-		.test_fail {
+		.warn {
+			color: orange;
+    	}    	
+		.error {
 			color: red;
     	}
     </style>
   </head>
   <body>
-  	This page compares processed MySQL parse results with expected ones.
+  	<iframe id="squt" src="../squt.html" onload="start()" class="hidden"></iframe><br />
+  	This page :
+  	<ul>
+  		<li>compares processed MySQL parse results with expected ones.</li>
+  		<li>checks if the query parsing didn't throw any warning or error.</li>
+  		<li>ensures that building the graph didn't throw any error.</li>
+  	</ul>
   	<div class="test_pattern hidden">
   		Test : <span class="test_name"></span>
   		<div class="test_result">
-	  		<div class="test_success hidden">
-	  			Test succeeded.
+	  		<div class="compare success hidden">
+	  			Parse results are the same as expected.
 	  		</div>
-	  		<div class="test_fail hidden">
-	  			Test failed.
+	  		<div class="compare error hidden">
+	  			Parse results are not the same as expected.
 	  			<br />
 	  			<table>
 	  				<tr>
@@ -54,22 +70,42 @@
 	  				</tr>
 	  			</table>
 	  		</div>
+	  		<div class="parse success hidden">
+	  			The query has been parsed without errors.
+	  		</div>
+	  		<div class="parse warn hidden">
+	  			The query has been parsed with one or several warning(s) :<span class="warn_details"></span>
+	  		</div>
+	  		<div class="parse error hidden">
+	  			The query has been parsed with one or several error(s) :<span class="error_details"></span>
+	  		</div>
+	  		
+	  		<div class="graph success hidden">
+	  			The graph has been generated without errors.
+	  		</div>
+	  		<div class="graph error hidden">
+	  			The graph has been generated with one or several error(s) :<span class="error_details"></span>
+	  		</div>
 	  	</div>
   	</div>
   	<script type="text/javascript">
+	  	var ifr;
   		var queries;
   		var current_query=-1;
 		var pattern = d3.select(".test_pattern.hidden").node();
-	  	d3.text("../list_samples.php",function(text) {
-	  		queries=text.split(/,/g);
-	  		if (queries.length > 0) {
-				current_query = 0;
-				test_next_query();
-	  		}
-	  	});
+		
+		function start() {
+		  	ifr = document.getElementById("squt").contentWindow;
+		  	d3.text("../list_samples.php",function(text) {
+		  		queries=text.split(/,/g);
+		  		if (queries.length > 0) {
+					current_query = 0;
+					test_next_query();
+		  		}
+		  	});
+		}
 	  	
 	  	function test_next_query() {
-	  		current_query++;
 	  		if (queries[current_query] === undefined)
 	  			return;
 			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
@@ -88,13 +124,41 @@
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
 									if (JSON.stringify(processed_json) === JSON.stringify(expected_json)) {
-										test_section.select(".test_success").attr("class","test_success");
+										if (processed_json.Error) {
+											test_section.select(".parse.error").attr("class","parse error")
+															.select(".error_details").text(JSON.stringify(processed_json.Error));
+										}
+										if (processed_json.Warning) {
+											test_section.select(".parse.warn").attr("class","parse warn")
+															.select(".warn_details").text(JSON.stringify(processed_json.Warning));
+										}
+										if (! processed_json.Error && ! processed_json.Warning) {
+											test_section.select(".parse.success").attr("class","parse success");
+										}
+										
+										jsErrors = [];
+										try {
+											ifr.analyzeAndBuildFromJson(processed_json);
+										}
+										catch(e) {
+											jsErrors.push(e);
+										}
+										if (jsErrors.length == 0) {
+											test_section.select(".graph.success").attr("class","graph success");
+										}
+										else {
+											test_section.select(".graph.error").attr("class","graph error")
+												.select(".error_details").text("\n"+jsErrors.join("\n"));
+										}
+										
+										test_section.select(".compare.success").attr("class","compare success");
 									}
 									else {	
-										test_section.select(".test_fail").attr("class","test_fail");
+										test_section.select(".compare.error").attr("class","compare error");
 										test_section.select(".processed").text(JSON.stringify(processed_json));
 										test_section.select(".expected" ).text(JSON.stringify(expected_json ));
 									}
+							  		current_query++;
 									test_next_query();
 								}
 							);
