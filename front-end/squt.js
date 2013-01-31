@@ -675,6 +675,14 @@ function extractUrlParams(){
 }
 
 function tick() {
+	var q = d3.geom.quadtree(n),
+      	i = 0,
+      	nl = n.length;
+
+	while (++i < nl) {
+		q.visit(collide(n[i]));
+	}
+  
 	tableBoxes.each(function(d,i) {
 		positionTable.call(this,d,i);
 	});
@@ -682,4 +690,43 @@ function tick() {
 		positionFunction.call(this,d,i);
 	});
 	console.log("tick");
+}
+
+function collide(node) {
+	var node_element=tableBoxes.filter(function(d,i) { return d.name == node.name; });
+	if (node_element[0].length == 0)
+		return function() { return true; };
+	var width=parseInt(node_element.attr("width"));
+	var height=parseInt(node_element.attr("height"));
+	var nx1 = node.x, 
+		nx2 = node.x + width, 
+		ny1 = node.y, 
+		ny2 = node.y + height;
+	return function(quad, x1, y1, x2, y2) {
+		if (quad.point && (quad.point !== node)) {
+			var quad_element=tableBoxes.filter(function(d,i) { return d.name == quad.point.name; });
+			if (quad_element[0].length == 0)
+				return true;
+			var quad_element_width=parseInt(quad_element.attr("width"));
+			var quad_element_height=parseInt(quad_element.attr("height"));
+			
+			var x = node.x - quad.point.x, 
+				y = node.y - quad.point.y, 
+				l = Math.sqrt(x * x + y * y), 
+				r = (width+height)/2 + (quad_element_width+quad_element_height)/2;
+			if (l < r) {
+				l = ((l - r) / l) * .5;
+				x *= l;
+				y *= l;
+				node.x -= x;
+				node.y -= y;
+				quad.point.x += x;
+				quad.point.y += y;
+			}
+		}
+		return x1 > nx2
+			|| x2 < nx1 
+			|| y1 > ny2 
+			|| y2 < ny1;
+	};
 }
