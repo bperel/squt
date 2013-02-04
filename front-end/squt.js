@@ -713,8 +713,15 @@ function collide(node) {
 			var x = node.x - quad.point.x, 
 				y = node.y - quad.point.y, 
 				l = Math.sqrt(x * x + y * y), 
-				r = (width+height)/2 + (quad_element_width+quad_element_height)/2;
-			if (l < r) {
+				r = (width+height)/4 + (quad_element_width+quad_element_height)/4;
+
+			var qx1 = quad.point.x, 
+				qx2 = quad.point.x + quad_element_width, 
+				qy1 = quad.point.y, 
+				qy2 = quad.point.y + quad_element_height;
+			//if (l < r) {
+			if ((qx1 >= nx1 && qx1 <= nx2 && qy1 >= ny1 && qy1 <= ny2)
+			 || (nx1 >= qx1 && nx1 <= qx2 && ny1 >= qy1 && ny1 <= qy2)) {
 				l = ((l - r) / l) * .5;
 				x *= l;
 				y *= l;
