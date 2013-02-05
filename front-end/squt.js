@@ -124,7 +124,7 @@ d3.text(
 
 d3.select("#OK").on("click",function(d,i) {
 	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
-}
+});
 
 function analyzeAndBuild(query) {
 	var url;
@@ -304,7 +304,7 @@ function analyzeAndBuild(query) {
 		buildGraph();
 
 	  });
-});
+}
 
 var ground, 
 	table, 
