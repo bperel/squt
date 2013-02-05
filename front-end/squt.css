@@ -1,5 +1,8 @@
 body {
 	margin: 0;
+	font-family: Verdana;
+	font-size: 12px;
+	line-height: 17px;
 }
 
 .invisible {
@@ -12,6 +15,7 @@ div#panel {
 	top: 10px;
 	right: 10px;
 	bottom: 10px;
+	overflow-y: auto;
 }
 
 div#panel textarea#log {
@@ -25,8 +29,8 @@ div#panel textarea#log {
 }
 
 div#panel textarea#log, .CodeMirror {
-	width: 100%;
-	margin: 0.2em;
+	width: 97%;
+	margin: 0em;
 	background-color: white;
 }
 

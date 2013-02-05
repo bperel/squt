@@ -13,11 +13,13 @@ var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
 	lineWrapping: true
 });
 
+var selected_query_sample;
+
 d3.select('#query_sample')
   .on("change",function(d,i) {
-	var queryname = d3.select(this[this.selectedIndex]).attr('name');
-	if (queryname != "dummy") {
-		d3.text("querysamples/"+queryname,function(sql) {
+	  selected_query_sample = d3.select(this[this.selectedIndex]).attr('name');
+	  if (selected_query_sample != "dummy") {
+		d3.text("querysamples/"+selected_query_sample,function(sql) {
 			editor.setValue(sql);
 		});
 	}
@@ -106,8 +108,32 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("width",10)
         .attr("height",5);
 
+var no_parser=false;
+
+d3.text(
+	"analyze.php?query=SELECT b.a FROM b",
+	function(data) {
+		if (data !== undefined) {
+			no_parser=true;
+			editor.setOption('readOnly',true);
+			d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
+			d3.select('#no-parser').attr("class","");
+		}
+	}
+);
+
 d3.select("#OK").on("click",function(d,i) {
-	var url="analyze.php?query="+editor.getValue().replace(/\n/g,' ');
+	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
+}
+
+function analyzeAndBuild(query) {
+	var url;
+	if (no_parser) {
+		url="analyze.php?sample="+selected_query_sample;
+	}
+	else {
+		url="analyze.php?query="+query;
+	}
 	if (is_debug) {
 		d3.text(
 			url+"&debug=1",
