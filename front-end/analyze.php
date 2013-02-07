@@ -3,11 +3,7 @@ header('Content-type: application/json');
 include_once('config.php');
 error_reporting(E_ALL);
 
-$agent = $_SERVER['HTTP_USER_AGENT'];
-if(preg_match('/Linux/',$agent)) $os = 'Linux';
-elseif(preg_match('/Win/',$agent)) $os = 'Windows';
-elseif(preg_match('/Mac/',$agent)) $os = 'Mac';
-else $os = 'UnKnown';
+$os = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows' : 'Linux';
 
 if (isset($_GET['sample'])) {
 	echo file_get_contents("querysamples/".preg_replace('#\.sql$#','_expected.json',$_GET['sample']));

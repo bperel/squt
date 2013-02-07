@@ -105,7 +105,7 @@ var no_parser=false;
 d3.text(
 	"analyze.php?query=SELECT b.a FROM b",
 	function(data) {
-		if (data !== undefined) {
+		if (data === undefined) {
 			no_parser=true;
 			editor.setOption('readOnly',true);
 			d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
