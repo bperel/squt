@@ -106,6 +106,20 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("width",10)
         .attr("height",5);
 
+var no_parser=false;
+
+d3.text(
+	"analyze.php?query=SELECT b.a FROM b",
+	function(data) {
+		if (data === undefined || data === "") {
+			no_parser=true;
+			editor.setOption('readOnly',true);
+			d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
+			d3.select('#no-parser').attr("class","");
+		}
+	}
+);
+
 d3.select("#OK").on("click",function(d,i) {
 	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
 });
