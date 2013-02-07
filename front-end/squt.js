@@ -107,7 +107,17 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("height",5);
 
 d3.select("#OK").on("click",function(d,i) {
-	var url="analyze.php?query="+editor.getValue().replace(/\n/g,' ');
+	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
+});
+
+function analyzeAndBuild(query) {
+	var url;
+	if (no_parser) {
+		url="analyze.php?sample="+selected_query_sample;
+	}
+	else {
+		url="analyze.php?query="+query;
+	}
 	if (is_debug) {
 		d3.text(
 			url+"&debug=1",
@@ -278,7 +288,7 @@ d3.select("#OK").on("click",function(d,i) {
 		buildGraph();
 
 	  });
-});
+}
 
 var ground, 
 	table, 
