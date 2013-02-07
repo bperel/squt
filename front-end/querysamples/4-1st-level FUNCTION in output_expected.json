@@ -7,7 +7,7 @@
       }
    },
    "Tables" : {
-      "person" : {
+      "Person" : {
          "p" : {
             "OUTPUT" : {
                "firstName" : {
