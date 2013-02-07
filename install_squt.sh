@@ -28,4 +28,4 @@ make test
 export CC="gcc"
 export CXX="g++"
 
-chown www-data $DIR/front-end/error_output.log
+chmod 666 $DIR/front-end/error_output.log
