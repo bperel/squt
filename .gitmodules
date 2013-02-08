@@ -7,3 +7,6 @@
 [submodule "parser/DBIx-MyParse-0.88"]
 	path = parser/DBIx-MyParse-0.88
 	url = https://github.com/ducksmanager/DBIx-MyParse.git
+[submodule "front-end/lib/Object.identical.js"]
+	path = front-end/lib/Object.identical.js
+	url = https://github.com/prettycode/Object.identical.js.git

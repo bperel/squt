@@ -10,9 +10,9 @@
 	    };
     </script>
     <script type="text/javascript" src="../lib/d3/d3.v2.js"></script>
-    <script type="text/javascript">
-    	
-    </script>
+	
+	<script type="text/javascript" src="../lib/Object.identical.js/Object.identical.js"></script>
+	
     <style type="text/css">
 		.hidden {
 			display: none;
@@ -123,7 +123,7 @@
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
-									if (JSON.stringify(processed_json) === JSON.stringify(expected_json)) {
+									if (Object.identical(processed_json, expected_json)) {
 										if (processed_json.Error) {
 											test_section.select(".parse.error").attr("class","parse error")
 															.select(".error_details").text(JSON.stringify(processed_json.Error));
