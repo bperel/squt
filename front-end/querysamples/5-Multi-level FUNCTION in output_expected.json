@@ -36,7 +36,7 @@
       }
    },
    "Tables" : {
-      "contract" : {
+      "Contract" : {
          "co" : {
             "OUTPUT" : {
                "ContractID" : {
@@ -53,7 +53,7 @@
             }
          }
       },
-      "person" : {
+      "Person" : {
          "p" : {
             "OUTPUT" : {
                "firstName" : {

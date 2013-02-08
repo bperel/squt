@@ -7,7 +7,7 @@
       }
    },
    "Tables" : {
-      "person" : {
+      "Person" : {
          "p" : {
             "OUTPUT" : {
                "firstName" : {
@@ -19,7 +19,7 @@
             }
          }
       },
-      "contractid" : {
+      "Contractid" : {
          "co" : {
             "OUTPUT" : {
                "ContractID" : {
