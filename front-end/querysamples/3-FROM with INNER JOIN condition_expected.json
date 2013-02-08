@@ -1,6 +1,6 @@
 {
    "Tables" : {
-      "Contrat" : {
+      "contract" : {
          "co" : {
             "OUTPUT" : {
                "contractID" : {
@@ -14,7 +14,7 @@
             }
          }
       },
-      "Company" : {
+      "company" : {
          "comp" : {
             "OUTPUT" : {
                "companyName" : {
