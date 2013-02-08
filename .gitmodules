@@ -1,12 +1,12 @@
 [submodule "front-end/lib/codemirror"]
 	path = front-end/lib/codemirror
 	url = git://github.com/marijnh/CodeMirror.git
-[submodule "front-end/lib/d3"]
-	path = front-end/lib/d3
-	url = git://github.com/mbostock/d3.git
 [submodule "parser/DBIx-MyParse-0.88"]
 	path = parser/DBIx-MyParse-0.88
 	url = https://github.com/ducksmanager/DBIx-MyParse.git
 [submodule "front-end/lib/Object.identical.js"]
 	path = front-end/lib/Object.identical.js
 	url = https://github.com/prettycode/Object.identical.js.git
+[submodule "front-end/lib/d3.v3"]
+	path = front-end/lib/d3.v3
+	url = https://github.com/mbostock/d3.git
