@@ -3,10 +3,10 @@
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <title>Squt parse tests</title>
-    <script type="text/javascript" src="../lib/d3/d3.v2.js"></script>
-    <script type="text/javascript">
-    	
-    </script>
+    <script type="text/javascript" src="../lib/d3.v3/d3.js"></script>
+	
+	<script type="text/javascript" src="../lib/Object.identical.js/Object.identical.js"></script>
+	
     <style type="text/css">
 		.hidden {
 			display: none;
@@ -87,7 +87,7 @@
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
-									if (JSON.stringify(processed_json) === JSON.stringify(expected_json)) {
+									if (Object.identical(processed_json, expected_json)) {
 										test_section.select(".test_success").attr("class","test_success");
 									}
 									else {	

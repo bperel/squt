@@ -19,7 +19,7 @@
             }
          }
       },
-      "contractid" : {
+      "contract" : {
          "co" : {
             "OUTPUT" : {
                "ContractID" : {
