@@ -103,7 +103,7 @@ d3.select("defs").append("svg:g").selectAll("marker")
 var no_parser=false;
 
 d3.text(
-	"analyze.php?query=SELECT b.a FROM b",
+	"analyze.php?query="+encodeURIComponent("SELECT b.a FROM b"),
 	function(data) {
 		if (data === undefined || data === "") {
 			no_parser=true;
@@ -124,7 +124,7 @@ function analyzeAndBuild(query) {
 		url="analyze.php?sample="+selected_query_sample;
 	}
 	else {
-		url="analyze.php?query="+query;
+		url="analyze.php?query="+encodeURIComponent(query);
 	}
 	if (is_debug) {
 		d3.text(
