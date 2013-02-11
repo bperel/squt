@@ -10,11 +10,15 @@ if (isset($_GET['sample'])) {
 }
 else {
 	$query = str_replace('"','\"',str_replace("\n"," ",$_GET['query']));
+	if (strlen($query) > $QUERY_MAX_LENGTH) {
+		echo json_encode(array('Error'=>'For performance and security reasons, squt does not allow queries longer than 2000 characters'));
+		exit(0);
+	}
 	$is_debug = isset($_GET['debug']) && $_GET['debug'] == 1;
 	$path_to_perl = ($os == 'Windows' ? $PATH_TO_CYGWIN.'/bin/' : '');
 	
 	if (!file_exists($ERROR_OUTPUT_FILE)) {
-		echo 'Error - The file '.$ERROR_OUTPUT_FILE.' has not been found in the /front-end directory.';
+		echo json_encode(array('Error'=>'The file '.$ERROR_OUTPUT_FILE.' has not been found in the /front-end directory.'));
 		exit(0);
 	}
 	ob_start();

@@ -28,6 +28,10 @@ div#panel textarea#log {
 	padding: 2px;
 }
 
+.CodeMirror.error {
+	border: 1px solid red;
+}
+
 div#panel textarea#log, .CodeMirror {
 	width: 97%;
 	margin: 0em;
@@ -99,4 +103,8 @@ text.shadow {
   stroke: #fff;
   stroke-width: 3px;
   stroke-opacity: .8;
+}
+
+#error_texts {
+	display: none;
 }

@@ -1,5 +1,20 @@
+var query_max_length = 2000;
+var query_is_too_long = false;
+
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
-	lineWrapping: true
+	lineWrapping: true,
+	onKeyEvent: function(editor,event) {
+		var new_query_is_too_long = editor.getValue().length > query_max_length;
+		if (query_is_too_long && !new_query_is_too_long) {
+			d3.select("#log").text("");
+			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class").replace(/ error/g,""); });
+		}
+		if (!query_is_too_long && new_query_is_too_long) {
+			d3.select("#log").text(d3.select("#error_query_too_long").text());	
+			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class")+" error"; });
+		}
+		query_is_too_long = new_query_is_too_long;
+	}
 });
 
 var selected_query_sample;
