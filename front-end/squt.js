@@ -41,6 +41,7 @@ d3.text("list_samples.php",function(text) {
 });
 
 var is_debug=extractUrlParams()['debug'] !== undefined;
+var no_graph=extractUrlParams()['no_graph'] !== undefined;
 
 var tables= [],
 	tableAliases={},
@@ -132,7 +133,7 @@ function analyzeAndBuild(query) {
 	else {
 		url="analyze.php?query="+query;
 	}
-	if (is_debug) {
+	if (no_graph) {
 		d3.text(
 			url+"&debug=1",
 			function(data) {
@@ -717,47 +718,62 @@ function tick() {
 }
 
 function collide(node) {
-	var node_element=tableBoxes.filter(function(d,i) { return d.name == node.name; });
-	if (node_element[0].length == 0)
+	var p1 = getTableBoundaries(node);
+	if (p1 === null)
 		return function() { return true; };
-	var width=parseInt(node_element.attr("width"));
-	var height=parseInt(node_element.attr("height"));
-	var nx1 = node.x, 
-		nx2 = node.x + width, 
-		ny1 = node.y, 
-		ny2 = node.y + height;
+		
 	return function(quad, x1, y1, x2, y2) {
 		if (quad.point && (quad.point !== node)) {
-			var quad_element=tableBoxes.filter(function(d,i) { return d.name == quad.point.name; });
-			if (quad_element[0].length == 0)
+			var p2 = getTableBoundaries(quad.point);
+			if (p2 === null)
 				return true;
-			var quad_element_width=parseInt(quad_element.attr("width"));
-			var quad_element_height=parseInt(quad_element.attr("height"));
 			
 			var x = node.x - quad.point.x, 
 				y = node.y - quad.point.y, 
 				l = Math.sqrt(x * x + y * y), 
-				r = (width+height)/4 + (quad_element_width+quad_element_height)/4;
+				r = (p1.width+p1.height)/4 
+				  + (p2.width+p2.height)/4;
 
-			var qx1 = quad.point.x, 
-				qx2 = quad.point.x + quad_element_width, 
-				qy1 = quad.point.y, 
-				qy2 = quad.point.y + quad_element_height;
 			//if (l < r) {
-			if ((qx1 >= nx1 && qx1 <= nx2 && qy1 >= ny1 && qy1 <= ny2)
-			 || (nx1 >= qx1 && nx1 <= qx2 && ny1 >= qy1 && ny1 <= qy2)) {
+			if (p1.left <= p2.right
+	         && p2.left <= p1.right
+	         && p1.top  <= p2.bottom
+	         && p2.top  <= p1.bottom) {
+				logCollision(true);
 				l = ((l - r) / l) * .5;
 				x *= l;
 				y *= l;
-				node.x -= x;
-				node.y -= y;
-				quad.point.x += x;
-				quad.point.y += y;
+				node.x = p1.left - x;
+				node.y = p1.top  - y;
+				quad.point.x = p2.left + x;
+				quad.point.y = p2.top  + y;
 			}
+			else 
+				logCollision(false);
 		}
-		return x1 > nx2
-			|| x2 < nx1 
-			|| y1 > ny2 
-			|| y2 < ny1;
+		return x1 > p1.x2
+			|| x2 < p1.x1 
+			|| y1 > p1.y2 
+			|| y2 < p1.y1;
 	};
+}
+
+function getTableBoundaries(point) {
+	var node_element=tableBoxes.filter(function(d,i) { return d.name == point.name; });
+	if (node_element[0].length == 0)
+		return null;
+	var width=parseInt(node_element.attr("width"));
+	var height=parseInt(node_element.attr("height"));
+	return {left:  	point.x, 
+			right: 	point.x + width, 
+			top: 	point.y, 
+			bottom: point.y + height,
+			width: 	width,
+			height:	height};
+}
+
+function logCollision(is_collision) {
+	if (!is_debug)
+		return;
+	d3.select('#collision').attr("class",is_collision ? "" : "invisible");
 }
