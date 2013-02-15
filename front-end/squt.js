@@ -759,17 +759,52 @@ function collide(node) {
 }
 
 function getTableBoundaries(point) {
-	var node_element=tableBoxes.filter(function(d,i) { return d.name == point.name; });
-	if (node_element[0].length == 0)
-		return null;
-	var width=parseInt(node_element.attr("width"));
-	var height=parseInt(node_element.attr("height"));
-	return {left:  	point.x, 
-			right: 	point.x + width, 
-			top: 	point.y, 
-			bottom: point.y + height,
-			width: 	width,
-			height:	height};
+	return getBoundaries(
+			getElementsByTypeAndName("table",point.name)[0]
+	.concat(getElementsByTypeAndName("aliasByTableName",point.name)[0])
+	);
+}
+
+function getElementsByTypeAndName(type,name) {
+	var elements;
+	switch(type) {
+		case "table":
+			elements = tableBoxes.filter(function(d,i) { return d.name == name; });
+		break;
+		case "aliasByTableName":
+			elements = tableAliasBoxes.filter(function(d,i) { return d.table == name; });
+	}
+	return elements;
+}
+	
+function getBoundaries(elements) {
+	var left, right, top, bottom;
+	d3.selectAll(elements).each(function(d) {
+		var pos = d.x === undefined 
+			? [parseInt(d3.select(this).attr("x")), parseInt(d3.select(this).attr("y"))]
+			: [d.x, d.y];
+		var boundaries = {left:   pos[0],
+						  right:  pos[0]+parseInt(d3.select(this).attr("width")),
+						  top:    pos[1],
+						  bottom: pos[1]+parseInt(d3.select(this).attr("height"))};
+		
+		if (left === undefined || left > boundaries.left)
+			left = boundaries.left;
+		if (top  === undefined || top  > boundaries.top)
+			top  = boundaries.top;
+		if (right === undefined || right < boundaries.right)
+			right = boundaries.right;
+		if (bottom  === undefined || bottom  < boundaries.bottom)
+			bottom  = boundaries.bottom;
+	});
+	
+	return {
+		left:  	left, 
+		right: 	right, 
+		top: 	top, 
+		bottom: bottom,
+		width: 	right-left,
+		height:	bottom-top};
 }
 
 function logCollision(is_collision) {
