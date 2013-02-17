@@ -123,6 +123,8 @@
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
+									processed_json=objectToLowerCase(processed_json);
+									expected_json=objectToLowerCase(expected_json);
 									if (Object.identical(processed_json, expected_json)) {
 										if (processed_json.Error) {
 											test_section.select(".parse.error").attr("class","parse error")
@@ -156,7 +158,7 @@
 									else {	
 										test_section.select(".compare.error").attr("class","compare error");
 										test_section.select(".processed").text(JSON.stringify(processed_json));
-										test_section.select(".expected" ).text(JSON.stringify(expected_json ));
+										test_section.select(".expected" ).text(JSON.stringify(expected_json));
 									}
 							  		current_query++;
 									test_next_query();
@@ -166,6 +168,21 @@
 					);
 				}
 			);
+	  	}
+	  	
+	  	function objectToLowerCase(o) {
+	  		var o2 = {};
+	  		for(var x in o) {
+	  			if (o !== null) {
+		  			if (typeof o[x] === "object") {
+		  				o2[x.toLowerCase()] = objectToLowerCase(o[x]);
+		  			}
+		  			else {
+		  				o2[x.toLowerCase()] = o[x].toLowerCase();
+		  			}
+	  			}
+	        }
+	  		return o2;
 	  	}
   	</script>
   </body>
