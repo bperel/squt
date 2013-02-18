@@ -38,6 +38,10 @@ pre#query {
 	display: none;
 }
 
+#collision {
+	color: red;
+}
+
 svg#graph {
 	margin: 8px 300px 0px 8px;
 	outline:1px solid gray;
