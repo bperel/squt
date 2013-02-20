@@ -531,13 +531,6 @@ function positionTable(d, i) {
 	var x = d.x;
 	var y = d.y;
 	
-	if (this instanceof SVGImageElement) {
-		ground.attr("x", x)
-			  .attr("y", y);
-		pathToOutput.attr("d", getPathToOutput);
-		return;
-	}
-	
 	var relatedAliases = tableAlias.filter(function(ta) { return ta.table == d.name; });
 	var relatedAliasesBoxes = tableAliasBoxes.filter(function(ta) { return ta.table == d.name; });
 	
@@ -563,7 +556,7 @@ function positionTable(d, i) {
 	  
 	tableSeparator.filter(function(ts) { return ts.name == d.name; })
 	  .attr("x1", x)
-	  .attr("x2", function(ts) { return x+parseInt(d3.select('rect[name="'+ts.name+'"]').attr('width'));})
+	  .attr("x2", x+tableWidth)
 	  .attr("y1", y+LINE_SEPARATOR_TOP)
 	  .attr("y2", y+LINE_SEPARATOR_TOP);
 	  
@@ -577,8 +570,8 @@ function positionTable(d, i) {
 									return j2 === j-1; 
 								  });
 			  return parseInt(previousAlias.attr("x"))
+		  			+ALIAS_NAME_PADDING.right
 			  		+previousAlias.data()[0].name.length*CHAR_WIDTH
-			  		+ALIAS_NAME_PADDING.right
 			  		+ALIAS_NAME_PADDING.left;
 		  }
 	  })
@@ -618,9 +611,9 @@ function positionTable(d, i) {
 	
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
 	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cx"));})
-	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cy"))-15;});
+	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cy"))-SORT_SIDE/2;});
 
-	
+	// Paths between fields
 	path.attr("d", function(d) {
 	  var source=field.filter(function(f) { return d.source == f.fullName; });
 	  var target=field.filter(function(f) { return d.target == f.fullName; });
