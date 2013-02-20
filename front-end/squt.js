@@ -14,7 +14,7 @@ var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
 });
 
 d3.select('#query_sample')
-  .on("change",function(d,i) {
+  .on("change",function() {
 	var queryname = d3.select(this[this.selectedIndex]).attr('name');
 	if (queryname != "dummy") {
 		d3.text("querysamples/"+queryname,function(sql) {
@@ -94,7 +94,7 @@ d3.select("defs").append("svg:g").selectAll("marker")
     .enter().append("marker")
       .attr("id", String)
       .attr("class","solidlink")
-      .attr("refX", function(d,i) {
+      .attr("refX", function(d) {
     	  if (d == "solidlink1") {
     		  return -4;
     	  }
@@ -124,7 +124,7 @@ d3.text(
 	}
 );
 
-d3.select("#OK").on("click",function(d,i) {
+d3.select("#OK").on("click",function() {
 	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
 });
 
@@ -333,8 +333,8 @@ function buildGraph() {
 	
 	ground = g.append("svg:image")
 	  .attr("xlink:href", "images/ground.svg")
-	  .attr("width", 40)
-	  .attr("height", 40)
+	  .attr("width", GROUND_SIDE)
+	  .attr("height", GROUND_SIDE)
 	  .call(dragGround);
 	  
 	tableBoxes = g.append("svg:g").selectAll("rect.table")
@@ -342,7 +342,6 @@ function buildGraph() {
 	  .enter().append("svg:rect")
 		.attr("class","table")
 		.attr("name", function(d) { return d.name;})
-		.attr("width", function(d) { return 120;/*12+d.name.length*7;*/})
 		.call(force.drag);
 		
 	tableText = g.append("svg:g").selectAll("g")
@@ -425,13 +424,13 @@ function buildGraph() {
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
-		.attr("class", function(d) { return "link tofunction"; });
+		.attr("class", "link tofunction");
 
 	pathToOutput = g.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
-		.attr("class", function(d) { return "output link "; })
+		.attr("class", "output link ")
 		.attr("marker-end", "url(#output)");
 
 	outputTexts = g.append("svg:g").selectAll("g")
@@ -782,13 +781,13 @@ function getElementsByTypeAndName(type,name) {
 	var elements = [];
 	switch(type) {
 		case "table":
-			elements = tableBoxes.filter(function(d,i) { return d.name == name; });
+			elements = tableBoxes.filter(function(d) { return d.name == name; });
 		break;
 		case "aliasByTableName":
-			elements = tableAliasBoxes.filter(function(d,i) { return d.table == name; });
+			elements = tableAliasBoxes.filter(function(d) { return d.table == name; });
 		break;
 		case "function":
-			elements = func.filter(function(d,i) { return d.functionAlias == name; });
+			elements = func.filter(function(d) { return d.functionAlias == name; });
 	}
 	return elements;
 }

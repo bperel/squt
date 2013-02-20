@@ -3,7 +3,8 @@ var W = 960,
 
 var CHAR_WIDTH=8;
 
-var CIRCLE_RADIUS 	   		 = 6,
+var GROUND_SIDE				 = 40,
+	CIRCLE_RADIUS 	   		 = 6,
 	SORT_SIDE	  	   		 = 30,
 	MIN_TABLE_HEIGHT   		 = 35,
 	TABLE_NAME_PADDING 		 = [],
