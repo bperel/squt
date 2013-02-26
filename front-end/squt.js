@@ -194,9 +194,11 @@ function build(jsondata) {
 	else {
 		d3.select('#log').text("");
 	}
+	
+	groundData=		 [{name:"", type:"ground"}],
 	tables= 	 	 [],
-	tableAliases=	 {},
-	fields= 	 	 {},
+	tableAliases=	 [],
+	fields= 	 	 [],
 	links= 			 [],
 	functions=		 [],
 	constants=		 [],
@@ -224,7 +226,7 @@ function build(jsondata) {
 								if (functionAlias == -1) { // Directly to output
 									linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 								}
-								else { // Through a function
+								else { // To a function
 									linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 								}
 							}
@@ -287,8 +289,11 @@ function build(jsondata) {
 	  fields[key].id=i++;
 	};
 
-	n = d3.values(tables).concat(d3.values(functions));
+	n = 	  d3.values(groundData)
+	  .concat(d3.values(tables))
+	  .concat(d3.values(functions));
 	l = [];
+	
 	for (var i in links) {
 		var sourceTableId = parseInt(fieldToTableId(links[i].source));
 		var targetTableId = parseInt(fieldToTableId(links[i].target));
@@ -298,6 +303,17 @@ function build(jsondata) {
 		else {
 			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: 1};
 		}
+	}
+	for (var i in linksToOutput) {
+		var sourceId;
+		if (linksToOutput[i].type == "field") {
+			sourceId = parseInt(fieldToTableId(linksToOutput[i].fieldName));
+		}
+		else if (linksToOutput[i].type == "function") {
+			sourceId = parseInt(getFunctionId(linksToOutput[i].functionAlias));
+		}
+		else continue;
+		l[sourceId+",0"] = {source: sourceId, target: 0, value: 1};
 	}
 
 	for (var i in linksToFunctions) {
@@ -347,11 +363,13 @@ function buildGraph() {
 	svg.selectAll('image,svg>g').remove();
 	var g = svg.append("svg:g");
 	
-	ground = g.append("svg:image")
-	  .attr("xlink:href", "images/ground.svg")
-	  .attr("width", GROUND_SIDE)
-	  .attr("height", GROUND_SIDE)
-	  .call(dragGround);
+	ground = g.append("svg:g").selectAll("image")
+		.data(d3.values(groundData))
+	  .enter().append("svg:image")
+	  	.attr("xlink:href", "images/ground.svg")
+	  	.attr("width", GROUND_SIDE)
+	  	.attr("height", GROUND_SIDE)
+	  	.call(force.drag);
 	  
 	tableBoxes = g.append("svg:g").selectAll("rect.table")
 		.data(d3.values(tables))
@@ -459,9 +477,6 @@ function buildGraph() {
 		    .append("tspan")
 		      .attr("dy",-5)
 		      .text(function(d) { return d.outputName; });
-	
-	// Initial positions
-	positionGround.call(ground,null,null,null,false);
 	
 	force
 		.nodes(n)
@@ -667,19 +682,13 @@ function positionFunction(d, i) {
 	
 }
 
-function positionGround(d, i) {
-	var drawLinks = d3.event != null;
-	
-	var x=d3.event == null ? W-45 : (parseInt(d3.select(this).attr("x"))+d3.event.dx);
-	var y=d3.event == null ? H-45 : (parseInt(d3.select(this).attr("y"))+d3.event.dy);
+function positionGround(d, i) {	
+	var x=d.x;
+	var y=d.y;
 	
 	ground
 	  .attr("x", x)
 	  .attr("y", y);
-
-	if (drawLinks) {
-		positionPathsToOutput("all");
-	}
 }
 
 function isFieldInTable(field,table) {
@@ -723,7 +732,10 @@ function tick() {
 	while (++i < nl) {
 		q.visit(collide(n[i]));
 	}
-  
+
+	ground.each(function(d,i) {
+		positionGround.call(ground,d,i);
+	});
 	tableBoxes.each(function(d,i) {
 		positionTable.call(this,d,i);
 	});
@@ -736,13 +748,13 @@ function tick() {
 
 function collide(node) {
 	var p1 = getElementBoundaries(node);
-	if (p1 === null)
+	if (p1 === null || p1 === undefined)
 		return function() { return true; };
 		
 	return function(quad, x1, y1, x2, y2) {
 		if (quad.point && (quad.point !== node)) {
 			var p2 = getElementBoundaries(quad.point);
-			if (p2 === null)
+			if (p2 === null || p2 === undefined)
 				return true;
 			
 			var x = node.x - quad.point.x, 
@@ -757,7 +769,7 @@ function collide(node) {
 	         && p1.top  <= p2.bottom
 	         && p2.top  <= p1.bottom) {
 				collisions+=(node.type+","+quad.point.type);
-				l = ((l - r) / l) * .5;
+				l = (l - r) / l;
 				x *= l;
 				y *= l;
 				node.x = p1.left - x;
