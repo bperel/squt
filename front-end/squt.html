@@ -29,7 +29,13 @@
 		<span id="collision_info">
 			Collision x <span id="collision">0</span>
 		</span>
+		<div id="no-parser" class="invisible">The MySQL parser is not available.<br />
+		This means that you can only use one of the sample queries listed above (for which the parsing results are known), 
+		but not write a custom query.</div>
 		<textarea id="log" readonly="readonly"></textarea>
+		<div id="error_texts">
+			<div id="error_query_too_long">For performance and security reasons, squt does not allow queries longer than 2000 characters.</div>
+		</div>
 	</div>
 
     <script type="text/javascript" src="squt_constants.js"></script>

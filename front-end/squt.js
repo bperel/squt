@@ -1,4 +1,3 @@
-/*global d3; */
 var w = 1280,
 	h = 800,
 	r = 6,
@@ -10,18 +9,34 @@ var force = d3.layout.force()
 			.linkDistance(400)
 			.size([w*2/3, h*2/3]);
 
+var query_is_too_long = false;
+
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
-	lineWrapping: true
+	lineWrapping: true,
+	onKeyEvent: function(editor,event) {
+		var new_query_is_too_long = editor.getValue().length > QUERY_MAX_LENGTH;
+		if (query_is_too_long && !new_query_is_too_long) {
+			d3.select("#log").text("");
+			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class").replace(/ error/g,""); });
+		}
+		if (!query_is_too_long && new_query_is_too_long) {
+			d3.select("#log").text(d3.select("#error_query_too_long").text());	
+			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class")+" error"; });
+		}
+		query_is_too_long = new_query_is_too_long;
+	}
 });
+
+var selected_query_sample;
 
 d3.select('#query_sample')
   .on("change",function() {
-	var queryname = d3.select(this[this.selectedIndex]).attr('name');
-	if (queryname != "dummy") {
-		d3.text("querysamples/"+queryname,function(sql) {
+	  selected_query_sample = d3.select(this[this.selectedIndex]).attr('name');
+	  if (selected_query_sample != "dummy") {
+		d3.text("querysamples/"+selected_query_sample,function(sql) {
 			editor.setValue(sql);
 		});
-	}
+	  }
   });
 
 d3.text("list_samples.php",function(text) {
@@ -113,202 +128,202 @@ d3.select("defs").append("svg:g").selectAll("marker")
 
 var no_parser=false;
 
-d3.text(
-	"analyze.php?query=SELECT b.a FROM b",
-	function(data) {
-		if (data === undefined || data === "") {
-			no_parser=true;
-			editor.setOption('readOnly',true);
-			d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
-			d3.select('#no-parser').attr("class","");
-		}
+d3.text(URL,function(data) {
+	if (data === undefined || data === null || data === "") {
+		no_parser=true;
+		editor.setOption('readOnly',true);
+		d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
+		d3.select('#no-parser').attr("class","");
 	}
-);
+})
+  .header("Content-Type","application/x-www-form-urlencoded")
+  .send("POST","query=SELECT b.a FROM b");
 
 d3.select("#OK").on("click",function() {
 	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
 });
 
 function analyzeAndBuild(query) {
-	var url;
+	var parameters;
 	if (no_parser) {
-		url="analyze.php?sample="+selected_query_sample;
+		parameters="sample="+selected_query_sample;
 	}
 	else {
-		url="analyze.php?query="+query;
+		parameters="query="+query;
 	}
 	if (no_graph) {
-		d3.text(
-			url+"&debug=1",
-			function(data) {
-				d3.select('#log').text(data);
-			}
+		d3.text(URL,function(data) {
+			d3.select('#log').text(data);
+		  })
+		  .header("Content-Type","application/x-www-form-urlencoded")
+		  .send("POST",parameters+"&debug=1"
 		);
 		return;
 	}
-	d3.json(
-	  url,	  
-	  function (jsondata) {
-		console.log(jsondata);
-		if (jsondata == null) {
-			d3.select('#log').text("Error ! Make sure your paths are properly configured");
-			svg.selectAll('image,g').remove();
-			return;
-		}
-		if (jsondata.Error) {
-			d3.select('#log').text("ERROR - " + jsondata.Error);
-			svg.selectAll('image,g').remove();
-			return;
-		}
-		if (jsondata.Warning) {
-			var warningText=[];
-			for (var warnType in jsondata.Warning) {
-				switch (warnType) {
-					case 'No alias':
-						for (var i in jsondata.Warning[warnType]) {
-							var field_location=jsondata.Warning[warnType][i];
-							warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
-						}
-					break;
-				}
+	d3.json(URL,build)
+	  .header("Content-Type","application/x-www-form-urlencoded")
+	  .send("POST",parameters);
+}
+
+function build(jsondata) {
+	console.log(jsondata);
+	if (jsondata == null) {
+		d3.select('#log').text("Error ! Make sure your paths are properly configured");
+		svg.selectAll('image,g').remove();
+		return;
+	}
+	if (jsondata.Error) {
+		d3.select('#log').text("ERROR - " + jsondata.Error);
+		svg.selectAll('image,g').remove();
+		return;
+	}
+	if (jsondata.Warning) {
+		var warningText=[];
+		for (var warnType in jsondata.Warning) {
+			switch (warnType) {
+				case 'No alias':
+					for (var i in jsondata.Warning[warnType]) {
+						var field_location=jsondata.Warning[warnType][i];
+						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
+					}
+				break;
 			}
-			d3.select('#log').text(warningText.join("\n"));
 		}
-		else {
-			d3.select('#log').text("");
-		}
-		tables= 	 	 [],
-		tableAliases=	 {},
-		fields= 	 	 {},
-		links= 			 [],
-		functions=		 [],
-		constants=		 [],
-		linksToFunctions=[],
-		linksToOutput=	 [];
-		
-		for (var tableName in jsondata.Tables) {
-			tables[tableName]=({type: "table",
-				  				name:tableName});
-			var tableInfo = jsondata.Tables[tableName];
-			for (var tableAlias in tableInfo) {
-				tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
-				var actions=tableInfo[tableAlias];
-				for (var type in actions) {
-					var actionFields=actions[type];
-					for (var field in actionFields) {
-						var data=actionFields[field];
-						if (fields[tableAlias+"."+field] == undefined) {
-							fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
-						}
-						switch(type) {
-							case 'OUTPUT':
-								for (var functionAlias in data) {
-									var outputAlias = data[functionAlias];
-									if (functionAlias == -1) { // Directly to output
-										linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
-									}
-									else { // Through a function
-										linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
-									}
+		d3.select('#log').text(warningText.join("\n"));
+	}
+	else {
+		d3.select('#log').text("");
+	}
+	tables= 	 	 [],
+	tableAliases=	 {},
+	fields= 	 	 {},
+	links= 			 [],
+	functions=		 [],
+	constants=		 [],
+	linksToFunctions=[],
+	linksToOutput=	 [];
+	
+	for (var tableName in jsondata.Tables) {
+		tables[tableName]=({type: "table",
+			  				name:tableName});
+		var tableInfo = jsondata.Tables[tableName];
+		for (var tableAlias in tableInfo) {
+			tableAliases[tableAlias]={'table':tableName,'name':tableAlias};
+			var actions=tableInfo[tableAlias];
+			for (var type in actions) {
+				var actionFields=actions[type];
+				for (var field in actionFields) {
+					var data=actionFields[field];
+					if (fields[tableAlias+"."+field] == undefined) {
+						fields[tableAlias+"."+field]={tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
+					}
+					switch(type) {
+						case 'OUTPUT':
+							for (var functionAlias in data) {
+								var outputAlias = data[functionAlias];
+								if (functionAlias == -1) { // Directly to output
+									linksToOutput.push({type: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 								}
-								
-							break;
-							case 'CONDITION':
-								for (var otherField in data) {
-									if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-										if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
-											var tableAliasAndField=otherField.split('.');
-											fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
-										}
-										var joinType=null;
-										switch(data[otherField]) {
-											case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
-											case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
-											case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
-											case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
-										}
-										links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
-									}
-									else { 
-										fields[tableAlias+"."+field]['filtered']=true;
-									}
+								else { // Through a function
+									linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 								}
-							break;
-							case 'SORT':
-								fields[tableAlias+"."+field]['sort']=data;
-							break;
-						}
+							}
+							
+						break;
+						case 'CONDITION':
+							for (var otherField in data) {
+								if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
+									if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
+										var tableAliasAndField=otherField.split('.');
+										fields[otherField]={tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
+									}
+									var joinType=null;
+									switch(data[otherField]) {
+										case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
+										case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
+										case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
+										case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
+									}
+									links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
+								}
+								else { 
+									fields[tableAlias+"."+field]['filtered']=true;
+								}
+							}
+						break;
+						case 'SORT':
+							fields[tableAlias+"."+field]['sort']=data;
+						break;
 					}
 				}
 			}
 		}
-		
-		for (var functionAlias in jsondata.Functions) {
-			functions[functionAlias]={type: "function",
-									  functionAlias: functionAlias, 
-								      name: jsondata.Functions[functionAlias]["name"]
-									 };
-			var functionDestination=jsondata.Functions[functionAlias]["to"];
-			if (functionDestination === "OUTPUT") {
-				linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
-			}
-			else {
-				linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
-			}
-			if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
-				var functionConstants = jsondata.Functions[functionAlias]["Constants"];
-				for (var constant in functionConstants) {
-					var constantId=constants.length;
-					constants.push({id: constantId, name: constant, functionAlias: functionAlias });
-					linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
-				}
+	}
+	
+	for (var functionAlias in jsondata.Functions) {
+		functions[functionAlias]={type: "function",
+								  functionAlias: functionAlias, 
+							      name: jsondata.Functions[functionAlias]["name"]
+								 };
+		var functionDestination=jsondata.Functions[functionAlias]["to"];
+		if (functionDestination === "OUTPUT") {
+			linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
+		}
+		else {
+			linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
+		}
+		if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
+			var functionConstants = jsondata.Functions[functionAlias]["Constants"];
+			for (var constant in functionConstants) {
+				var constantId=constants.length;
+				constants.push({id: constantId, name: constant, functionAlias: functionAlias });
+				linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
 			}
 		}
+	}
 
-		var i=0;
-		for(var key in fields) {
-		  fields[key].id=i++;
-		};
+	var i=0;
+	for(var key in fields) {
+	  fields[key].id=i++;
+	};
 
-		n = d3.values(tables).concat(d3.values(functions));
-		l = [];
-		for (var i in links) {
-			var sourceTableId = parseInt(fieldToTableId(links[i].source));
-			var targetTableId = parseInt(fieldToTableId(links[i].target));
-			if (l[sourceTableId+","+targetTableId]) {
-				l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: l[sourceTableId+","+targetTableId].value+1};
-			}
-			else {
-				l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: 1};
-			}
+	n = d3.values(tables).concat(d3.values(functions));
+	l = [];
+	for (var i in links) {
+		var sourceTableId = parseInt(fieldToTableId(links[i].source));
+		var targetTableId = parseInt(fieldToTableId(links[i].target));
+		if (l[sourceTableId+","+targetTableId]) {
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: l[sourceTableId+","+targetTableId].value+1};
 		}
-
-		for (var i in linksToFunctions) {
-			var sourceId;
-			if (linksToFunctions[i].constantId !== undefined) { // Not supported yet
-				continue;
-			}
-			else if (linksToFunctions[i].sourceFunctionId) {
-				sourceId = parseInt(getFunctionId(linksToFunctions[i].sourceFunctionId));
-			}
-			else {
-				sourceId = parseInt(fieldToTableId(linksToFunctions[i].fieldName));
-			}
-			var targetId = parseInt(getFunctionId(linksToFunctions[i].functionAlias));
-			if (l[sourceId+","+targetId]) {
-				l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: l[sourceId+","+targetId].value+1};
-			}
-			else {
-				l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
-			}
+		else {
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: 1};
 		}
-		l = d3.values(l);
-		console.log(n);
-		console.log(l);
-		
-		buildGraph();
+	}
 
-	  });
+	for (var i in linksToFunctions) {
+		var sourceId;
+		if (linksToFunctions[i].constantId !== undefined) { // Not supported yet
+			continue;
+		}
+		else if (linksToFunctions[i].sourceFunctionId) {
+			sourceId = parseInt(getFunctionId(linksToFunctions[i].sourceFunctionId));
+		}
+		else {
+			sourceId = parseInt(fieldToTableId(linksToFunctions[i].fieldName));
+		}
+		var targetId = parseInt(getFunctionId(linksToFunctions[i].functionAlias));
+		if (l[sourceId+","+targetId]) {
+			l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: l[sourceId+","+targetId].value+1};
+		}
+		else {
+			l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
+		}
+	}
+	l = d3.values(l);
+	console.log(n);
+	console.log(l);
+	
+	buildGraph();
 }
 
 var ground, 

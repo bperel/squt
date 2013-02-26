@@ -5,16 +5,20 @@ error_reporting(E_ALL);
 
 $os = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows' : 'Linux';
 
-if (isset($_GET['sample'])) {
-	echo file_get_contents("querysamples/".preg_replace('#\.sql$#','_expected.json',$_GET['sample']));
+if (isset($_POST['sample'])) {
+	echo file_get_contents("querysamples/".preg_replace('#\.sql$#','_expected.json',$_POST['sample']));
 }
 else {
-	$query = str_replace('"','\"',str_replace("\n"," ",$_GET['query']));
-	$is_debug = isset($_GET['debug']) && $_GET['debug'] == 1;
+	$query = str_replace('"','\"',str_replace("\n"," ",$_POST['query']));
+	if (strlen($query) > $QUERY_MAX_LENGTH) {
+		echo json_encode(array('Error'=>'For performance and security reasons, squt does not allow queries longer than 2000 characters'));
+		exit(0);
+	}
+	$is_debug = isset($_POST['debug']) && $_POST['debug'] == 1;
 	$path_to_perl = ($os == 'Windows' ? $PATH_TO_CYGWIN.'/bin/' : '');
 	
 	if (!file_exists($ERROR_OUTPUT_FILE)) {
-		echo 'Error - The file '.$ERROR_OUTPUT_FILE.' has not been found in the /front-end directory.';
+		echo json_encode(array('Error'=>'The file '.$ERROR_OUTPUT_FILE.' has not been found in the /front-end directory.'));
 		exit(0);
 	}
 	ob_start();

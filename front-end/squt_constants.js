@@ -1,3 +1,6 @@
+var URL="analyze.php";
+var QUERY_MAX_LENGTH = 2000;
+
 var W = 960,
     H = 500;
 

@@ -118,7 +118,7 @@
 				"../querysamples/"+queries[current_query],
 				function (textquery) {
 					d3.json(
-						"../analyze.php?query="+textquery.replace(/\n/g,' '),
+						"../analyze.php",
 						function (processed_json) {
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
@@ -138,7 +138,7 @@
 										
 										jsErrors = [];
 										try {
-											ifr.analyzeAndBuild(processed_json);
+											ifr.build(processed_json);
 										}
 										catch(e) {
 											jsErrors.push(e);
@@ -163,7 +163,9 @@
 								}
 							);
 						}
-					);
+					)
+					.header("Content-Type","application/x-www-form-urlencoded")
+					.send("POST","query="+textquery.replace(/\n/g,' '));
 				}
 			);
 	  	}
