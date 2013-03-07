@@ -269,7 +269,7 @@ function build(jsondata) {
 								 };
 		var functionDestination=jsondata.Functions[functionAlias]["to"];
 		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["alias"]});
+			linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
 		}
 		else {
 			linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
