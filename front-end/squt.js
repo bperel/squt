@@ -9,6 +9,12 @@ var force = d3.layout.force()
 			.linkDistance(400)
 			.size([w*2/3, h*2/3]);
 
+var repulsion = d3.select('#repulsion').attr("value");
+d3.select('#repulsion').on("change",function() {
+	repulsion = this.value;
+	force.start();
+});
+
 var query_is_too_long = false;
 
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
@@ -58,7 +64,7 @@ d3.text("list_samples.php",function(text) {
 
 var is_debug=extractUrlParams()['debug'] !== undefined;
 if (!is_debug) {
-	d3.select("#collision_info").attr("class","invisible");
+	d3.select("#debug_info").attr("class","invisible");
 }
 var no_graph=extractUrlParams()['no_graph'] !== undefined;
 
@@ -768,8 +774,8 @@ function collide(node) {
 	         && p2.left <= p1.right
 	         && p1.top  <= p2.bottom
 	         && p2.top  <= p1.bottom) {
-				collisions+=(node.type+","+quad.point.type);
-				l = (l - r) / l;
+				collisions+=(node.type+"/"+quad.point.type)+" ";
+				l = repulsion * (l - r) / l;
 				x *= l;
 				y *= l;
 				node.x = p1.left - x;
@@ -789,7 +795,7 @@ function getElementBoundaries(point) {
 	switch(point.type) {
 		case "table":
 			return getBoundaries(getElementsByTypeAndName("table",			  point.name)[0]
-				  		 .concat(getElementsByTypeAndName("aliasByTableName", point.name)[0])
+				  		 .concat(getElementsByTypeAndName("aliasByTableName", point.name))
 			);
 		break;
 		case "function":
@@ -817,6 +823,7 @@ function getElementsByTypeAndName(type,name) {
 }
 	
 function getBoundaries(elements) {
+	elements = [].concat.apply([], elements);
 	var left, right, top, bottom;
 	d3.selectAll(elements).each(function(d) {
 		var boundaries=[];
