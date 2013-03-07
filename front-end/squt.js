@@ -795,6 +795,9 @@ function getElementBoundaries(point) {
 		case "function":
 			return getBoundaries(getElementsByTypeAndName("function",		  point.functionAlias)[0]);
 		break;
+		case "ground":
+			return getBoundaries(ground[0]);
+		break;
 	}
 }
 
@@ -834,6 +837,12 @@ function getBoundaries(elements) {
 							  right:  c[0]+r[0]/2,
 							  top:    c[1]-r[1]/2,
 							  bottom:  c[1]+r[1]/2};
+			break;
+			case "ground":
+				boundaries = {left:   parseInt(d.x),
+							  right:  parseInt(d.x)+GROUND_SIDE,
+							  top:    parseInt(d.y),
+							  bottom: parseInt(d.y)+GROUND_SIDE};
 			break;
 		}
 		
