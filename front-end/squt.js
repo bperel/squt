@@ -775,7 +775,7 @@ function collide(node) {
 	         && p1.top  <= p2.bottom
 	         && p2.top  <= p1.bottom) {
 				collisions+=(node.type+"/"+quad.point.type)+" ";
-				distance = repulsion * (distance - r) / distance;
+				distance = repulsion * (Math.abs(distance - r)) / distance;
 				x *= distance;
 				y *= distance;
 				node.x = p1.left - x;
