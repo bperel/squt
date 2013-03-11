@@ -840,10 +840,10 @@ function getBoundaries(elements) {
 			case "function":
 				var c = [parseInt(d3.select(this).attr("cx")), parseInt(d3.select(this).attr("cy"))];
 				var r = [parseInt(d3.select(this).attr("rx")), parseInt(d3.select(this).attr("ry"))];
-				boundaries = {left:   c[0]-r[0]/2,
-							  right:  c[0]+r[0]/2,
-							  top:    c[1]-r[1]/2,
-							  bottom:  c[1]+r[1]/2};
+				boundaries = {left:   c[0]-r[0],
+							  right:  c[0]+r[0],
+							  top:    c[1]-r[1],
+							  bottom: c[1]+r[1]};
 			break;
 			case "ground":
 				boundaries = {left:   parseInt(d.x),
