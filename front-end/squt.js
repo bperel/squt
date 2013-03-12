@@ -506,11 +506,25 @@ function filterFunction(fieldOrFunction, origin, d) {
 function positionPathsToOutput(origin,d) {
   pathToOutput.filter(function(link) {
 	return filterFunction(link,origin,d);
-  }).attr("d", function(d) { return getPathToOutput(d);});
-  
+  }).attr("d", function(link) { return getPathToOutput(link);});
   outputTexts.filter(function(link) {
 	return filterFunction(link,origin,d);
   }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
+  
+  d3.selectAll("text.outputname").filter(function(link) {
+	return filterFunction(link,origin,d);
+  }).attr("transform",function(link) {
+	  var sourceCoords = getPathSourceCoords(
+		pathToOutput.filter(function(pathLink) { 
+		  return link.outputName === pathLink.outputName; 
+		}).data()[0]
+	  );
+	  if (sourceCoords[0] > parseFloat(ground.attr("x")) 
+	   || sourceCoords[1] < parseFloat(ground.attr("y"))) {
+		  return "rotate(180 "+sourceCoords[0]+","+sourceCoords[1]+")";
+	  }
+	  else return "";
+  });
 }
 
 function positionPathsToFunctions(origin,d) {
@@ -544,24 +558,29 @@ function positionPathsToFunctions(origin,d) {
 	});
 }
 
-function getPathToOutput(info) {
-	var source,
-		source_y;
-	if (info.type == "field") {
+function getPathToOutput(pathInfo) {
+	var sourceCoords = getPathSourceCoords(pathInfo);
+	  
+	var dx = ground.attr("x") - sourceCoords[0],
+		dy = ground.attr("y") - sourceCoords[1],
+		dr = Math.sqrt(dx * dx + dy * dy);
+	return "M" + sourceCoords[0] + "," + sourceCoords[1] + "A" + dr + "," + dr + " 0 0,1 " + (parseInt(ground.attr("x"))+parseInt(ground.attr("width"))/2) + "," + ground.attr("y");
+}
+
+function getPathSourceCoords(pathInfo) {
+	var source;
+	if (pathInfo.type == "field") {
 		source=field.filter(function(f) { 
-			return f.fullName == info.fieldName; 
+			return f.fullName == pathInfo.fieldName; 
 		});
-		source_y=source.attr("cy");
+		return [parseFloat(source.attr("cx")),parseFloat(source.attr("cy"))];
 	}
 	else {
-		source=func.filter(function(f) { return info.functionAlias == f.functionAlias; });
-		source_y=parseFloat(source.attr("cy")) + FUNCTION_BOX_RY;
+		source=func.filter(function(f) { 
+			return pathInfo.functionAlias == f.functionAlias; 
+		});
+		return [parseFloat(source.attr("cx")),parseFloat(source.attr("cy"))+FUNCTION_BOX_RY];
 	}
-	  
-	var dx = ground.attr("x") - source.attr("cx"),
-		dy = ground.attr("y") - source_y,
-		dr = Math.sqrt(dx * dx + dy * dy);
-	return "M" + source.attr("cx") + "," + source_y + "A" + dr + "," + dr + " 0 0,1 " + (parseInt(ground.attr("x"))+parseInt(ground.attr("width"))/2) + "," + ground.attr("y");
 }
 
 function positionTable(d, i) {
