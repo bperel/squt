@@ -230,10 +230,10 @@ function build(jsondata) {
 							for (var functionAlias in data) {
 								var outputAlias = data[functionAlias];
 								if (functionAlias == -1) { // Directly to output
-									linksToOutput.push({type: "fromField", fieldName: tableAlias+"."+field, outputName: outputAlias});
+									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 								}
 								else { // To a function
-									linksToFunctions.push({fieldName: tableAlias+"."+field, functionAlias: functionAlias});
+									linksToFunctions.push({type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 								}
 							}
 							
@@ -275,17 +275,17 @@ function build(jsondata) {
 								 };
 		var functionDestination=jsondata.Functions[functionAlias]["to"];
 		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
+			linksToOutput.push({type: "link", from: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
 		}
 		else {
-			linksToFunctions.push({sourceFunctionId: functionAlias, functionAlias: functionDestination});
+			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
 		}
 		if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
 			var functionConstants = jsondata.Functions[functionAlias]["Constants"];
 			for (var constant in functionConstants) {
 				var constantId=constants.length;
 				constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
-				linksToFunctions.push({constantId: constantId, functionAlias: functionAlias});
+				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
 			}
 		}
 	}
@@ -312,10 +312,10 @@ function build(jsondata) {
 	}
 	for (var i in linksToOutput) {
 		var sourceId;
-		if (linksToOutput[i].type == "field") {
+		if (linksToOutput[i].from == "field") {
 			sourceId = parseInt(fieldToTableId(linksToOutput[i].fieldName));
 		}
-		else if (linksToOutput[i].type == "function") {
+		else if (linksToOutput[i].from == "function") {
 			sourceId = parseInt(getFunctionId(linksToOutput[i].functionAlias));
 		}
 		else continue;
@@ -506,7 +506,16 @@ function filterFunction(fieldOrFunction, origin, d) {
 function positionPathsToOutput(origin,d) {
   pathToOutput.filter(function(link) {
 	return filterFunction(link,origin,d);
-  }).attr("d", function(link) { return getPathToOutput(link);});
+  }).attr("d", function(link) { 
+	  var sourceCoords = getNodeCoords(link);
+	  var groundCoords = getNodeCoords(ground.data()[0]);
+	  
+	  var dx = groundCoords.x - sourceCoords.x,
+		  dy = groundCoords.y - sourceCoords.y,
+		  dr = Math.sqrt(dx * dx + dy * dy);
+	  return "M" + sourceCoords.x + "," + sourceCoords.y + "A" + dr + "," + dr + " 0 0,1 " + groundCoords.x + "," + groundCoords.y;
+  });
+  
   outputTexts.filter(function(link) {
 	return filterFunction(link,origin,d);
   }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
@@ -520,8 +529,7 @@ function positionPathsToOutput(origin,d) {
 		  return link.outputName === pathLink.outputName; 
 		}).data()[0]
 	  );
-	  if (sourceCoords.x > groundCoords.x 
-	   || sourceCoords.y < groundCoords.y) {
+	  if (sourceCoords.x > groundCoords.x) {
 		  return "rotate(180 "+sourceCoords.x+","+sourceCoords.y+")";
 	  }
 	  else return "";
@@ -532,66 +540,74 @@ function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
 	  return filterFunction(link,origin,d);
 	}).attr("d", function(d) {
-		var sourcePos = getNodeCoords(d);
-		if (d.fieldName !== undefined) {
-			sourcePos=getNodeCoords(getElementsByTypeAndName("field", d.fieldName).data()[0]);
-		}
-		else if (d.sourceFunctionId !== undefined) {
-			source=func.filter(function(f) { return d.sourceFunctionId == f.functionAlias; });
-			sourcePos={x: source.attr("cx") || 0, y: parseInt(source.attr("cy") || 0)
-											 + parseInt(source.attr("ry"))};
-		}
-		else if (d.constantId !== undefined) {
-			sourcePos=getNodeCoords(d);
-		}
-	    var target=func.filter(function(f) { return d.functionAlias == f.functionAlias; });
+		var sourcePos=getNodeCoords(d, "source");
+		var targetPos=getNodeCoords(d, "target");
 	
-	    var x = [sourcePos.x, target.attr("cx") || 0];
-	    var y = [sourcePos.y, target.attr("cy") - FUNCTION_BOX_RY || 0];
+		targetPos.y-=FUNCTION_BOX_RY;
  	
-	    var dx = x[1] - x[0],
-		    dy = y[1] - y[0],
+	    var dx = targetPos.x - sourcePos.x,
+		    dy = targetPos.y - sourcePos.y,
 		    dr = Math.sqrt(dx * dx + dy * dy);
-	    return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
+	    return "M" + sourcePos.x + "," + sourcePos.y + "A" + dr + "," + dr + " 0 0,1 " + targetPos.x + "," + targetPos.y;
 	});
 }
 
-function getPathToOutput(pathInfo) {
-	var sourceCoords = getNodeCoords(pathInfo);
-	var groundCoords = getNodeCoords(ground.data()[0]);
-	  
-	var dx = groundCoords.x - sourceCoords.x,
-		dy = groundCoords.y - sourceCoords.y,
-		dr = Math.sqrt(dx * dx + dy * dy);
-	return "M" + sourceCoords.x + "," + sourceCoords.y + "A" + dr + "," + dr + " 0 0,1 " + groundCoords.x + "," + groundCoords.y;
-}
-
-function getNodeCoords(pathInfo) {
+function getNodeCoords(pathInfo, sourceOrTarget /* For links only */) {
+	sourceOrTarget = sourceOrTarget || "source";
+	var element = null;
 	switch (pathInfo.type) {
-		case "field": case "fromField": 
-			var source=field.filter(function(f) { 
-				return f.fullName == (pathInfo.type == "fromField" ? pathInfo.fieldName : pathInfo.fullName); 
+		case "field":
+			element=field.filter(function(f) { 
+				return f.fullName == pathInfo.fullName; 
 			});
-			return {x:parseFloat(source.attr("cx")), 
-					y: parseFloat(source.attr("cy"))};
+			return {x:parseFloat(element.attr("cx")), 
+					y: parseFloat(element.attr("cy"))};
 		break;
-		case "function":
-			var source=func.filter(function(f) { 
-				return pathInfo.functionAlias == f.functionAlias; 
-			});
-			return {x: parseFloat(source.attr("cx")),
-					y: parseFloat(source.attr("cy"))+FUNCTION_BOX_RY};
+		case "link":
+			if (sourceOrTarget == "source") {
+				switch (pathInfo.from) {
+					case "field":
+						element=field.filter(function(f) { 
+							return pathInfo.fieldName == f.fullName; 
+						});
+
+						return {x: parseFloat(element.attr("cx")),
+								y: parseFloat(element.attr("cy"))};
+					break;
+					case "function":
+						element=func.filter(function(f) { 
+							return pathInfo.functionAlias == f.functionAlias; 
+						});
+						return {x: parseFloat(element.attr("cx")),
+								y: parseFloat(element.attr("cy")) + FUNCTION_BOX_RY};
+					break;
+					case "constant":
+						element=constantText.filter(function(c) { 
+							return pathInfo.constantId == c.id; 
+						});
+						return {x: parseFloat(element.attr("x")),
+								y: parseFloat(element.attr("y"))};
+					break;
+				}
+			}
+			else {
+				element=func.filter(function(f) { 
+					return pathInfo.functionAlias == f.functionAlias; 
+				});
+				return {x: parseFloat(element.attr("cx")),
+						y: parseFloat(element.attr("cy"))};
+			}
 		break;
 		case "constant":
-			var source=constantText.filter(function(c) { 
+			element=constantText.filter(function(c) { 
 				return pathInfo.constantId == c.id; 
 			});
-			return {x: parseFloat(source.attr("x")),
-					y: parseFloat(source.attr("y"))};
+			return {x: parseFloat(element.attr("x")),
+					y: parseFloat(element.attr("y"))};
 		break;
 		case "ground":
-			return {x: pathInfo.x+GROUND_SIDE/2,
-					y: pathInfo.y+GROUND_SIDE/2};
+			return {x: parseFloat(ground.attr("x"))+GROUND_SIDE/2,
+					y: parseFloat(ground.attr("y"))+GROUND_SIDE/2};
 	}
 }
 
