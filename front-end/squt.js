@@ -79,14 +79,6 @@ var tables= [],
 
 var n=[],l=[];
 
-var dragFunction = d3.behavior.drag()
-	.origin(Object)
-	.on("drag", positionFunction),
-
-	dragGround = d3.behavior.drag()
-	.origin(Object)
-	.on("drag", positionGround);
-
 var svg = d3.select("body").append("svg:svg")
 	.attr("id","graph")
 	.attr("width", W)
