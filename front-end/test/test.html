@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="qunit/qunit/qunit.css">
     <title>Squt parse tests</title>
     <script type="text/javascript">
     	var jsErrors = [];
@@ -42,6 +43,11 @@
   		<li>checks if the query parsing didn't throw any warning or error.</li>
   		<li>ensures that building the graph didn't throw any error.</li>
   	</ul>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="qunit/qunit/qunit.js"></script>
+	<script src="qunit-reporter-junit/qunit-reporter-junit.js"></script>
+	
   	<div class="test_pattern hidden">
   		Test : <span class="test_name"></span>
   		<div class="test_result">
@@ -88,7 +94,12 @@
 	  		</div>
 	  	</div>
   	</div>
+	<div id="report"></div>
   	<script type="text/javascript">
+		QUnit.jUnitReport = function(report) {
+			d3.select("#report").text(report.xml);
+		};
+		
 	  	var ifr;
   		var queries;
   		var current_query=-1;
@@ -123,43 +134,53 @@
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
-									processed_json=objectToLowerCase(processed_json);
-									expected_json=objectToLowerCase(expected_json);
-									if (Object.identical(processed_json, expected_json)) {
-										if (processed_json.Error) {
-											test_section.select(".parse.error").attr("class","parse error")
-															.select(".error_details").text(JSON.stringify(processed_json.Error));
-										}
-										if (processed_json.Warning) {
-											test_section.select(".parse.warn").attr("class","parse warn")
-															.select(".warn_details").text(JSON.stringify(processed_json.Warning));
-										}
-										if (! processed_json.Error && ! processed_json.Warning) {
-											test_section.select(".parse.success").attr("class","parse success");
-										}
+									test("ok test", function() {
+										processed_json=objectToLowerCase(processed_json);
+										expected_json=objectToLowerCase(expected_json);
+										ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
 										
-										jsErrors = [];
-										try {
-											ifr.build(processed_json);
+										if (Object.identical(processed_json, expected_json)) {
+											equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
+											
+											if (processed_json.Error) {
+												test_section.select(".parse.error").attr("class","parse error")
+																.select(".error_details").text(JSON.stringify(processed_json.Error));
+											}
+											equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
+
+											if (processed_json.Warning) {
+												test_section.select(".parse.warn").attr("class","parse warn")
+																.select(".warn_details").text(JSON.stringify(processed_json.Warning));
+											}
+											if (! processed_json.Error && ! processed_json.Warning) {
+												test_section.select(".parse.success").attr("class","parse success");
+											}
+											
+											jsErrors = [];
+											try {
+												ifr.build(processed_json);
+											}
+											catch(e) {
+												jsErrors.push(e);
+											}
+											deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
+
+											if (jsErrors.length == 0) {
+												test_section.select(".graph.success").attr("class","graph success");
+											}
+											else {
+												test_section.select(".graph.error").attr("class","graph error")
+													.select(".error_details").text("\n"+jsErrors.join("\n"));
+											}
+											
+											test_section.select(".compare.success").attr("class","compare success");
 										}
-										catch(e) {
-											jsErrors.push(e);
+										else {	
+											test_section.select(".compare.error").attr("class","compare error");
+											test_section.select(".processed").text(JSON.stringify(processed_json));
+											test_section.select(".expected" ).text(JSON.stringify(expected_json ));
 										}
-										if (jsErrors.length == 0) {
-											test_section.select(".graph.success").attr("class","graph success");
-										}
-										else {
-											test_section.select(".graph.error").attr("class","graph error")
-												.select(".error_details").text("\n"+jsErrors.join("\n"));
-										}
-										
-										test_section.select(".compare.success").attr("class","compare success");
-									}
-									else {	
-										test_section.select(".compare.error").attr("class","compare error");
-										test_section.select(".processed").text(JSON.stringify(processed_json));
-										test_section.select(".expected" ).text(JSON.stringify(expected_json ));
-									}
+									});
 							  		current_query++;
 									test_next_query();
 								}
