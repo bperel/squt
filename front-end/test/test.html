@@ -48,53 +48,7 @@
     <script src="qunit/qunit/qunit.js"></script>
 	<script src="qunit-reporter-junit/qunit-reporter-junit.js"></script>
 	
-  	<div class="test_pattern hidden">
-  		Test : <span class="test_name"></span>
-  		<div class="test_result">
-	  		<div class="compare success hidden">
-	  			Parse results are the same as expected.
-	  		</div>
-	  		<div class="compare error hidden">
-	  			Parse results are not the same as expected.
-	  			<br />
-	  			<table>
-	  				<tr>
-	  					<td>
-	  						Processed :
-	  					</td>
-	  					<td>
-	  						Expected :
-	  					</td>
-	  				</tr>
-	  				<tr>
-	  					<td>
-	  						<textarea rows="30" cols="50" class="processed"></textarea>
-	  					</td>
-	  					<td>
-	  						<textarea rows="30" cols="50" class="expected"></textarea>
-	  					</td>
-	  				</tr>
-	  			</table>
-	  		</div>
-	  		<div class="parse success hidden">
-	  			The query has been parsed without errors.
-	  		</div>
-	  		<div class="parse warn hidden">
-	  			The query has been parsed with one or several warning(s) :<span class="warn_details"></span>
-	  		</div>
-	  		<div class="parse error hidden">
-	  			The query has been parsed with one or several error(s) :<span class="error_details"></span>
-	  		</div>
-	  		
-	  		<div class="graph success hidden">
-	  			The graph has been generated without errors.
-	  		</div>
-	  		<div class="graph error hidden">
-	  			The graph has been generated with one or several error(s) :<span class="error_details"></span>
-	  		</div>
-	  	</div>
-  	</div>
-	<div id="report"></div>
+	<div id="report" class="hidden"></div>
   	<script type="text/javascript">
 		QUnit.jUnitReport = function(report) {
 			d3.select("#report").text(report.xml);
@@ -121,10 +75,6 @@
 	  			return;
 			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
 			
-	  		var test_section=d3.select(pattern.cloneNode(true));
-			test_section.attr("class","test_pattern");
-			test_section.select(".test_name").text(sql_name);
-			document.body.appendChild(test_section.node());
 			d3.text(
 				"../querysamples/"+queries[current_query],
 				function (textquery) {
@@ -134,27 +84,14 @@
 							d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
-									test("ok test", function() {
+									test("query "+sql_name+" test", function() {
 										processed_json=objectToLowerCase(processed_json);
 										expected_json=objectToLowerCase(expected_json);
 										ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
 										
 										if (Object.identical(processed_json, expected_json)) {
 											equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
-											
-											if (processed_json.Error) {
-												test_section.select(".parse.error").attr("class","parse error")
-																.select(".error_details").text(JSON.stringify(processed_json.Error));
-											}
 											equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
-
-											if (processed_json.Warning) {
-												test_section.select(".parse.warn").attr("class","parse warn")
-																.select(".warn_details").text(JSON.stringify(processed_json.Warning));
-											}
-											if (! processed_json.Error && ! processed_json.Warning) {
-												test_section.select(".parse.success").attr("class","parse success");
-											}
 											
 											jsErrors = [];
 											try {
@@ -164,21 +101,6 @@
 												jsErrors.push(e);
 											}
 											deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
-
-											if (jsErrors.length == 0) {
-												test_section.select(".graph.success").attr("class","graph success");
-											}
-											else {
-												test_section.select(".graph.error").attr("class","graph error")
-													.select(".error_details").text("\n"+jsErrors.join("\n"));
-											}
-											
-											test_section.select(".compare.success").attr("class","compare success");
-										}
-										else {	
-											test_section.select(".compare.error").attr("class","compare error");
-											test_section.select(".processed").text(JSON.stringify(processed_json));
-											test_section.select(".expected" ).text(JSON.stringify(expected_json ));
 										}
 									});
 							  		current_query++;
