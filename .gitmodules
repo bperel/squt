@@ -10,3 +10,9 @@
 [submodule "front-end/lib/d3.v3"]
 	path = front-end/lib/d3.v3
 	url = https://github.com/mbostock/d3.git
+[submodule "front-end/test/qunit"]
+	path = front-end/test/qunit
+	url = https://github.com/jquery/qunit
+[submodule "front-end/test/qunit-reporter-junit"]
+	path = front-end/test/qunit-reporter-junit
+	url = https://github.com/jquery/qunit-reporter-junit
