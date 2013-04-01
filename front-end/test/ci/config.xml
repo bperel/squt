@@ -14,9 +14,6 @@
   <customWorkspace>/usr/src/squt</customWorkspace>
   <builders>
     <hudson.tasks.Shell>
-      <command></command>
-    </hudson.tasks.Shell>
-    <hudson.tasks.Shell>
       <command>/path/to/phantomjs /usr/src/squt/front-end/test/run-qunit.js http://localhost/squt/front-end/test/test.html &gt; test-results.xml</command>
     </hudson.tasks.Shell>
   </builders>
