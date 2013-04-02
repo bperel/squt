@@ -55,7 +55,7 @@ d3.text("list_samples.php",function(text) {
 			for (var i=0;i<queries.length;i++) {
 				d3.select('#query_sample')
 				  	.append("option")
-				  	.text(queries[i].replace(/^[0-9]+\-(.*)\.sql/g,'$1'))
+				  	.text(queries[i].replace(/^(.*)\.sql/g,'$1'))
 				  	.attr("name",queries[i]);
 			}
 		}

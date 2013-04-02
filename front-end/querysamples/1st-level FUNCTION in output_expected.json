@@ -1,0 +1,40 @@
+{
+   "Functions" : {
+      "PersonFullName" : {
+         "to" : "OUTPUT",
+         "name" : "concat",
+         "alias" : "PersonFullName"
+      }
+   },
+   "Tables" : {
+      "person" : {
+         "p" : {
+            "OUTPUT" : {
+               "firstName" : {
+                  "PersonFullName" : "firstName"
+               },
+               "lastName" : {
+                  "PersonFullName" : "lastName"
+               }
+            }
+         }
+      },
+      "contract" : {
+         "co" : {
+            "OUTPUT" : {
+               "ContractID" : {
+                  "-1" : "ID"
+               }
+            },
+            "CONDITION" : {
+               "personInChargeID" : {
+                  "p.ID" : "JOIN_TYPE_STRAIGHT"
+               },
+               "isActive" : {
+                  "1" : "JOIN_TYPE_STRAIGHT"
+               }
+            }
+         }
+      }
+   }
+}
