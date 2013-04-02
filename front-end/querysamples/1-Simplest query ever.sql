@@ -1,1 +1,0 @@
-SELECT b.a FROM b;
