@@ -64,53 +64,64 @@
 		  	d3.text("../list_samples.php",function(text) {
 		  		queries=text.split(/,/g);
 		  		if (queries.length > 0) {
-					current_query = 0;
 					test_next_query();
 		  		}
 		  	});
 		}
 	  	
 	  	function test_next_query() {
+			current_query++;
 	  		if (queries[current_query] === undefined)
 	  			return;
 			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
-			
+			console.log("Testing query "+queries[current_query]);
 			d3.text(
 				"../querysamples/"+queries[current_query],
 				function (textquery) {
-					d3.json(
+					d3.xhr(
+						"application/json",
 						"../analyze.php",
-						function (processed_json) {
-							var expected_json_file = queries[current_query].replace(/\.sql$/g,'_expected.json');
-							var expected_json_file_exists = fileExists ("../querysamples/"+expected_json_file);
-							ok (fileExists(expected_json_file), "File '"+expected_json_file+"' has not been found");
-							if (fileExists(expected_json_file) {
-								d3.json(expected_json_file,
-									function (expected_json) {
-										test("query "+sql_name+" test", function() {
-											processed_json=objectToLowerCase(processed_json);
-											expected_json=objectToLowerCase(expected_json);
-											ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
-											
-											if (Object.identical(processed_json, expected_json)) {
-												equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
-												equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
-												
-												jsErrors = [];
-												try {
-													ifr.build(processed_json);
-												}
-												catch(e) {
-													jsErrors.push(e);
-												}
-												deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
-											}
-										});
-										current_query++;
-										test_next_query();
-									}
-								);
+						function (response) {
+							var processed_json;
+							try {
+								processed_json=JSON.parse(response);
 							}
+							catch(e) {
+								test("query "+sql_name+" test", function() {
+									ok (false, "The JSON output could not be parsed : "+response);
+								});
+								test_next_query();
+								return;
+							}
+							var expected_json_file = queries[current_query].replace(/\.sql$/g,'_expected.json');
+							d3.json("../querysamples/"+expected_json_file, function (expected_json) {
+								test("query "+sql_name+" test", function() {
+									processed_json=objectToLowerCase(processed_json);
+									expected_json=objectToLowerCase(expected_json);
+									ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
+									
+									if (Object.identical(processed_json, expected_json)) {
+										equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
+										equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
+										
+										jsErrors = [];
+										try {
+											ifr.build(processed_json);
+										}
+										catch(e) {
+											jsErrors.push(e);
+										}
+										deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
+									}
+								});
+								test_next_query();
+							})
+							.on("error", function(error) { 
+								test("query "+sql_name+" test", function() {
+									ok (false, "File '"+expected_json_file+"' has not been found"); 
+								});
+								test_next_query();
+							});
 						}
 					)
 					.header("Content-Type","application/x-www-form-urlencoded")

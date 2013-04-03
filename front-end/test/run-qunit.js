@@ -1,9 +1,15 @@
-if (phantom.args.length === 0 || phantom.args.length > 2) {
-    console.log('Usage: run-qunit.js URL');
+if (!(phantom.args.length === 1 || phantom.args.length === 2)) {
+    console.log('Usage: run-qunit.js URL [debug]');
     phantom.exit(1);
 }
 
 var page = require('webpage').create();
+
+if (phantom.args.length === 2 && phantom.args[1] == "debug") {
+	page.onConsoleMessage = function(msg) {
+		console.log(msg);
+	};
+}
 
 page.open(phantom.args[0], function(status){
     if (status !== "success") {
