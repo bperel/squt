@@ -1,0 +1,1 @@
+SELECT BINARY 'a' = 'A'

@@ -1,0 +1,5 @@
+LOCK TABLES
+table1 AS alias1 READ,
+table2 READ LOCAL,
+table3 WRITE,
+table4 LOW_PRIORITY WRITE

@@ -1,0 +1,1 @@
+SELECT field2 FROM table2 WHERE EXISTS (SELECT field1 FROM table1 WHERE cond1)

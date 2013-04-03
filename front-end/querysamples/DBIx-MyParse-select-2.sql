@@ -1,0 +1,1 @@
+SELECT * FROM table1 LEFT OUTER JOIN table2 USING (field1)
