@@ -79,16 +79,15 @@
 				"../querysamples/"+queries[current_query],
 				function (textquery) {
 					d3.xhr(
-						"application/json",
 						"../analyze.php",
-						function (response) {
+						function (request) {
 							var processed_json;
 							try {
-								processed_json=JSON.parse(response);
+								processed_json=JSON.parse(request.responseText);
 							}
 							catch(e) {
 								test("query "+sql_name+" test", function() {
-									ok (false, "The JSON output could not be parsed : "+response);
+									ok (false, "The JSON output could not be parsed : "+request.responseText);
 								});
 								test_next_query();
 								return;
