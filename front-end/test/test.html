@@ -81,20 +81,21 @@
 					d3.xhr(
 						"../analyze.php",
 						function (request) {
-							var processed_json;
+							var processed_text=request.responseText;
+							console.log("Query : "+textquery.replace(/\n/g,' '));
 							try {
-								processed_json=JSON.parse(request.responseText);
+								var processed_json=JSON.parse(processed_text);
 							}
 							catch(e) {
-								test("query "+sql_name+" test", function() {
-									ok (false, "The JSON output could not be parsed : "+request.responseText);
+								test("query "+sql_name, function() {
+									ok (false, "The JSON output could not be parsed : "+processed_text);
 								});
 								test_next_query();
 								return;
 							}
 							var expected_json_file = queries[current_query].replace(/\.sql$/g,'_expected.json');
 							d3.json("../querysamples/"+expected_json_file, function (expected_json) {
-								test("query "+sql_name+" test", function() {
+								test("query "+sql_name, function() {
 									processed_json=objectToLowerCase(processed_json);
 									expected_json=objectToLowerCase(expected_json);
 									ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
@@ -116,7 +117,7 @@
 								test_next_query();
 							})
 							.on("error", function(error) { 
-								test("query "+sql_name+" test", function() {
+								test("query "+sql_name, function() {
 									ok (false, "File '"+expected_json_file+"' has not been found"); 
 								});
 								test_next_query();
