@@ -4,6 +4,7 @@ include_once('config.php');
 error_reporting(E_ALL);
 
 $os = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows' : 'Linux';
+$is_win= $os == 'Windows';
 
 if (isset($_POST['sample'])) {
 	echo file_get_contents("querysamples/".preg_replace('#\.sql$#','_expected.json',$_POST['sample']));
@@ -26,24 +27,29 @@ else {
 			  .'"'.$PATH_SQUT.'squt/parser/myparse_to_squt.pl" '
 			  .'"'.$query.'" '
 			  .($is_debug ? '"debug" ':'')
-			  .'2> '.$ERROR_OUTPUT_FILE;
+			  .($is_win ? ('2> '.$ERROR_OUTPUT_FILE) : ('2>&1'));
 	if ($is_debug) {
 		echo $command."\n\n";
 	}
 	
-	if ($os == 'Windows') {
+	if ($is_win) {
 		$WshShell = new COM("WScript.Shell");
 		$result = $WshShell->Exec($command)->StdOut->ReadAll;
+		$error_output = file_get_contents($ERROR_OUTPUT_FILE);
 	}
 	else {
 		$result = shell_exec($command);
 	}
-	$error_output = file_get_contents($ERROR_OUTPUT_FILE);
-	if (!empty($error_output)) {
+	if ($is_win && !empty($error_output)) {
 		echo json_encode(array('Error'=>file_get_contents($ERROR_OUTPUT_FILE)));
 	}
 	else {
-		echo $result;
+		if (strpos($result,'{') === false) {
+			echo json_encode(array('Error'=>$result));
+		}
+		else {
+			echo $result;
+		}
 	}
 }
 

@@ -10,6 +10,7 @@ if (is_dir($sample_directory)) {
         }
         closedir($dh);
     }
+	sort($samples);
     echo implode(",",$samples);
 }
 else {
