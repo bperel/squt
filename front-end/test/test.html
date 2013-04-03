@@ -81,7 +81,8 @@
 					d3.json(
 						"../analyze.php",
 						function (processed_json) {
-							d3.json(
+							if (fileExists(expected_json_file) {
+		d3.json(
 								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
 								function (expected_json) {
 									test("query "+sql_name+" test", function() {
@@ -129,6 +130,13 @@
 	        }
 	  		return o2;
 	  	}
+
+		function fileExists(url) {
+			var http = new XMLHttpRequest();
+    			http.open('HEAD', url, false);
+    			http.send();
+    			return http.status!=404;
+		}
   	</script>
   </body>
 </html>
