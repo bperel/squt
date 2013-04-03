@@ -81,33 +81,36 @@
 					d3.json(
 						"../analyze.php",
 						function (processed_json) {
+							var expected_json_file = queries[current_query].replace(/\.sql$/g,'_expected.json');
+							var expected_json_file_exists = fileExists ("../querysamples/"+expected_json_file);
+							ok (fileExists(expected_json_file), "File '"+expected_json_file+"' has not been found");
 							if (fileExists(expected_json_file) {
-		d3.json(
-								"../querysamples/"+queries[current_query].replace(/\.sql$/g,'_expected.json'),
-								function (expected_json) {
-									test("query "+sql_name+" test", function() {
-										processed_json=objectToLowerCase(processed_json);
-										expected_json=objectToLowerCase(expected_json);
-										ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
-										
-										if (Object.identical(processed_json, expected_json)) {
-											equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
-											equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
+								d3.json(expected_json_file,
+									function (expected_json) {
+										test("query "+sql_name+" test", function() {
+											processed_json=objectToLowerCase(processed_json);
+											expected_json=objectToLowerCase(expected_json);
+											ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
 											
-											jsErrors = [];
-											try {
-												ifr.build(processed_json);
+											if (Object.identical(processed_json, expected_json)) {
+												equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
+												equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
+												
+												jsErrors = [];
+												try {
+													ifr.build(processed_json);
+												}
+												catch(e) {
+													jsErrors.push(e);
+												}
+												deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
 											}
-											catch(e) {
-												jsErrors.push(e);
-											}
-											deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
-										}
-									});
-							  		current_query++;
-									test_next_query();
-								}
-							);
+										});
+										current_query++;
+										test_next_query();
+									}
+								);
+							}
 						}
 					)
 					.header("Content-Type","application/x-www-form-urlencoded")
