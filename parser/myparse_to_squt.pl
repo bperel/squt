@@ -19,7 +19,10 @@ if ($debug) {
 	print Dumper $query;
 }
 
-if ($query->getCommand() eq "SQLCOM_ERROR") {
+if ($query->getCommand() ne "SQLCOM_SELECT") {
+	$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
+}
+elsif ($query->getCommand() eq "SQLCOM_ERROR") {
 	$sqlv_tables{"Error"}=$query->getErrstr();
 }
 else {
