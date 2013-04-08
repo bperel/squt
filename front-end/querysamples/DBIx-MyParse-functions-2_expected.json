@@ -1,0 +1,25 @@
+{
+   "Functions" : {
+      "1" : {
+         "to" : "a",
+         "Constants" : {
+            "Microsoft" : "Microsoft"
+         },
+         "name" : "soundex",
+         "alias" : "1"
+      },
+      "a" : {
+         "to" : "OUTPUT",
+         "name" : "=",
+         "alias" : "a"
+      },
+      "2" : {
+         "to" : "a",
+         "Constants" : {
+            "Linix" : "Linix"
+         },
+         "name" : "soundex",
+         "alias" : "2"
+      }
+   }
+}
