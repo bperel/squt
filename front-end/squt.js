@@ -179,10 +179,11 @@ function build(jsondata) {
 		var warningText=[];
 		for (var warnType in jsondata.Warning) {
 			switch (warnType) {
-				case 'No alias':
+			case "No alias": case "No alias field ignored":
 					for (var i in jsondata.Warning[warnType]) {
 						var field_location=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause : field will be ignored");
+						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause "
+										+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 					}
 				break;
 			}
@@ -267,7 +268,7 @@ function build(jsondata) {
 								 };
 		var functionDestination=jsondata.Functions[functionAlias]["to"];
 		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "link", from: "function", functionAlias: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
+			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
 		}
 		else {
 			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
@@ -514,17 +515,6 @@ function positionPathsToOutput(origin,d) {
   
   d3.selectAll("text.outputname").filter(function(link) {
 	return filterFunction(link,origin,d);
-  }).attr("transform",function(link) {
-	  var groundCoords = getNodeCoords(ground.data()[0]);
-	  var sourceCoords = getNodeCoords(
-		pathToOutput.filter(function(pathLink) { 
-		  return link.outputName === pathLink.outputName; 
-		}).data()[0]
-	  );
-	  if (sourceCoords.x > groundCoords.x) {
-		  return "rotate(180 "+sourceCoords.x+","+sourceCoords.y+")";
-	  }
-	  else return "";
   });
 }
 
@@ -568,7 +558,7 @@ function getNodeCoords(pathInfo, sourceOrTarget /* For links only */) {
 					break;
 					case "function":
 						element=func.filter(function(f) { 
-							return pathInfo.functionAlias == f.functionAlias; 
+							return pathInfo.sourceFunctionId == f.functionAlias; 
 						});
 						return {x: parseFloat(element.attr("cx")),
 								y: parseFloat(element.attr("cy")) + FUNCTION_BOX_RY};

@@ -19,19 +19,22 @@ if ($debug) {
 	print Dumper $query;
 }
 
-if ($query->getCommand() eq "SQLCOM_ERROR") {
-	$sqlv_tables{"Error"}=$query->getErrstr();
-}
-elsif ($query->getCommand() ne "SQLCOM_SELECT") {
+if ($query->getCommand() ne "SQLCOM_SELECT") {
 	$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
 }
+elsif ($query->getCommand() eq "SQLCOM_ERROR") {
+	$sqlv_tables{"Error"}=$query->getErrstr();
+}
 else {
+	my $a = $query->getTables();
 	foreach my $selectItem (@{$query->getSelectItems()}) {
 		handleSelectItem($selectItem,-1,1);
 	}
-	foreach my $item (@{$query->getTables()}) {
-		if ($item->getType() eq "JOIN_ITEM") {
-			handleJoin($item);
+	if ($query->getTables() != undef) {
+		foreach my $item (@{$query->getTables()}) {
+			if ($item->getType() eq "JOIN_ITEM") {
+				handleJoin($item);
+			}
 		}
 	}
 	if ($query->getOrder() != undef) {
@@ -77,7 +80,7 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		if ($item->getTableName() eq undef) {
-			setWarning("No alias",$item->getFieldName(),"SELECT");
+			setWarning("No alias field ignored",$item->getFieldName(),"SELECT");
 		}
 		$sqlv_tables{"Tables"}{getSqlTableName($item->getTableName())}{$item->getTableName()}
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$item->getAlias() 
@@ -90,19 +93,17 @@ sub handleSelectItem($$$) {
 	}
 	elsif ($item->getType() eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
-		if ($functionAlias eq undef && $directOutput) {
-			setWarning("No alias",$item->getFuncName(),"SELECT");
+		if ($functionAlias eq undef) {
+			if ($directOutput) {
+				setWarning("No alias",$item->getFuncName(),"SELECT");
+			}
+			$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
 		}
-		else {
-			if ($functionAlias eq undef) {
-				$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
-			}
-			$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$item->getFuncName();
-			$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
-			$sqlv_tables{"Functions"}{$functionAlias}{"to"}=($functionId == -1 ? "OUTPUT" : $functionId);
-			foreach my $argument (@{$item->getArguments()}) {
-				handleSelectItem($argument,$functionAlias,0);
-			}
+		$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$item->getFuncName();
+		$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
+		$sqlv_tables{"Functions"}{$functionAlias}{"to"}=($functionId == -1 ? "OUTPUT" : $functionId);
+		foreach my $argument (@{$item->getArguments()}) {
+			handleSelectItem($argument,$functionAlias,0);
 		}
 	}
 }
@@ -119,7 +120,7 @@ sub handleWhere(\@) {
 		}
 		elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
 			if ($whereArgument->getTableName() eq undef) {
-				setWarning("No alias",$whereArgument->getFieldName(),"WHERE or JOIN");
+				setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
 				return;
 			}
 			if ($fieldname eq undef) {
@@ -148,7 +149,7 @@ sub handleWhere(\@) {
 sub handleOrderBy($) {
 	my ($orderByItem) = @_;
 	if ($orderByItem->getTableName() eq undef) {
-		setWarning("No alias",$orderByItem->getFieldName(),"ORDER");
+		setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
 	}
 	else {
 		$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
