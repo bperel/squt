@@ -118,7 +118,7 @@
 							})
 							.on("error", function(error) { 
 								test("query "+sql_name, function() {
-									ok (false, "File '"+expected_json_file+"' has not been found"); 
+									ok (false, "File '"+expected_json_file+"' has not been found ; processed json : "+JSON.stringify(processed_json)); 
 								});
 								test_next_query();
 							});
