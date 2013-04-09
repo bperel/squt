@@ -1,4 +1,9 @@
 {
+   "warning": {
+      "no alias" : {
+         "=":"select"
+         }
+      },
    "Functions" : {
       "1" : {
          "to" : "a",
