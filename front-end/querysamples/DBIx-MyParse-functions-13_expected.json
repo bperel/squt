@@ -1,0 +1,25 @@
+{
+  "Warning": {
+    "No alias": {
+      "=": "SELECT"
+    }
+  },
+  "Functions": {
+    "1": {
+      "to": "0",
+      "Constants": {
+        "a": "a"
+      },
+      "name": "cast_as_binary",
+      "alias": "1"
+    },
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "A": "A"
+      },
+      "name": "=",
+      "alias": "0"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "Warning": {
+    "No alias": {
+      "regexp": "SELECT"
+    }
+  },
+  "Functions": {
+    "1": {
+      "to": "0",
+      "Constants": {
+        "A": "A"
+      },
+      "name": "cast_as_binary",
+      "alias": "1"
+    },
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "a": "a"
+      },
+      "name": "regexp",
+      "alias": "0"
+    }
+  }
+}
