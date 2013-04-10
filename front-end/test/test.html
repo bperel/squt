@@ -82,7 +82,8 @@
 						"../analyze.php",
 						function (request) {
 							var processed_text=request.responseText;
-							console.log("Query : "+textquery.replace(/\n/g,' '));
+							textquery = textquery.replace(/\n/g,' ');
+							console.log("Query : "+ textquery);
 							try {
 								var processed_json=JSON.parse(processed_text);
 							}
@@ -118,7 +119,7 @@
 							})
 							.on("error", function(error) { 
 								test("query "+sql_name, function() {
-									ok (false, "File '"+expected_json_file+"' has not been found ; processed json for query " + queries[current_query] + " : "+JSON.stringify(processed_json)); 
+									ok (false, "File '"+expected_json_file+"' has not been found ; processed json for query <" + textquery + "> : "+JSON.stringify(processed_json)); 
 								});
 								test_next_query();
 							});
