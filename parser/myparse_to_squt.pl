@@ -26,24 +26,22 @@ elsif ($query->getCommand() eq "SQLCOM_ERROR") {
 	$sqlv_tables{"Error"}=$query->getErrstr();
 }
 else {
-	my $a = $query->getTables();
 	foreach my $selectItem (@{$query->getSelectItems()}) {
 		handleSelectItem($selectItem,-1,1);
 	}
-	if ($query->getTables() != undef) {
+	if ($query->getTables() ne undef) {
 		foreach my $item (@{$query->getTables()}) {
 			if ($item->getType() eq "JOIN_ITEM") {
 				handleJoin($item);
 			}
 		}
 	}
-	if ($query->getOrder() != undef) {
+	if ($query->getOrder() ne undef) {
 		foreach my $orderByItem (@{$query->getOrder()}) {
 			handleOrderBy($orderByItem);
 		}
 	}
-	my $a=$query->getWhere();
-	if ($query->getWhere() != undef) {
+	if ($query->getWhere() ne undef) {
 		handleWhere($query->getWhere());
 	}
 }
@@ -114,35 +112,40 @@ sub handleWhere(\@) {
 	my $tablename;
 	my $value;
 	my $j=0;
-	foreach my $whereArgument (@{$where->getArguments()}) {
-		if ($whereArgument->getType() eq 'FUNC_ITEM') {
-			handleWhere($whereArgument);
-		}
-		elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
-			if ($whereArgument->getTableName() eq undef) {
-				setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
-				return;
-			}
-			if ($fieldname eq undef) {
-				$tablename=$whereArgument->getTableName();
-				$fieldname=$whereArgument->getFieldName();
-			}
-			else { # 2nd argument, also a field
-				$value=$whereArgument->getTableName().".".$whereArgument->getFieldName();
-			}
-		}
-		elsif ($whereArgument->getType() eq 'INT_ITEM' || $whereArgument->getType() eq 'DECIMAL_ITEM'|| $whereArgument->getType() eq 'REAL_ITEM'
-			|| $whereArgument->getType() eq 'STRING_ITEM') {
-			
-			$value=$whereArgument->getValue();
-		}
-		#	foreach my $sub_item (@{$whereArgument->getCondItems()}) {
-		#		handleWhere($sub_item);
-		#	}
+	if ($where->getItemType() eq 'FIELD_ITEM') {
+		setWarning("Invalid",$where->getFieldName(),"WHERE");
 	}
-	if ($fieldname ne undef && $value ne undef) {
-		$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-					{"CONDITION"}{$fieldname}{$value}="JOIN_TYPE_STRAIGHT";
+	else {
+		foreach my $whereArgument (@{$where->getArguments()}) {
+			if ($whereArgument->getType() eq 'FUNC_ITEM') {
+				handleWhere($whereArgument);
+			}
+			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
+				if ($whereArgument->getTableName() eq undef) {
+					setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
+					return;
+				}
+				if ($fieldname eq undef) {
+					$tablename=$whereArgument->getTableName();
+					$fieldname=$whereArgument->getFieldName();
+				}
+				else { # 2nd argument, also a field
+					$value=$whereArgument->getTableName().".".$whereArgument->getFieldName();
+				}
+			}
+			elsif ($whereArgument->getType() eq 'INT_ITEM' || $whereArgument->getType() eq 'DECIMAL_ITEM'|| $whereArgument->getType() eq 'REAL_ITEM'
+				|| $whereArgument->getType() eq 'STRING_ITEM') {
+				
+				$value=$whereArgument->getValue();
+			}
+			#	foreach my $sub_item (@{$whereArgument->getCondItems()}) {
+			#		handleWhere($sub_item);
+			#	}
+		}
+		if ($fieldname ne undef && $value ne undef) {
+			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+						{"CONDITION"}{$fieldname}{$value}="JOIN_TYPE_STRAIGHT";
+		}
 	}
 }
 
@@ -166,6 +169,9 @@ sub setWarning {
 
 sub getSqlTableName($) {
 	my ($tableAlias) = @_;
+	if ($tableAlias eq undef) {
+		return undef;
+	}
 	my $tableName;
 	foreach my $table (@{$query->getTables()}) {
 		$tableName = getSqlTableNameFromTable($tableAlias,$table);

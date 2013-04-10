@@ -178,14 +178,18 @@ function build(jsondata) {
 	if (jsondata.Warning) {
 		var warningText=[];
 		for (var warnType in jsondata.Warning) {
-			switch (warnType) {
-			case "No alias": case "No alias field ignored":
-					for (var i in jsondata.Warning[warnType]) {
-						var field_location=jsondata.Warning[warnType][i];
+			for (var i in jsondata.Warning[warnType]) {
+				var field_location=jsondata.Warning[warnType][i];
+				switch (warnType) {
+					case "No alias": case "No alias field ignored":
 						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause "
-										+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
-					}
-				break;
+										 +(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
+					
+					break;
+					case "Invalid":
+						warningText.push("WARNING - Invalid statement '" + i + "' in "+field_location+" clause : the statement will be ignored");
+					break;
+				}
 			}
 		}
 		d3.select('#log').text(warningText.join("\n"));
