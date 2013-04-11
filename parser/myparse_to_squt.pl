@@ -77,10 +77,11 @@ sub handleJoin {
 sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
-		if ($item->getTableName() eq undef) {
+		my $tableName = getItemTableName($item);
+		if ($tableName eq undef) {
 			setWarning("No alias field ignored",$item->getFieldName(),"SELECT");
 		}
-		$sqlv_tables{"Tables"}{getSqlTableName($item->getTableName())}{$item->getTableName()}
+		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$item->getAlias() 
 																		  || $item->getFieldName();
 		
@@ -170,6 +171,18 @@ sub setWarning {
 	my $concerned_field = $_[1];
 	my $extra_info = $_[2];
 	$sqlv_tables{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
+}
+
+sub getItemTableName($) {
+	my ($item) = @_;
+	if ($item->getTableName() ne undef) {
+		return $item->getTableName();
+	}
+	if ($item->getFieldName() eq "*"
+	 && $query->getTables() ne undef
+	 && scalar @{$query->getTables()} == 1) {
+	 	return @{$query->getTables()}[0]->getTableName();
+	 }
 }
 
 sub getSqlTableName($) {
