@@ -112,8 +112,13 @@ sub handleWhere(\@) {
 	my $tablename;
 	my $value;
 	my $j=0;
-	if ($where->getItemType() eq 'FIELD_ITEM') {
-		setWarning("Invalid",$where->getFieldName(),"WHERE");
+	if ($where->getItemType() ne 'COND_ITEM') {
+		if ($where->getItemType() eq 'COND_ITEM') {
+			setWarning("Invalid",$where->getFieldName(),"WHERE");
+		}
+		if ($where->getItemType() eq 'SUBSELECT_ITEM') {
+			setWarning("Not supported","Sub-selects","");
+		}
 	}
 	else {
 		foreach my $whereArgument (@{$where->getArguments()}) {

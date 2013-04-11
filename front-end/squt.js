@@ -189,6 +189,9 @@ function build(jsondata) {
 					case "Invalid":
 						warningText.push("WARNING - Invalid statement '" + i + "' in "+field_location+" clause : the statement will be ignored");
 					break;
+					case "Not supported":
+						warningText.push("WARNING - Not supported : " + i);
+					break;
 				}
 			}
 		}
