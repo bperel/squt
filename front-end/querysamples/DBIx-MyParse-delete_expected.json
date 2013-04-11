@@ -1,1 +1,1 @@
-{"error":"for performance and security reasons, squt does not allow queries longer than 2000 characters"}
+{"error":"only select queries are supported for now"}
