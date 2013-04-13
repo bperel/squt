@@ -316,7 +316,7 @@ function build(jsondata) {
 			sourceId = parseInt(fieldToTableId(linksToOutput[i].fieldName));
 		}
 		else if (linksToOutput[i].from == "function") {
-			sourceId = parseInt(getFunctionId(linksToOutput[i].functionAlias));
+			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
 		}
 		else continue;
 		l[sourceId+",0"] = {source: sourceId, target: 0, value: 1};
@@ -531,6 +531,12 @@ function positionPathsToFunctions(origin,d) {
 	}).attr("d", function(d) {
 		var sourcePos=getNodeCoords(d, "source");
 		var targetPos=getNodeCoords(d, "target");
+		if (!sourcePos.x || !sourcePos.y) {
+			sourcePos={x:0, y:0};
+		}
+		if (!targetPos.x || !targetPos.y) {
+			targetPos={x:0, y:0};
+		}
 	
 		targetPos.y-=FUNCTION_BOX_RY;
  	
