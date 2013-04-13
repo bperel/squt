@@ -45,7 +45,7 @@ d3.select('#query_sample')
 	  }
   });
 
-d3.text("list_samples.php",function(text) {
+d3.text("list_samples.php?test=false",function(text) {
 	var queries=text.split(/,/g);
 	if (queries.length > 0) {
 		if (queries[0].indexOf("Error") !== -1) {
