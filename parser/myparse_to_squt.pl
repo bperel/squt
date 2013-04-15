@@ -18,12 +18,11 @@ if ($debug) {
 	print "Dumped:\n";
 	print Dumper $query;
 }
-
-if ($query->getCommand() ne "SQLCOM_SELECT") {
-	$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
-}
-elsif ($query->getCommand() eq "SQLCOM_ERROR") {
+if ($query->getCommand() eq "SQLCOM_ERROR") {
 	$sqlv_tables{"Error"}=$query->getErrstr();
+}
+elsif ($query->getCommand() ne "SQLCOM_SELECT") {
+	$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
 }
 else {
 	foreach my $selectItem (@{$query->getSelectItems()}) {
@@ -114,8 +113,13 @@ sub handleWhere(\@) {
 	my $value;
 	my $j=0;
 	if ($where->getItemType() ne 'COND_ITEM') {
-		if ($where->getItemType() eq 'COND_ITEM') {
-			setWarning("Invalid",$where->getFieldName(),"WHERE");
+		if ($where->getItemType() eq 'FIELD_ITEM') {
+			my @fieldInfos = handleFieldInWhere($where, undef);
+			if (@fieldInfos ne undef) {
+				my($tablename, $fieldname) = @fieldInfos;
+				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+							{"CONDITION"}{$fieldname}{""}="JOIN_TYPE_STRAIGHT";
+			}
 		}
 		if ($where->getItemType() eq 'SUBSELECT_ITEM') {
 			setWarning("Not supported","Sub-selects","");
@@ -127,16 +131,16 @@ sub handleWhere(\@) {
 				handleWhere($whereArgument);
 			}
 			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
-				if ($whereArgument->getTableName() eq undef) {
-					setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
+				my @fieldInfos = handleFieldInWhere($whereArgument, $fieldname);
+				if (@fieldInfos eq undef) {
 					return;
 				}
-				if ($fieldname eq undef) {
-					$tablename=$whereArgument->getTableName();
-					$fieldname=$whereArgument->getFieldName();
+				if ($fieldInfos[1] ne undef) {
+					$tablename=$fieldInfos[0];
+					$fieldname=$fieldInfos[1];
 				}
-				else { # 2nd argument, also a field
-					$value=$whereArgument->getTableName().".".$whereArgument->getFieldName();
+				else { 
+					$value=$fieldInfos[0];
 				}
 			}
 			elsif ($whereArgument->getType() eq 'INT_ITEM' || $whereArgument->getType() eq 'DECIMAL_ITEM'|| $whereArgument->getType() eq 'REAL_ITEM'
@@ -153,6 +157,25 @@ sub handleWhere(\@) {
 						{"CONDITION"}{$fieldname}{$value}="JOIN_TYPE_STRAIGHT";
 		}
 	}
+}
+
+sub handleFieldInWhere($$) {
+	my ($whereArgument,$fieldname) = @_;
+	my @fieldInfos; # table name then field name if $fieldname doesn't already exit, full field name else
+	if ($whereArgument->getTableName() eq undef) {
+		setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
+		$fieldInfos[0]="?";
+		$fieldInfos[1]=$whereArgument->getFieldName();
+	}
+	elsif ($fieldname eq undef) {
+		$fieldInfos[0]=$whereArgument->getTableName();
+		$fieldInfos[1]=$whereArgument->getFieldName();
+	}
+	else { # 2nd argument, also a field
+		$fieldInfos[0]=$whereArgument->getTableName().".".$whereArgument->getFieldName();
+	}
+	
+	return @fieldInfos;
 }
 
 sub handleOrderBy($) {
@@ -178,17 +201,27 @@ sub getItemTableName($) {
 	if ($item->getTableName() ne undef) {
 		return $item->getTableName();
 	}
-	if ($item->getFieldName() eq "*"
-	 && $query->getTables() ne undef
-	 && scalar @{$query->getTables()} == 1) {
-	 	return @{$query->getTables()}[0]->getTableName();
+	if ($query->getTables() eq undef) {
+		return undef;
+	}
+	my @a=@{$query->getTables()};
+	if ($query->getTables() ne undef) {
+	 	if (scalar @{$query->getTables()} == 1) {
+	 		return @{$query->getTables()}[0]->getTableName();
+	 	}
+	 	else {
+	 		return "?";
+	 	}
 	 }
 }
 
 sub getSqlTableName($) {
 	my ($tableAlias) = @_;
-	if ($tableAlias eq undef) {
+	if ($query->getTables() eq undef || $tableAlias eq undef) {
 		return undef;
+	}
+	elsif ($tableAlias eq "?") {
+		return "?";
 	}
 	my $tableName;
 	foreach my $table (@{$query->getTables()}) {
