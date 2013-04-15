@@ -170,7 +170,7 @@ function build(jsondata) {
 		svg.selectAll('image,g').remove();
 		return;
 	}
-	if (jsondata.Error) {
+	if (jsondata.Error !== undefined) {
 		d3.select('#log').text("ERROR - " + jsondata.Error);
 		svg.selectAll('image,g').remove();
 		return;
