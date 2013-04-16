@@ -1,0 +1,17 @@
+{
+  "Warning": {
+    "No alias": {
+      "get_format": "SELECT"
+    }
+  },
+  "Functions": {
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "INTERNAL": "INTERNAL"
+      },
+      "name": "get_format",
+      "alias": "0"
+    }
+  }
+}
