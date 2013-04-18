@@ -67,7 +67,8 @@ sub handleJoin {
 				if ($joinType eq undef) {
 					$joinType = "JOIN_TYPE_STRAIGHT";
 				}
-				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{$table2->getAlias.".".$field2->getFieldName()}=$joinType;
+				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
+															  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
 			}	
 		}
 	}
@@ -112,26 +113,27 @@ sub handleWhere(\@) {
 	my $tablename;
 	my $value;
 	my $j=0;
-	if ($where->getItemType() ne 'COND_ITEM') {
-		if ($where->getItemType() eq 'FIELD_ITEM') {
-			my @fieldInfos = handleFieldInWhere($where, undef);
-			if (@fieldInfos ne undef) {
-				my($tablename, $fieldname) = @fieldInfos;
-				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-							{"CONDITION"}{$fieldname}{""}="JOIN_TYPE_STRAIGHT";
-			}
-		}
-		if ($where->getItemType() eq 'SUBSELECT_ITEM') {
-			setWarning("Not supported","Sub-selects","");
+	if ($where->getItemType() eq 'FIELD_ITEM') {
+		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
+		if (@fieldInfos ne undef) {
+			my($tablename, $fieldname) = @fieldInfos;
+			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+						{"CONDITION"}{$fieldname}{"EXISTS"}=1;
 		}
 	}
-	else {
+	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
+		setWarning("Not supported","Sub-selects","");
+	}
+	elsif ($where->getItemType() eq 'FUNC_ITEM') {
+		handleFunctionInWhere($where);
+	}
+	elsif ($where->getItemType() eq 'COND_ITEM') {
 		foreach my $whereArgument (@{$where->getArguments()}) {
 			if ($whereArgument->getType() eq 'FUNC_ITEM') {
-				handleWhere($whereArgument);
+				handleFunctionInWhere($whereArgument);
 			}
 			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
-				my @fieldInfos = handleFieldInWhere($whereArgument, $fieldname);
+				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, $fieldname);
 				if (@fieldInfos eq undef) {
 					return;
 				}
@@ -154,14 +156,41 @@ sub handleWhere(\@) {
 		}
 		if ($fieldname ne undef && $value ne undef) {
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-						{"CONDITION"}{$fieldname}{$value}="JOIN_TYPE_STRAIGHT";
+						{"CONDITION"}{$fieldname}{"VALUE"}=$value;
 		}
 	}
 }
 
-sub handleFieldInWhere($$) {
+sub handleFunctionInWhere($$) {
+	my ($function,$destination) = @_;
+	my $functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
+	$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$function->getFuncName();
+	$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
+	$sqlv_tables{"Functions"}{$functionAlias}{"to"}=
+		($destination ne undef) ? $destination : "NOWHERE";
+	
+	my $tablename;
+	my $fieldname;
+	foreach my $functionArgument (@{$function->getArguments()}) {
+		if ($functionArgument->getType() eq 'FIELD_ITEM') {
+			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, undef);
+			$tablename=$fieldInfos[0];
+			$fieldname=$fieldInfos[1];
+			#$sqlv_tables{"Functions"}{$functionAlias}{"fromFields"}{$tablename}{$fieldname}=1;
+		}
+		elsif ($functionArgument->getType() eq 'FUNC_ITEM') {
+			handleFunctionInWhere($functionArgument,$functionAlias);
+		}
+	}
+	if ($fieldname ne undef) {
+		$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+				{"CONDITION"}{$fieldname}{"FUNCTION"}{$functionAlias}=1;
+	}
+}
+
+sub getInfosFromFieldInWhere($$) {
 	my ($whereArgument,$fieldname) = @_;
-	my @fieldInfos; # table name then field name if $fieldname doesn't already exit, full field name else
+	my @fieldInfos; # table name then field name if $fieldname doesn't already exist, full field name else
 	if ($whereArgument->getTableName() eq undef) {
 		setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
 		$fieldInfos[0]="?";
