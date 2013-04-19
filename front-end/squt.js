@@ -247,7 +247,7 @@ function build(jsondata) {
 											linksToFunctions.push({type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: destinationFunctionAlias});
 										}
 									break;
-									case 'VALUE': case 'EXISTS':
+									case 'JOIN': case 'VALUE': case 'EXISTS':
 										for (var otherField in conditionData) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
 												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
@@ -263,7 +263,7 @@ function build(jsondata) {
 												}
 												links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
 											}
-											else { 
+											else { // It's a value
 												fields[tableAlias+"."+field]['filtered']=true;
 											}
 										}
@@ -281,12 +281,12 @@ function build(jsondata) {
 	}
 	
 	for (var functionAlias in jsondata.Functions) {
+		var functionDestination=jsondata.Functions[functionAlias]["to"];
 		functions[functionAlias]={type: "function",
 								  functionAlias: functionAlias, 
 							      name: jsondata.Functions[functionAlias]["name"],
 							      isCondition: functionDestination === "NOWHERE"
 								 };
-		var functionDestination=jsondata.Functions[functionAlias]["to"];
 		if (functionDestination === "OUTPUT") {
 			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
 		}

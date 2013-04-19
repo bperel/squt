@@ -1,5 +1,13 @@
 {
    "Functions" : {
+      "1" : {
+         "to" : "NOWHERE",
+         "Constants" : {
+            "1" : "1"
+         },
+         "name" : "=",
+         "alias" : "1"
+      },
       "PersonFullName" : {
          "to" : "OUTPUT",
          "name" : "concat",
@@ -7,18 +15,6 @@
       }
    },
    "Tables" : {
-      "person" : {
-         "p" : {
-            "OUTPUT" : {
-               "firstName" : {
-                  "PersonFullName" : "firstName"
-               },
-               "lastName" : {
-                  "PersonFullName" : "lastName"
-               }
-            }
-         }
-      },
       "contract" : {
          "co" : {
             "OUTPUT" : {
@@ -28,10 +24,26 @@
             },
             "CONDITION" : {
                "personInChargeID" : {
-                  "p.ID" : "JOIN_TYPE_STRAIGHT"
+                  "JOIN" : {
+                     "p.ID" : "JOIN_TYPE_STRAIGHT"
+                  }
                },
                "isActive" : {
-                  "1" : "JOIN_TYPE_STRAIGHT"
+                  "FUNCTION" : {
+                     "1" : "1"
+                  }
+               }
+            }
+         }
+      },
+      "Person" : {
+         "p" : {
+            "OUTPUT" : {
+               "firstName" : {
+                  "PersonFullName" : "firstName"
+               },
+               "lastName" : {
+                  "PersonFullName" : "lastName"
                }
             }
          }
