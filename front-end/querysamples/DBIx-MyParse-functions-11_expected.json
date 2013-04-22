@@ -1,0 +1,35 @@
+{
+   "Warning" : {
+      "No alias field ignored" : {
+         "body" : "WHERE or JOIN",
+         "title" : "WHERE or JOIN"
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "NOWHERE",
+         "name" : "match",
+         "Constants" : {
+            "database" : "database"
+         },
+         "alias" : "0"
+      }
+   },
+   "Tables" : {
+      "articles" : {
+         "articles" : {
+            "OUTPUT" : {
+               "body" : {
+                  "0" : "body"
+               },
+               "title" : {
+                  "0" : "title"
+               },
+               "*" : {
+                  "-1" : "*"
+               }
+            }
+         }
+      }
+   }
+}

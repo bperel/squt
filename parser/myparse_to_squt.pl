@@ -163,8 +163,10 @@ sub handleWhere(\@) {
 
 sub handleFunctionInWhere($$) {
 	my ($function,$destination) = @_;
-	my $functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
-	
+	my $functionAlias = $function->getAlias();
+	if ($functionAlias eq undef) {
+		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
+	}
 	my $tablename;
 	my $fieldname;
 	my $tablename2;
@@ -172,14 +174,14 @@ sub handleFunctionInWhere($$) {
 	foreach my $functionArgument (@{$function->getArguments()}) {
 		if ($functionArgument->getType() eq 'FIELD_ITEM') {
 			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, $fieldname);
-			if ($tablename eq undef) {
-				$tablename=$fieldInfos[0];
-				$fieldname=$fieldInfos[1];
+			my $tableName = getItemTableName($functionArgument);
+			if ($tableName eq undef) {
+				setWarning("No alias field ignored",$functionArgument->getFieldName(),"SELECT");
 			}
-			else { 
-				$tablename2=$fieldInfos[0];
-				$fieldname2=$fieldInfos[1];
-			}
+			$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
+								  {"OUTPUT"}{$functionArgument->getFieldName()}{$functionAlias}
+								 =$functionArgument->getAlias() 
+							   || $functionArgument->getFieldName();
 		}
 		elsif ($functionArgument->getType() eq 'INT_ITEM' 
 			|| $functionArgument->getType() eq 'DECIMAL_ITEM'
@@ -191,21 +193,10 @@ sub handleFunctionInWhere($$) {
 			handleFunctionInWhere($functionArgument,$functionAlias);
 		}
 	}
-	if ($fieldname ne undef) {
-		if ($fieldname2 ne undef) {
-			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}{"CONDITION"}{$fieldname}{"JOIN"}
-								  {$tablename2.".".$fieldname2}="JOIN_TYPE_STRAIGHT";
-		}
-		else {
-			$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$function->getFuncName();
-			$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
-			$sqlv_tables{"Functions"}{$functionAlias}{"to"}=
-				($destination ne undef) ? $destination : "NOWHERE";
-			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-					{"CONDITION"}{$fieldname}{"FUNCTION"}{$functionAlias}="1";
-		}
-	}
 	
+	$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$function->getFuncName();
+	$sqlv_tables{"Functions"}{$functionAlias}{"to"}= $destination || "NOWHERE";
+
 }
 
 sub getInfosFromFieldInWhere($$) {
