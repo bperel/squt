@@ -17,6 +17,13 @@
          "name" : "concat",
          "alias" : "PersonDisplayedName"
       },
+      "4" : {
+         "to" : "NOWHERE",
+         "name" : "=",
+         "Constants" : {
+            "1" : "1"
+         }
+      },
       "1" : {
          "to" : "PersonDisplayedName",
          "Constants" : {
@@ -36,24 +43,7 @@
       }
    },
    "Tables" : {
-      "contract" : {
-         "co" : {
-            "OUTPUT" : {
-               "ContractID" : {
-                  "-1" : "ID"
-               }
-            },
-            "CONDITION" : {
-               "personInChargeID" : {
-                  "p.ID" : "JOIN_TYPE_STRAIGHT"
-               },
-               "isActive" : {
-                  "1" : "JOIN_TYPE_STRAIGHT"
-               }
-            }
-         }
-      },
-      "person" : {
+      "Person" : {
          "p" : {
             "OUTPUT" : {
                "firstName" : {
@@ -62,6 +52,25 @@
                "lastName" : {
                   "PersonDisplayedName" : "lastName",
                   "3" : "lastName"
+               }
+            }
+         }
+      },
+      "Contract" : {
+         "co" : {
+            "OUTPUT" : {
+               "isActive" : {
+                  "4" : "isActive"
+               },
+               "ContractID" : {
+                  "-1" : "ID"
+               }
+            },
+            "CONDITION" : {
+               "personInChargeID" : {
+                  "JOIN" : {
+                     "p.ID" : "JOIN_TYPE_STRAIGHT"
+                  }
                }
             }
          }

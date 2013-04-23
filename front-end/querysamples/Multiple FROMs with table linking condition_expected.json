@@ -1,37 +1,56 @@
 {
+   "Functions" : {
+      "1" : {
+         "to" : "NOWHERE",
+         "name" : ">",
+         "Constants" : {
+            "0" : "0"
+         }
+      },
+      "0" : {
+         "to" : "NOWHERE",
+         "name" : "=",
+         "Constants" : {
+            "C" : "C"
+         }
+      },
+      "2" : {
+         "to" : "NOWHERE",
+         "name" : "="
+      }
+   },
    "Tables" : {
-      "contract" : {
+      "Company" : {
+         "comp" : {
+            "OUTPUT" : {
+               "companyCode" : {
+                  "2" : "companyCode"
+               },
+               "companyName" : {
+                  "-1" : "companyName"
+               }
+            }
+         }
+      },
+      "Contract" : {
          "co" : {
             "OUTPUT" : {
+               "companyCode" : {
+                  "2" : "companyCode"
+               },
                "contractOrigin" : {
                   "-1" : "contractOrigin"
                },
+               "contractType" : {
+                  "0" : "contractType"
+               },
                "contractID" : {
+                  "1" : "contractID",
                   "-1" : "ID"
                }
             },
             "SORT" : {
                "contractDate" : "ASC"
-            },
-            "CONDITION" : {
-               "companyCode" : {
-                  "comp.companyCode" : "JOIN_TYPE_STRAIGHT"
-               },
-               "contractType" : {
-                  "C" : "JOIN_TYPE_STRAIGHT"
-               },
-               "contractID" : {
-                  "0" : "JOIN_TYPE_STRAIGHT"
-               }
-            }
-         }
-      },
-      "company" : {
-         "comp" : {
-            "OUTPUT" : {
-               "companyName" : {
-                  "-1" : "companyName"
-               }
             }
          }
       }

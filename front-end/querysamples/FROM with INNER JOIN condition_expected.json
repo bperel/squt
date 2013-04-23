@@ -1,6 +1,6 @@
 {
    "Tables" : {
-      "contract" : {
+      "Contract" : {
          "co" : {
             "OUTPUT" : {
                "contractID" : {
@@ -9,12 +9,14 @@
             },
             "CONDITION" : {
                "companyCode" : {
-                  "comp.companyCode" : "JOIN_TYPE_STRAIGHT"
+                  "JOIN" : {
+                     "comp.companyCode" : "JOIN_TYPE_STRAIGHT"
+                  }
                }
             }
          }
       },
-      "company" : {
+      "Company" : {
          "comp" : {
             "OUTPUT" : {
                "companyName" : {
