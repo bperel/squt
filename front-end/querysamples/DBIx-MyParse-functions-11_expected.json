@@ -11,8 +11,7 @@
          "name" : "match",
          "Constants" : {
             "database" : "database"
-         },
-         "alias" : "0"
+         }
       }
    },
    "Tables" : {
