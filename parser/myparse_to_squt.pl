@@ -202,12 +202,13 @@ sub handleFunctionInWhere($$) {
 sub getInfosFromFieldInWhere($$) {
 	my ($whereArgument,$fieldname) = @_;
 	my @fieldInfos; # table name then field name if $fieldname doesn't already exist, full field name else
-	if ($whereArgument->getTableName() eq undef) {
+	my $tableName = getItemTableName($whereArgument);
+	if ($tableName eq undef) {
 		setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
 		$fieldInfos[0]="?";
 	}
 	else {
-		$fieldInfos[0]=$whereArgument->getTableName();
+		$fieldInfos[0]=$tableName;
 	}
 	$fieldInfos[1]=$whereArgument->getFieldName();
 	return @fieldInfos;
