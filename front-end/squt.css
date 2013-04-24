@@ -93,6 +93,10 @@ ellipse.function {
   stroke-width: 1.5px;	
 }
 
+ellipse.function.conditional {
+	stroke: green;
+}
+
 text {
   font: 12px Courier;
   pointer-events: none;

@@ -6,20 +6,20 @@
       },
    "Functions" : {
       "1" : {
-         "to" : "a",
+         "to" : "0",
          "Constants" : {
             "Microsoft" : "Microsoft"
          },
          "name" : "soundex",
          "alias" : "1"
       },
-      "a" : {
+      "0" : {
          "to" : "OUTPUT",
          "name" : "=",
-         "alias" : "a"
+         "alias" : "0"
       },
       "2" : {
-         "to" : "a",
+         "to" : "0",
          "Constants" : {
             "Linix" : "Linix"
          },
