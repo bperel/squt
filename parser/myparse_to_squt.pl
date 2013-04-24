@@ -78,7 +78,7 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
-		if ($tableName eq undef) {
+		if ($tableName eq "?") {
 			setWarning("No alias field ignored",$item->getFieldName(),"SELECT");
 		}
 		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
@@ -175,7 +175,7 @@ sub handleFunctionInWhere($$) {
 		if ($functionArgument->getType() eq 'FIELD_ITEM') {
 			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, $fieldname);
 			my $tableName = getItemTableName($functionArgument);
-			if ($tableName eq undef) {
+			if ($tableName eq "?") {
 				setWarning("No alias field ignored",$functionArgument->getFieldName(),"SELECT");
 			}
 			$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
@@ -203,7 +203,7 @@ sub getInfosFromFieldInWhere($$) {
 	my ($whereArgument,$fieldname) = @_;
 	my @fieldInfos; # table name then field name if $fieldname doesn't already exist, full field name else
 	my $tableName = getItemTableName($whereArgument);
-	if ($tableName eq undef) {
+	if ($tableName eq "?") {
 		setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
 		$fieldInfos[0]="?";
 	}
@@ -242,7 +242,8 @@ sub getItemTableName($) {
 	}
 	my @a=@{$query->getTables()};
 	if ($query->getTables() ne undef) {
-	 	if (scalar @{$query->getTables()} == 1) {
+	 	if (scalar @{$query->getTables()} == 1 
+	 			&& @{$query->getTables()}[0]->getType() eq "TABLE_ITEM") {
 	 		return @{$query->getTables()}[0]->getTableName();
 	 	}
 	 	else {
