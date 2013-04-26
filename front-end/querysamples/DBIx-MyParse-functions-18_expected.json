@@ -1,0 +1,28 @@
+{
+  "Warning": {
+    "No alias": {
+      "=": "SELECT"
+    }
+  },
+  "Tables": {
+    "": {
+      "": {
+        "OUTPUT": {
+          "a": {
+            "0": "a"
+          }
+        }
+      }
+    }
+  },
+  "Functions": {
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "b": "b"
+      },
+      "name": "=",
+      "alias": "0"
+    }
+  }
+}
