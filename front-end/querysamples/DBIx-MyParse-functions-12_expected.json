@@ -1,0 +1,28 @@
+{
+  "functions": {
+    "0": {
+      "to": "nowhere",
+      "name": "match",
+      "constants": {
+        "database": "database"
+      }
+    }
+  },
+  "tables": {
+    "articles": {
+      "articles": {
+        "output": {
+          "body": {
+            "0": "body"
+          },
+          "title": {
+            "0": "title"
+          },
+          "*": {
+            "-1": "*"
+          }
+        }
+      }
+    }
+  }
+}
