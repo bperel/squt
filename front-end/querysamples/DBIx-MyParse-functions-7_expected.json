@@ -1,0 +1,18 @@
+{
+  "Warning": {
+    "No alias": {
+      "date_add_interval": "SELECT"
+    }
+  },
+  "Functions": {
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "31": "31",
+        "1998-01-02": "1998-01-02"
+      },
+      "name": "date_add_interval",
+      "alias": "0"
+    }
+  }
+}

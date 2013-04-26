@@ -1,0 +1,18 @@
+{
+  "Warning": {
+    "No alias": {
+      "ltrim": "SELECT"
+    }
+  },
+  "Functions": {
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "x": "x",
+        "xxxbarxxx": "xxxbarxxx"
+      },
+      "name": "ltrim",
+      "alias": "0"
+    }
+  }
+}
