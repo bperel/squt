@@ -1,0 +1,22 @@
+{
+  "Warning": {
+    "No alias": {
+      "case_switch": "SELECT"
+    }
+  },
+  "Functions": {
+    "0": {
+      "to": "OUTPUT",
+      "Constants": {
+        "1": "1",
+        "one": "one",
+        "3": "3",
+        "more": "more",
+        "two": "two",
+        "2": "2"
+      },
+      "name": "case_switch",
+      "alias": "0"
+    }
+  }
+}
