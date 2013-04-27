@@ -1,0 +1,23 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "coercibility" : "SELECT"
+      }
+   },
+   "Functions" : {
+      "1" : {
+         "to" : "0",
+         "Constants" : {
+            "abc" : "abc",
+            "latin1_swedish_ci" : "latin1_swedish_ci"
+         },
+         "name" : "collate",
+         "alias" : "1"
+      },
+      "0" : {
+         "to" : "OUTPUT",
+         "name" : "coercibility",
+         "alias" : "0"
+      }
+   }
+}
