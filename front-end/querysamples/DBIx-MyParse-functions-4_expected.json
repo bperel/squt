@@ -1,0 +1,29 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "like" : "SELECT"
+      }
+   },
+   "Tables" : {
+      "" : {
+         "" : {
+            "OUTPUT" : {
+               "expr" : {
+                  "0" : "expr"
+               }
+            }
+         }
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "OUTPUT",
+         "Constants" : {
+            "|" : "|",
+            "%test_" : "%test_"
+         },
+         "name" : "like",
+         "alias" : "0"
+      }
+   }
+}
