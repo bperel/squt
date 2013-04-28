@@ -735,7 +735,16 @@ function positionFunction(d, i) {
 	  .attr("y", y);
 
 	constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
-	  .attr("x", function(c,j) { return x+30*j; })
+	  .attr("x", function(c,j) { 
+		  var offset=0;
+		  constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
+		  	.each(function(c2,j2) {
+		  		if (j2<j) {
+		  			offset+=c2.name.length*CHAR_WIDTH;
+		  		}
+		  	});	
+		  return x+offset; 
+	  })
 	  .attr("y", y-50);
 	
 	func.filter(function(func) { return func.functionAlias == d.functionAlias; })
