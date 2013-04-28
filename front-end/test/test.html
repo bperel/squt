@@ -126,7 +126,7 @@
 						}
 					)
 					.header("Content-Type","application/x-www-form-urlencoded")
-					.send("POST","query="+textquery.replace(/\n/g,' '));
+					.send("POST","query="+encodeURIComponent(textquery.replace(/\n/g,' ')));
 				}
 			);
 	  	}
