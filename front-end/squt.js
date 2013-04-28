@@ -521,7 +521,7 @@ function positionPathsToOutput(origin,d) {
 	return filterFunction(link,origin,d);
   }).attr("d", function(link) { 
 	  var sourceCoords = getNodeCoords(link);
-	  var groundCoords = getNodeCoords(ground.data()[0]);
+	  var groundCoords = getNodeCoords(ground.data()[0], {role: "target"});
 	  
 	  var dx = groundCoords.x - sourceCoords.x,
 		  dy = groundCoords.y - sourceCoords.y,
@@ -542,8 +542,8 @@ function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
 	  return filterFunction(link,origin,d);
 	}).attr("d", function(d) {
-		var sourcePos=getNodeCoords(d, "source");
-		var targetPos=getNodeCoords(d, "target");
+		var sourcePos=getNodeCoords(d, {role: "source"});
+		var targetPos=getNodeCoords(d, {role: "target"});
 		if (!sourcePos.x || !sourcePos.y) {
 			sourcePos={x:0, y:0};
 		}
@@ -560,8 +560,8 @@ function positionPathsToFunctions(origin,d) {
 	});
 }
 
-function getNodeCoords(pathInfo, sourceOrTarget /* For links only */) {
-	sourceOrTarget = sourceOrTarget || "source";
+function getNodeCoords(pathInfo, args) {
+	args = args || {};
 	var element = null;
 	switch (pathInfo.type) {
 		case "field":
@@ -572,7 +572,8 @@ function getNodeCoords(pathInfo, sourceOrTarget /* For links only */) {
 					y: parseFloat(element.attr("cy"))};
 		break;
 		case "link":
-			if (sourceOrTarget == "source") {
+			args.role = args.role || "source";
+			if (args.role == "source") {
 				switch (pathInfo.from) {
 					case "field":
 						element=field.filter(function(f) { 
@@ -614,8 +615,13 @@ function getNodeCoords(pathInfo, sourceOrTarget /* For links only */) {
 					y: parseFloat(element.attr("y"))};
 		break;
 		case "ground":
-			return {x: parseFloat(ground.attr("x"))+GROUND_SIDE/2,
-					y: parseFloat(ground.attr("y"))+GROUND_SIDE/2};
+			args.role = args.role || "source";
+			var coords = {x: parseFloat(ground.attr("x"))+GROUND_SIDE/2,
+						  y: parseFloat(ground.attr("y"))+GROUND_SIDE/2};
+			if (args.role === "target") {
+				coords.y-=GROUND_SIDE/2;
+			}
+			return coords;
 	}
 }
 
