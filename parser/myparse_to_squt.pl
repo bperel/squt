@@ -90,6 +90,9 @@ sub handleSelectItem($$$) {
 		|| $item->getType() eq 'STRING_ITEM') {
 		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getValue()}=$item->getValue();
 	}
+	elsif ($item->getType() eq 'INTERVAL_ITEM') {
+		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getInterval()}=$item->getInterval();
+	}
 	elsif ($item->getType() eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
 		if ($functionAlias eq undef) {

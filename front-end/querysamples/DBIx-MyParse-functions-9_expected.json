@@ -1,0 +1,18 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "extract" : "SELECT"
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "OUTPUT",
+         "Constants" : {
+            "1999-07-02 01:02:03" : "1999-07-02 01:02:03",
+            "INTERVAL_YEAR_MONTH" : "INTERVAL_YEAR_MONTH"
+         },
+         "name" : "extract",
+         "alias" : "0"
+      }
+   }
+}
