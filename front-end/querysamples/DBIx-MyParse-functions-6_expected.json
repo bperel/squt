@@ -1,13 +1,14 @@
 {
-  "Warning": {
-    "No alias": {
-      "date_add_interval": "SELECT"
+  "warning": {
+    "no alias": {
+      "date_add_interval": "select"
     }
   },
-  "Functions": {
+  "functions": {
     "0": {
-      "to": "OUTPUT",
-      "Constants": {
+      "to": "output",
+      "constants": {
+        "interval_day": "interval_day",
         "31": "31",
         "1998-01-02": "1998-01-02"
       },

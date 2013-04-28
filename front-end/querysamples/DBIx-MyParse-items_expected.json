@@ -1,0 +1,31 @@
+{
+   "Tables" : {
+      "" : {
+         "" : {
+            "OUTPUT" : {
+               "field" : {
+                  "1" : "field"
+               }
+            }
+         }
+      }
+   },
+   "Functions" : {
+      "1" : {
+         "to" : "alias",
+         "Constants" : {
+            "6" : "6"
+         },
+         "name" : "left",
+         "alias" : "1"
+      },
+      "alias" : {
+         "to" : "OUTPUT",
+         "Constants" : {
+            "string" : "string"
+         },
+         "name" : "=",
+         "alias" : "alias"
+      }
+   }
+}
