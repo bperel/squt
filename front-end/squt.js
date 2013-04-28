@@ -147,7 +147,7 @@ function analyzeAndBuild(query) {
 		parameters="sample="+selected_query_sample;
 	}
 	else {
-		parameters="query="+query;
+		parameters="query="+encodeURIComponent(query);
 	}
 	if (no_graph) {
 		d3.text(URL,function(data) {
