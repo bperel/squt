@@ -69,6 +69,9 @@ sub handleJoin {
 				}
 				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
 															  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
+				if ($sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()} eq undef) {
+					$sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}{"EXISTS"}=1;
+				}
 			}	
 		}
 	}
@@ -78,12 +81,29 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
+		my $fieldAlias = $item->getFieldName eq "*" ? "" : $item->getAlias() || $item->getFieldName();
 		if ($tableName eq "?") {
+			if ($item->getFieldName eq "*") {
+				foreach my $tableOrJoin (@{$query->getTables()}) {
+					if ($tableOrJoin->getType() eq "JOIN_ITEM") {
+						foreach my $sub_item (@{$tableOrJoin->getJoinItems()}) {
+							if ($sub_item->getType() eq "TABLE_ITEM") {
+								$sqlv_tables{"Tables"}{getSqlTableName($sub_item->getTableName())}
+									{$sub_item->getTableName()}{"OUTPUT"}{"*"}{$functionId}=$fieldAlias;
+							}
+						}
+					}
+					else {
+						$sqlv_tables{"Tables"}{getSqlTableName($tableOrJoin->getTableName())}
+							{$tableOrJoin->getTableName()}{"OUTPUT"}{"*"}{$functionId}=$fieldAlias;
+					}
+				}
+				return;
+			}
 			setWarning("No alias field ignored",$item->getFieldName(),"SELECT");
 		}
 		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
-							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$item->getAlias() 
-																		  || $item->getFieldName();
+							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$fieldAlias;
 		
 	}
 	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'

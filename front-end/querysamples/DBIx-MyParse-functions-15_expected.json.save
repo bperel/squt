@@ -1,0 +1,24 @@
+{
+  "No alias": {
+    "cast_as_signed": "SELECT"
+  }
+},
+"Tables": {
+  "?": {
+    "?": {
+      "OUTPUT": {
+        "expr": {
+          "0": "expr"
+        }
+      }
+    }
+  }
+},
+"Functions": {
+  "0": {
+    "to": "OUTPUT",
+    "name": "cast_as_signed",
+    "alias": "0"
+  }
+}
+}

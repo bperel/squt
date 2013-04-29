@@ -1,0 +1,32 @@
+ield ignored" : {
+         "body" : "WHERE or JOIN",
+         "title" : "WHERE or JOIN"
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "NOWHERE",
+         "name" : "match",
+         "Constants" : {
+            "database" : "database"
+         }
+      }
+   },
+   "Tables" : {
+      "articles" : {
+         "articles" : {
+            "OUTPUT" : {
+               "body" : {
+                  "0" : "body"
+               },
+               "title" : {
+                  "0" : "title"
+               },
+               "*" : {
+                  "-1" : "*"
+               }
+            }
+         }
+      }
+   }
+}

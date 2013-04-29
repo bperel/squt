@@ -1,0 +1,29 @@
+{
+   "Tables" : {
+      "table1" : {
+         "table1" : {
+            "OUTPUT" : {
+               "*" : {
+                  "-1" : ""
+               }
+            },
+            "CONDITION" : {
+               "field1" : {
+                  "JOIN" : {
+                     "table2.field2" : "JOIN_TYPE_LEFT"
+                  }
+               }
+            }
+         }
+      },
+      "table2" : {
+         "table2" : {
+            "OUTPUT" : {
+               "*" : {
+                  "-1" : ""
+               }
+            }
+         }
+      }
+   }
+}
