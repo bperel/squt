@@ -57,22 +57,33 @@ sub handleJoin {
 			}
 		}
 		my $joinCond = $item->getJoinCond();
-		if ($joinCond ne undef && $two_tables) {
-			if ($joinCond->getType() eq "FUNC_ITEM") {
-				my $table = @{$item->getJoinItems()}[0];
-				my $table2 = @{$item->getJoinItems()}[1];
-				my $field1 = @{$joinCond->getArguments()}[0];
-				my $field2 = @{$joinCond->getArguments()}[1];
-				my $joinType = $item->getJoinType();
-				if ($joinType eq undef) {
-					$joinType = "JOIN_TYPE_STRAIGHT";
-				}
-				$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
-															  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
-				if ($sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()} eq undef) {
-					$sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}{"EXISTS"}=1;
-				}
-			}	
+		my $joinFields = $item->getJoinFields();
+		my $table = @{$item->getJoinItems()}[0];
+		my $table2 = @{$item->getJoinItems()}[1];
+		my $field1;
+		my $field2;
+		if ($two_tables) {
+			if ($joinCond ne undef 
+			 && $joinCond->getType() eq "FUNC_ITEM") {
+				$field1 = @{$joinCond->getArguments()}[0];
+				$field2 = @{$joinCond->getArguments()}[1];
+			}
+			elsif ($joinFields ne undef) {
+				$field1 = $field2 = @{$joinFields}[0];
+			}
+			else {
+				return;
+			}
+			
+			my $joinType = $item->getJoinType();
+			if ($joinType eq undef) {
+				$joinType = "JOIN_TYPE_STRAIGHT";
+			}
+			$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
+														  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
+			if ($sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()} eq undef) {
+				$sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}{"EXISTS"}=1;
+			}
 		}
 	}
 }
