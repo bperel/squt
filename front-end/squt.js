@@ -521,10 +521,7 @@ function positionPathsToOutput(origin,d) {
 		  return f.tableAlias === "/OUTPUT/" && f.fullName === link.outputName; 
 	  }).data()[0]);
 	  
-	  var dx = targetCoords.x - sourceCoords.x,
-		  dy = targetCoords.y - sourceCoords.y,
-		  dr = Math.sqrt(dx * dx + dy * dy);
-	  return "M" + sourceCoords.x + "," + sourceCoords.y + "A" + dr + "," + dr + " 0 0,1 " + targetCoords.x + "," + targetCoords.y;
+	  return getPath(sourceCoords, targetCoords, true);
   });
   
   outputTexts.filter(function(link) {
@@ -548,14 +545,41 @@ function positionPathsToFunctions(origin,d) {
 		if (!targetPos.x || !targetPos.y) {
 			targetPos={x:0, y:0};
 		}
-	
-		targetPos.y-=FUNCTION_BOX_RY;
- 	
-	    var dx = targetPos.x - sourcePos.x,
-		    dy = targetPos.y - sourcePos.y,
-		    dr = Math.sqrt(dx * dx + dy * dy);
-	    return "M" + sourcePos.x + "," + sourcePos.y + "A" + dr + "," + dr + " 0 0,1 " + targetPos.x + "," + targetPos.y;
+		
+    	var functionNode = func.filter(function(f) { 
+    		return d.functionAlias == f.functionAlias; 
+    	});
+    	var targetDimensions = 
+			{rx: parseFloat(functionNode.attr("rx")) || 1, 
+    		 ry: parseFloat(functionNode.attr("ry")) || 1};
+	    if (d.from === "constant") {
+	    	return getPath(sourcePos, targetPos, false, targetDimensions);
+	    }
+	    else {
+	    	return getPath(sourcePos, targetPos, true, targetDimensions);
+		}
 	});
+}
+
+function getPath(source, target, isArc, targetDimensions) {
+	if (targetDimensions) { // We use the target dimensions to calculate the intersection between the path and the target shape
+		var intersection = Intersection.intersectEllipseLine(
+			new Point2D(target.x, target.y), 
+			targetDimensions.rx, targetDimensions.ry,
+			new Point2D(source.x, source.y), new Point2D(target.x, target.y));
+		if (intersection.points.length > 0) {
+			target=intersection.points[0];
+		}
+	}
+	if (isArc) {		
+		var dx = target.x - source.x,
+		  	dy = target.y - source.y,
+		  	dr = Math.sqrt(dx * dx + dy * dy);
+		return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+	}
+	else { // Line
+    	return "M" + source.x + "," + source.y + "L" + target.x + "," + target.y;
+	}
 }
 
 function getNodeCoords(pathInfo, args) {
@@ -706,13 +730,10 @@ function positionTable(d, i) {
 	  var source=field.filter(function(f) { return d.source == f.fullName; });
 	  var target=field.filter(function(f) { return d.target == f.fullName; });
 	
-	  var x = [source.attr("cx") || 0, target.attr("cx") || 0];
-	  var y = [source.attr("cy") || 0, target.attr("cy") || 0];
- 	
-	  var dx = x[1] - x[0],
-		  dy = y[1] - y[0],
-		  dr = Math.sqrt(dx * dx + dy * dy);
-	  return "M" + x[0] + "," + y[0] + "A" + dr + "," + dr + " 0 0,1 " + x[1] + "," + y[1];
+	  var sourcePos = {x: source.attr("cx") || 0, y: source.attr("cy") || 0};
+	  var targetPos = {x: target.attr("cx") || 0, y: target.attr("cy") || 0};
+	  
+	  return getPath(sourcePos, targetPos, true);
 	});
 }
 
