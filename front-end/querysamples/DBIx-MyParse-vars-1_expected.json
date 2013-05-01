@@ -1,0 +1,17 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "get_user_var" : "SELECT"
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "OUTPUT",
+         "Constants" : {
+            "a" : "a"
+         },
+         "name" : "get_user_var",
+         "alias" : "0"
+      }
+   }
+}
