@@ -1,0 +1,17 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "get_system_var" : "SELECT"
+      }
+   },
+   "Functions" : {
+      "0" : {
+         "to" : "OUTPUT",
+         "Constants" : {
+            "cold_cache.key_cache_block_size" : "cold_cache.key_cache_block_size"
+         },
+         "name" : "get_system_var",
+         "alias" : "0"
+      }
+   }
+}

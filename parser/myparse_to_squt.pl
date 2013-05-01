@@ -124,6 +124,10 @@ sub handleSelectItem($$$) {
 	elsif ($item->getType() eq 'INTERVAL_ITEM') {
 		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getInterval()}=$item->getInterval();
 	}
+	elsif ($item->getType() eq 'SYSTEM_VAR_ITEM') {
+		my $component_and_variable=$item->getVarComponent().".".$item->getVarName();
+		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$component_and_variable}=$component_and_variable;
+	}
 	elsif ($item->getType() eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
 		if ($functionAlias eq undef) {
