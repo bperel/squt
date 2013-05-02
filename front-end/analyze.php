@@ -10,7 +10,7 @@ if (isset($_POST['sample'])) {
 	echo file_get_contents("querysamples/".preg_replace('#\.sql$#','_expected.json',$_POST['sample']));
 }
 else {
-	$query = str_replace('"','\"',str_replace("\n"," ",$_POST['query']));
+	$query = str_replace('"','\"',str_replace("\n"," ",str_replace('\\"','\\\"',$_POST['query'])));
 	$query = preg_replace('#[\s\t]+$#','',$query);
 	if (strlen($query) > $QUERY_MAX_LENGTH) {
 		echo json_encode(array('Error'=>'For performance and security reasons, squt does not allow queries longer than 2000 characters'));
