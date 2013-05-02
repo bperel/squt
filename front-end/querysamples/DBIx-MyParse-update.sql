@@ -1,1 +1,1 @@
-UPDATE table1 SET field1 = value1'
+UPDATE table1 SET field1 = value1
