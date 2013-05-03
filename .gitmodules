@@ -18,4 +18,4 @@
 	url = https://github.com/jquery/qunit-reporter-junit
 [submodule "front-end/lib/js-intersections"]
 	path = front-end/lib/js-intersections
-	url = https://github.com/thelonious/js-intersections.git
+	url = https://github.com/ducksmanager/js-intersections.git
