@@ -658,40 +658,6 @@ function getNode(pathInfo, args) {
 	}
 }
 
-function getNodeDimensions(pathInfo, args) {
-	args = args || {};
-	var element = null;
-	var dimensions = null;
-	switch (pathInfo.type) {
-		case "link":
-			args.role = args.role || "source";
-			if (args.role == "source") {
-				switch (pathInfo.from) {
-					case "function":
-						element=func.filter(function(f) { 
-							return pathInfo.sourceFunctionId == f.functionAlias; 
-						});
-						dimensions = {x: parseFloat(element.attr("rx")),
-									  y: parseFloat(element.attr("ry"))};
-					break;
-				}
-			}
-			else {
-				element=func.filter(function(f) { 
-					return pathInfo.functionAlias == f.functionAlias; 
-				});
-				dimensions = {x: parseFloat(element.attr("rx")),
-							  y: parseFloat(element.attr("ry"))};
-			}
-		break;
-	}
-	if (dimensions != null) {
-		return {x: dimensions.x || 1,
-				y: dimensions.y || 1};
-	}
-	return null;
-}
-
 function positionTable(d, i) {
 	var x = d.x;
 	var y = d.y;
