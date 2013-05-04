@@ -516,12 +516,13 @@ function positionPathsToOutput(origin,d) {
   pathToOutput.filter(function(link) {
 	return filterFunction(link,origin,d);
   }).attr("d", function(link) { 
-	  var sourceCoords = getNodeCoords(link);
-	  var targetCoords = getNodeCoords(field.filter(function(f) { 
-		  return f.tableAlias === "/OUTPUT/" && f.fullName === link.outputName; 
-	  }).data()[0]);
+	  var source = getNode(link);
 	  
-	  return getPath(sourceCoords, targetCoords, true);
+	  var target = field.filter(function(f) { 
+		  return f.tableAlias === "/OUTPUT/" && f.fullName === link.outputName; 
+	  });
+	  
+	  return getPath(this, source, target);
   });
   
   outputTexts.filter(function(link) {
@@ -537,87 +538,141 @@ function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
 	  return filterFunction(link,origin,d);
 	}).attr("d", function(d) {
-		var sourcePos=getNodeCoords(d, {role: "source"});
-		var targetPos=getNodeCoords(d, {role: "target"});
-		if (!sourcePos.x || !sourcePos.y) {
-			sourcePos={x:0, y:0};
-		}
-		if (!targetPos.x || !targetPos.y) {
-			targetPos={x:0, y:0};
-		}
+		var source = getNode(d, {role: "source"});
+		var target = getNode(d, {role: "target"});
 		
-    	var functionNode = func.filter(function(f) { 
-    		return d.functionAlias == f.functionAlias; 
-    	});
-    	var targetDimensions = 
-			{rx: parseFloat(functionNode.attr("rx")) || 1, 
-    		 ry: parseFloat(functionNode.attr("ry")) || 1};
-	    if (d.from === "constant") {
-	    	return getPath(sourcePos, targetPos, false, targetDimensions);
-	    }
-	    else {
-	    	return getPath(sourcePos, targetPos, true, targetDimensions);
-		}
+	    return getPath(this, source, target);
 	});
 }
 
-function getPath(source, target, isArc, targetDimensions) {
-	if (targetDimensions) { // We use the target dimensions to calculate the intersection between the path and the target shape
-		var intersection = Intersection.intersectEllipseLine(
-			new Point2D(target.x, target.y), 
-			targetDimensions.rx, targetDimensions.ry,
-			new Point2D(source.x, source.y), new Point2D(target.x, target.y));
-		if (intersection.points.length > 0) {
-			target=intersection.points[0];
+function getPath(pathElement, source, target) {
+	var sourceCoords = getNodeCoords(source);
+	var targetCoords = getNodeCoords(target);
+	var isArc = !(source.data()[0].type === "constant" && target.data()[0].type === "function");
+	
+	var pathCoords=getPathFromCoords(sourceCoords.x, sourceCoords.y, targetCoords.x, targetCoords.y, isArc);
+	d3.select(pathElement).attr("d",pathCoords);
+	var pathObject = domElementToMyObject(pathElement);
+	
+	sourceCoords = getCorrectedPathPoint(pathObject, source, sourceCoords, targetCoords);
+	targetCoords = getCorrectedPathPoint(pathObject, target, targetCoords, sourceCoords);
+	
+	return getPathFromCoords(sourceCoords.x, sourceCoords.y, targetCoords.x, targetCoords.y, isArc);
+}
+
+function getCorrectedPathPoint(pathObject, element, elementCoords, otherElementCoords) {
+	if (element.data()[0].type === "function") {
+		var elementObject = domElementToMyObject(element[0][0]);
+		if (!!pathObject && !!elementObject) {
+			var intersection = Intersection.intersectShapes(pathObject, elementObject);
+			if (intersection.points.length > 0) {
+				var minDistance = undefined;
+				var closest = null;
+				for (var i=0; i<intersection.points.length; i++) {
+					var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
+					if (!minDistance || distance < minDistance) {
+						minDistance = distance;
+						closest = intersection.points[i];
+					}
+				}
+				return {x: closest.x, y: closest.y};
+			}
 		}
 	}
-	if (isArc) {		
-		var dx = target.x - source.x,
-		  	dy = target.y - source.y,
-		  	dr = Math.sqrt(dx * dx + dy * dy);
-		return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+	return elementCoords;
+}
+
+function getPathFromCoords(x1, y1, x2, y2, isArc) {
+	if (isArc) {
+		var dr = getDistance(x1, y1, x2, y2);
+		return "M" + x1 + "," + y1 + "A" + dr + "," + dr + " 0 0,1 " + x2 + "," + y2;
 	}
 	else { // Line
-    	return "M" + source.x + "," + source.y + "L" + target.x + "," + target.y;
+    	return "M" + x1 + "," + y1 + "L" + x2 + "," + y2;
 	}
 }
 
-function getNodeCoords(pathInfo, args) {
+function getDistance(x1, y1, x2, y2) {
+	var dx = x2 - x1,
+  	dy = y2 - y1;
+  	return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getNodeCoords(element) {
+	var coords;
+	if (element.attr("x") !== null) {
+		coords = {x:parseFloat(element.attr("x")), 
+					  y: parseFloat(element.attr("y"))};
+	}
+	else {
+		coords = {x:parseFloat(element.attr("cx")), 
+					  y: parseFloat(element.attr("cy"))};
+	}
+	
+	if (!coords.x || !coords.y) {
+		return {x:0, y:0};
+	}
+	return coords;
+}
+
+function getNode(pathInfo, args) {
 	args = args || {};
-	var element = null;
 	switch (pathInfo.type) {
 		case "field":
-			element=field.filter(function(f) { 
+			return field.filter(function(f) { 
 				return f.fullName == pathInfo.fullName; 
 			});
-			return {x:parseFloat(element.attr("cx")), 
-					y: parseFloat(element.attr("cy"))};
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
 				switch (pathInfo.from) {
 					case "field":
-						element=field.filter(function(f) { 
+						return field.filter(function(f) { 
 							return pathInfo.fieldName == f.fullName; 
 						});
-
-						return {x: parseFloat(element.attr("cx")),
-								y: parseFloat(element.attr("cy"))};
 					break;
+					case "function":
+						return func.filter(function(f) { 
+							return pathInfo.sourceFunctionId == f.functionAlias; 
+						});
+					break;
+					case "constant":
+						return constantText.filter(function(c) { 
+							return pathInfo.constantId == c.id; 
+						});
+					break;
+				}
+			}
+			else {
+				return func.filter(function(f) { 
+					return pathInfo.functionAlias == f.functionAlias; 
+				});
+			}
+		break;
+		case "constant":
+			return constantText.filter(function(c) { 
+				return pathInfo.constantId == c.id; 
+			});
+		break;
+	}
+}
+
+function getNodeDimensions(pathInfo, args) {
+	args = args || {};
+	var element = null;
+	var dimensions = null;
+	switch (pathInfo.type) {
+		case "link":
+			args.role = args.role || "source";
+			if (args.role == "source") {
+				switch (pathInfo.from) {
 					case "function":
 						element=func.filter(function(f) { 
 							return pathInfo.sourceFunctionId == f.functionAlias; 
 						});
-						return {x: parseFloat(element.attr("cx")),
-								y: parseFloat(element.attr("cy")) + FUNCTION_BOX_RY};
-					break;
-					case "constant":
-						element=constantText.filter(function(c) { 
-							return pathInfo.constantId == c.id; 
-						});
-						return {x: parseFloat(element.attr("x")),
-								y: parseFloat(element.attr("y"))};
+						dimensions = {x: parseFloat(element.attr("rx")),
+									  y: parseFloat(element.attr("ry"))};
 					break;
 				}
 			}
@@ -625,18 +680,16 @@ function getNodeCoords(pathInfo, args) {
 				element=func.filter(function(f) { 
 					return pathInfo.functionAlias == f.functionAlias; 
 				});
-				return {x: parseFloat(element.attr("cx")),
-						y: parseFloat(element.attr("cy"))};
+				dimensions = {x: parseFloat(element.attr("rx")),
+							  y: parseFloat(element.attr("ry"))};
 			}
 		break;
-		case "constant":
-			element=constantText.filter(function(c) { 
-				return pathInfo.constantId == c.id; 
-			});
-			return {x: parseFloat(element.attr("x")),
-					y: parseFloat(element.attr("y"))};
-		break;
 	}
+	if (dimensions != null) {
+		return {x: dimensions.x || 1,
+				y: dimensions.y || 1};
+	}
+	return null;
 }
 
 function positionTable(d, i) {
@@ -729,11 +782,8 @@ function positionTable(d, i) {
 	path.attr("d", function(d) {
 	  var source=field.filter(function(f) { return d.source == f.fullName; });
 	  var target=field.filter(function(f) { return d.target == f.fullName; });
-	
-	  var sourcePos = {x: source.attr("cx") || 0, y: source.attr("cy") || 0};
-	  var targetPos = {x: target.attr("cx") || 0, y: target.attr("cy") || 0};
 	  
-	  return getPath(sourcePos, targetPos, true);
+	  return getPath(this, source, target, true);
 	});
 }
 
@@ -937,4 +987,16 @@ function getBoundaries(elements) {
 
 function logCollision() {
 	d3.select('#collision').text(collisions);
+}
+
+function domElementToMyObject(element) {
+	var localName = element.localName;
+	switch ( localName ) {
+	    case "circle":  return new Circle(element);    break;
+	    case "ellipse": return new Ellipse(element);   break;
+	    case "line":    return new Line(element);      break;
+	    case "path":    return new Path(element);      break;
+	    case "polygon": return new Polygon(element);   break;
+	    case "rect":    return new Rectangle(element); break;
+	}
 }
