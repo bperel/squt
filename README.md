@@ -8,7 +8,8 @@ squt uses :
 * Marijn Haverbeke's [CodeMirror](https://github.com/marijnh/CodeMirror) for the in-browser code editor
 * PrettyCode's [Object.identical.js](https://github.com/prettycode/Object.identical.js.git) for testing purposes
 * Philip Stoev's [MyParse](http://search.cpan.org/~philips/DBIx-MyParse/) to parse MySQL queries
-* Mike Bostock's [d3](/mbostock/d3) to handle the graph representation.
+* Mike Bostock's [d3](https://github.com/mbostock/d3.git) to handle the graph representation.
+* Kevin Lindsey's [js-intersections](https://github.com/thelonious/js-intersections.git) for geometrical intersection calculations.
 
 All of them are integrated into squt as submodules : no need to install them manually.
 

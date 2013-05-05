@@ -16,3 +16,6 @@
 [submodule "front-end/test/qunit-reporter-junit"]
 	path = front-end/test/qunit-reporter-junit
 	url = https://github.com/jquery/qunit-reporter-junit
+[submodule "front-end/lib/js-intersections"]
+	path = front-end/lib/js-intersections
+	url = https://github.com/ducksmanager/js-intersections.git
