@@ -490,17 +490,6 @@ function buildGraph() {
 	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("class", "output link ")
 		.attr("marker-end", "url(#arrow)");
-
-	outputTexts = g.append("svg:g").selectAll("g")
-		.data(linksToOutput)
-	  .enter().append("svg:text")
-	    .attr("class","outputname")
-		.append("textPath")
-		  .attr("xlink:href",function(d,i) { return "#outputpath"+i;})
-		    .attr({"startOffset":20})
-		    .append("tspan")
-		      .attr("dy",-5)
-		      .text(function(d) { return d.outputName; });
 	
 	tableBoxes.each(function(d,i) {
 		d.x=i*200;
@@ -538,10 +527,6 @@ function positionPathsToOutput(origin,d) {
 	  
 	  return getPath(this, source, target);
   });
-  
-  outputTexts.filter(function(link) {
-	return filterFunction(link,origin,d);
-  }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
   
   d3.selectAll("text.outputname").filter(function(link) {
 	return filterFunction(link,origin,d);
@@ -755,10 +740,17 @@ function positionTable(d, i) {
 		  									+FIELD_LINEHEIGHT*i
 		  									-CIRCLE_RADIUS/2; })
 	  .each(function(f) {
-		positionPathsToFunctions("field", f);
-		positionPathsToOutput("field", f);
+		if (d.name !== "/OUTPUT/") {
+			positionPathsToFunctions("field", f);
+			positionPathsToOutput("field", f);
+		}
 	  });
-		
+
+	if (d.name === "/OUTPUT/") {
+		field.each(function(f) {
+			positionPathsToOutput("field", f);
+		});
+	}
 	
 	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
 	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cx"));})
