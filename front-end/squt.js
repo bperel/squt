@@ -6,7 +6,7 @@ var w = 1280,
 var force = d3.layout.force()
 			.gravity(0.2)
 			.charge(-150)
-			.linkDistance(400)
+			.linkDistance(300)
 			.size([w*2/3, h*2/3]);
 
 var repulsion = d3.select('#repulsion').attr("value");
@@ -91,17 +91,18 @@ var svg = d3.select("body").append("svg:svg")
 svg.append("defs");
 	
 d3.select("defs").append("svg:g").selectAll("marker")
-    .data(["output"])
+    .data(["arrow"])
   .enter().append("marker")
     .attr("id", String)
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 15)
-    .attr("refY", -1.5)
-    .attr("markerWidth", 6)
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", 10)
+    .attr("refY", 5)
+    .attr("markerUnits", "strokeWidth")
+    .attr("markerWidth", 8)
     .attr("markerHeight", 6)
     .attr("orient", "auto")
-  .append("path")
-    .attr("d", "M0,-5L10,0L0,5");
+  .append("polyline")
+    .attr("points", "0,0 10,5 0,10 1,5 0,0");
 
 d3.select("defs").append("svg:g").selectAll("marker")
       .data(["solidlink1","solidlink2"])
@@ -473,14 +474,15 @@ function buildGraph() {
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
-		.attr("class", "link tofunction");
+		.attr("class", "link tofunction")
+		.attr("marker-end", "url(#arrow)");
 
 	pathToOutput = g.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("class", "output link ")
-		.attr("marker-end", "url(#output)");
+		.attr("marker-end", "url(#arrow)");
 
 	outputTexts = g.append("svg:g").selectAll("g")
 		.data(linksToOutput)
@@ -561,23 +563,29 @@ function getPath(pathElement, source, target) {
 }
 
 function getCorrectedPathPoint(pathObject, element, elementCoords, otherElementCoords) {
-	if (element.data()[0].type === "function") {
-		var elementObject = domElementToMyObject(element[0][0]);
-		if (!!pathObject && !!elementObject) {
-			var intersection = Intersection.intersectShapes(pathObject, elementObject);
-			if (intersection.points.length > 0) {
-				var minDistance = undefined;
-				var closest = null;
-				for (var i=0; i<intersection.points.length; i++) {
-					var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
-					if (!minDistance || distance < minDistance) {
-						minDistance = distance;
-						closest = intersection.points[i];
+	var elementData = element.data()[0];
+	switch (elementData.type) {
+		case "function":
+			var elementObject = domElementToMyObject(element[0][0]);
+			if (!!pathObject && !!elementObject) {
+				var intersection = Intersection.intersectShapes(pathObject, elementObject);
+				if (intersection.points.length > 0) {
+					var minDistance = undefined;
+					var closest = null;
+					for (var i=0; i<intersection.points.length; i++) {
+						var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
+						if (!minDistance || distance < minDistance) {
+							minDistance = distance;
+							closest = intersection.points[i];
+						}
 					}
+					return {x: closest.x, y: closest.y};
 				}
-				return {x: closest.x, y: closest.y};
 			}
-		}
+		break;
+		case "constant":
+			return {x: elementCoords.x+elementData.name.length/2*CHAR_WIDTH, 
+				 	y: elementCoords.y};
 	}
 	return elementCoords;
 }
@@ -601,12 +609,12 @@ function getDistance(x1, y1, x2, y2) {
 function getNodeCoords(element) {
 	var coords;
 	if (element.attr("x") !== null) {
-		coords = {x:parseFloat(element.attr("x")), 
-					  y: parseFloat(element.attr("y"))};
+		coords = {x: parseFloat(element.attr("x")), 
+				  y: parseFloat(element.attr("y"))};
 	}
 	else {
-		coords = {x:parseFloat(element.attr("cx")), 
-					  y: parseFloat(element.attr("cy"))};
+		coords = {x: parseFloat(element.attr("cx")), 
+				  y: parseFloat(element.attr("cy"))};
 	}
 	
 	if (!coords.x || !coords.y) {

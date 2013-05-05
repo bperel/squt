@@ -55,6 +55,11 @@ svg#graph {
 	outline:1px solid gray;
 }
 
+marker#arrow polyline {
+	stroke: black;
+	fill: white;
+}
+
 marker.solidlink {
 	fill: gray;
 	opacity: 0.9;
