@@ -1,50 +1,68 @@
 # Use example : 
 # perl myparse_to_squt.pl "SELECT b.a FROM b"
-#eval{require "DBIx-MyParse-0.88/lib/DBIx/MyParse.pm"}
 
 use strict;
 use DBIx::MyParse;
 use Data::Dumper;
+use Storable qw(dclone);
 use JSON::PP;
 my $json = JSON::PP->new->ascii->pretty->allow_nonref;
 $Data::Dumper::Indent = 1;
 
 our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
 our $query = $parser->parse($ARGV[0]);
+our $curQuery;
 our $debug = $ARGV[1] eq "debug";
+our %sqlv_tables_final; # Includes sub-selects
 our %sqlv_tables;
 
 if ($debug) {
 	print "Dumped:\n";
 	print Dumper $query;
 }
-if ($query->getCommand() eq "SQLCOM_ERROR") {
-	$sqlv_tables{"Error"}=$query->getErrstr();
-}
-elsif ($query->getCommand() ne "SQLCOM_SELECT") {
-	$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
-}
-else {
-	foreach my $selectItem (@{$query->getSelectItems()}) {
-		handleSelectItem($selectItem,-1,1);
+
+sub handleQuery($$) {
+	my ($queryToHandle,$subquery_id) = @_;
+	$curQuery = dclone($queryToHandle);
+	
+	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
+		$sqlv_tables{"Error"}=$curQuery->getErrstr();
 	}
-	if ($query->getTables() ne undef) {
-		foreach my $item (@{$query->getTables()}) {
-			if ($item->getType() eq "JOIN_ITEM") {
-				handleJoin($item);
+	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT") {
+		$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
+	}
+	else {
+		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
+			handleSelectItem($selectItem,-1,1);
+		}
+		if ($curQuery->getTables() ne undef) {
+			foreach my $item (@{$curQuery->getTables()}) {
+				if ($item->getType() eq "JOIN_ITEM") {
+					handleJoin($item);
+				}
 			}
 		}
-	}
-	if ($query->getOrder() ne undef) {
-		foreach my $orderByItem (@{$query->getOrder()}) {
-			handleOrderBy($orderByItem);
+		if ($curQuery->getOrder() ne undef) {
+			foreach my $orderByItem (@{$curQuery->getOrder()}) {
+				handleOrderBy($orderByItem);
+			}
+		}
+		if ($curQuery->getWhere() ne undef) {
+			handleWhere($curQuery->getWhere());
 		}
 	}
-	if ($query->getWhere() ne undef) {
-		handleWhere($query->getWhere());
+	if ($subquery_id == -1) {
+		%sqlv_tables_final = (%sqlv_tables_final, %{dclone(\%sqlv_tables)});
 	}
+	else {
+		$sqlv_tables_final{"Subqueries"}{$subquery_id} = dclone (\%sqlv_tables);
+	}
+	%sqlv_tables=();
 }
-print $json->pretty->encode( \%sqlv_tables );
+
+handleQuery($query,-1);
+
+print $json->pretty->encode( \%sqlv_tables_final );
 
 
 sub handleJoin {
@@ -92,10 +110,10 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
-		my $fieldAlias = $item->getFieldName eq "*" ? "" : $item->getAlias() || $item->getFieldName();
+		my $fieldAlias = $item->getFieldName() eq "*" ? "" : $item->getAlias() || $item->getFieldName();
 		if ($tableName eq "?") {
-			if ($item->getFieldName eq "*") {
-				foreach my $tableOrJoin (@{$query->getTables()}) {
+			if ($item->getFieldName() eq "*") {
+				foreach my $tableOrJoin (@{$curQuery->getTables()}) {
 					if ($tableOrJoin->getType() eq "JOIN_ITEM") {
 						foreach my $sub_item (@{$tableOrJoin->getJoinItems()}) {
 							if ($sub_item->getType() eq "TABLE_ITEM") {
@@ -116,6 +134,13 @@ sub handleSelectItem($$$) {
 		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$fieldAlias;
 		
+	}
+	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
+		my $subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+		my $superQuery=dclone($curQuery);
+		handleQuery($item->getSubselectQuery(), $subquery_id);
+		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
+		$curQuery=$superQuery;
 	}
 	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
 		|| $item->getType() eq 'STRING_ITEM') {
@@ -279,14 +304,13 @@ sub getItemTableName($) {
 	if ($item->getTableName() ne undef) {
 		return $item->getTableName();
 	}
-	if ($query->getTables() eq undef) {
+	if ($curQuery->getTables() eq undef) {
 		return undef;
 	}
-	my @a=@{$query->getTables()};
-	if ($query->getTables() ne undef) {
-	 	if (scalar @{$query->getTables()} == 1 
-	 			&& @{$query->getTables()}[0]->getType() eq "TABLE_ITEM") {
-	 		return @{$query->getTables()}[0]->getTableName();
+	else {
+	 	if (scalar @{$curQuery->getTables()} == 1 
+	 			&& @{$curQuery->getTables()}[0]->getType() eq "TABLE_ITEM") {
+	 		return @{$curQuery->getTables()}[0]->getTableName();
 	 	}
 	 	else {
 	 		return "?";
@@ -296,14 +320,14 @@ sub getItemTableName($) {
 
 sub getSqlTableName($) {
 	my ($tableAlias) = @_;
-	if ($query->getTables() eq undef || $tableAlias eq undef) {
+	if ($curQuery->getTables() eq undef || $tableAlias eq undef) {
 		return undef;
 	}
 	elsif ($tableAlias eq "?") {
 		return "?";
 	}
 	my $tableName;
-	foreach my $table (@{$query->getTables()}) {
+	foreach my $table (@{$curQuery->getTables()}) {
 		$tableName = getSqlTableNameFromTable($tableAlias,$table);
 		if ($tableName ne undef) {
 			return $tableName;

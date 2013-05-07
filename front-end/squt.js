@@ -209,6 +209,13 @@ function build(jsondata) {
 	tables["/OUTPUT/"]=({type: "table",
 		  				name:"/OUTPUT/"});
 	tableAliases["/OUTPUT/"]={table: "/OUTPUT/",name: "/OUTPUT/"};
+
+	processJson(jsondata);
+	if (jsondata.Subqueries) {
+		for (var i in jsondata.Subqueries) {
+			processJson(jsondata.Subqueries[i]);
+		}
+	}
 	
 	for (var tableName in jsondata.Tables) {
 		tables[tableName]=({type: "table",
@@ -359,6 +366,102 @@ function build(jsondata) {
 	console.log(l);
 	
 	buildGraph();
+}
+
+function processJson(jsondata) {
+	for (var tableName in jsondata.Tables) {
+		tables[tableName]=({type: "table",
+			  				name:tableName});
+		var tableInfo = jsondata.Tables[tableName];
+		for (var tableAlias in tableInfo) {
+			tableAliases[tableAlias]={table: tableName,name: tableAlias};
+			var actions=tableInfo[tableAlias];
+			for (var type in actions) {
+				var actionFields=actions[type];
+				for (var field in actionFields) {
+					var data=actionFields[field];
+					if (fields[tableAlias+"."+field] == undefined) {
+						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
+					}
+					switch(type) {
+						case 'OUTPUT':
+							for (var functionAlias in data) {
+								var outputAlias = data[functionAlias];
+								if (functionAlias == -1) { // Directly to output
+									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
+									fields[outputAlias]={type: "field", tableAlias:"/OUTPUT/", name:outputAlias, fullName:outputAlias, filtered: false, sort: false};
+								}
+								else { // To a function
+									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
+								}
+							}
+							
+						break;
+						case 'CONDITION':
+							for (var conditionType in data) {
+								var conditionData = data[conditionType];
+								switch(conditionType) {
+									case 'FUNCTION':
+										for (var destinationFunctionAlias in conditionData) {									
+											linksToFunctions.push({type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: destinationFunctionAlias});
+										}
+									break;
+									case 'JOIN': case 'VALUE': case 'EXISTS':
+										for (var otherField in conditionData) {
+											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
+												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
+													var tableAliasAndField=otherField.split('.');
+													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
+												}
+												var joinType=null;
+												switch(data[otherField]) {
+													case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
+													case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
+													case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
+													case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
+												}
+												links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
+											}
+											else { // It's a value
+												fields[tableAlias+"."+field]['filtered']=true;
+											}
+										}
+									break;
+								}
+							}
+						break;
+						case 'SORT':
+							fields[tableAlias+"."+field]['sort']=data;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	for (var functionAlias in jsondata.Functions) {
+		var functionDestination=jsondata.Functions[functionAlias]["to"];
+		functions[functionAlias]={type: "function",
+								  functionAlias: functionAlias, 
+							      name: jsondata.Functions[functionAlias]["name"],
+							      isCondition: functionDestination === "NOWHERE"
+								 };
+		if (functionDestination === "OUTPUT") {
+			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
+			fields[functionAlias]={type: "field", tableAlias:"/OUTPUT/", name:functionAlias, fullName:functionAlias, filtered: false, sort: false};
+		}
+		else if (functionDestination !== "NOWHERE") {
+			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
+		}
+		if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
+			var functionConstants = jsondata.Functions[functionAlias]["Constants"];
+			for (var constant in functionConstants) {
+				var constantId=constants.length;
+				constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
+				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
+			}
+		}
+	}
 }
 
 var table, 
