@@ -1,9 +1,3 @@
-var w = 1280,
-	h = 800,
-	r = 6,
-	z = d3.scale.category20c();
-
-
 var dragTable = d3.behavior.drag()
 	.origin(Object)
 	.on("drag", function(d,i){
@@ -784,7 +778,7 @@ function positionFunction(d, i) {
 		  	});	
 		  return x+offset; 
 	  })
-	  .attr("y", y-50);
+	  .attr("y", y-CONSTANT_PADDING.bottom);
 	
 	func.filter(function(func) { return func.functionAlias == d.functionAlias; })
 	  .attr("cx", x)
