@@ -1,13 +1,8 @@
-var w = 1280,
-	h = 800,
-	r = 6,
-	z = d3.scale.category20c();
-
 var force = d3.layout.force()
 			.gravity(0.2)
 			.charge(-150)
 			.linkDistance(300)
-			.size([w*2/3, h*2/3]);
+			.size([W*2/3, H*2/3]);
 
 var repulsion = d3.select('#repulsion').attr("value");
 d3.select('#repulsion').on("change",function() {
@@ -780,7 +775,7 @@ function positionFunction(d, i) {
 		  	});	
 		  return x+offset; 
 	  })
-	  .attr("y", y-50);
+	  .attr("y", y-CONSTANT_PADDING.bottom);
 	
 	func.filter(function(func) { return func.functionAlias == d.functionAlias; })
 	  .attr("cx", x)
