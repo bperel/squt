@@ -533,25 +533,6 @@ function buildGraph() {
 	  .enter().append("svg:text")
 		.attr("name",function(d) { return d.tableAlias+"."+d.name; })
 		.text(function(d) { return d.name; });
-		
-	func = g.append("svg:g").selectAll("ellipse.function")
-		.data(d3.values(functions))
-	  .enter().append("svg:ellipse")
-		.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
-		.attr("name", function(d) { return d.name;})
-		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
-		.call(force.drag);
-		
-	funcText = g.append("svg:g").selectAll("g")
-		.data(d3.values(functions))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; });
-
-	constantText = g.append("svg:g").selectAll("g")
-		.data(d3.values(constants))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; });
-	
 	
 	path = g.append("svg:g").selectAll("path.join")
 		.data(links)
@@ -568,19 +549,38 @@ function buildGraph() {
 			}
 		});
 
-	pathToFunction = g.append("svg:g").selectAll("path.tofunction")
-		.data(linksToFunctions)
-	  .enter().append("svg:path")
-	    .attr("id", function(d,i) { return "pathtofunction"+i;})
-		.attr("class", "link tofunction")
-		.attr("marker-end", "url(#arrow)");
-
 	pathToOutput = g.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("class", "output link ")
 		.attr("marker-end", "url(#arrow)");
+		
+	func = g.append("svg:g").selectAll("ellipse.function")
+		.data(d3.values(functions))
+	  .enter().append("svg:ellipse")
+		.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
+		.attr("name", function(d) { return d.name;})
+		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
+		.call(force.drag);
+
+	pathToFunction = g.append("svg:g").selectAll("path.tofunction")
+		.data(linksToFunctions)
+	  .enter().append("svg:path")
+	    .attr("id", function(d,i) { return "pathtofunction"+i;})
+		.attr("class", "link tofunction")
+		.attr("marker-end", "url(#arrow)");
+		
+	funcText = g.append("svg:g").selectAll("g")
+		.data(d3.values(functions))
+	  .enter().append("svg:text")
+		.text(function(d) { return d.name; });
+
+	constantText = g.append("svg:g").selectAll("g")
+		.data(d3.values(constants))
+	  .enter().append("svg:text")
+		.text(function(d) { return d.name; });
+	
 
 	outputTexts = g.append("svg:g").selectAll("g")
 		.data(linksToOutput)
