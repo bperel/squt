@@ -78,6 +78,12 @@ sub handleJoin {
 		my $joinFields = $item->getJoinFields();
 		my $table = @{$item->getJoinItems()}[0];
 		my $table2 = @{$item->getJoinItems()}[1];
+		
+		if ($item->getJoinType() eq "JOIN_TYPE_NATURAL") {
+			setWarning("Not supported","Natural joins","between ".$table->getAlias()." and ".$table2->getAlias());
+			return;
+		}
+		
 		my $field1;
 		my $field2;
 		if ($two_tables) {
