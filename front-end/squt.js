@@ -372,9 +372,11 @@ function build(jsondata) {
 }
 
 function processJson(jsondata) {
+	var subqueryGroup=jsondata.SubqueryAlias;
 	for (var tableName in jsondata.Tables) {
 		tables[tableName]=({type: "table",
-			  				name:tableName});
+			  				name:tableName,
+			  				subqueryGroup: subqueryGroup});
 		var tableInfo = jsondata.Tables[tableName];
 		for (var tableAlias in tableInfo) {
 			tableAliases[tableAlias]={table: tableName,name: tableAlias};
