@@ -116,7 +116,7 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
-		my $fieldAlias = $item->getFieldName() eq "*" ? "" : $item->getAlias() || $item->getFieldName();
+		my $fieldAlias = $item->getAlias() || $item->getFieldName();
 		if ($tableName eq "?") {
 			if ($item->getFieldName() eq "*") {
 				foreach my $tableOrJoin (@{$curQuery->getTables()}) {
