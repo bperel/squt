@@ -175,18 +175,21 @@ function build(jsondata) {
 		var warningText=[];
 		for (var warnType in jsondata.Warning) {
 			for (var i in jsondata.Warning[warnType]) {
-				var field_location=jsondata.Warning[warnType][i];
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
+						var field_location=jsondata.Warning[warnType][i];
 						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause "
 										 +(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 					
 					break;
 					case "Invalid":
+						var field_location=jsondata.Warning[warnType][i];
 						warningText.push("WARNING - Invalid statement '" + i + "' in "+field_location+" clause : the statement will be ignored");
 					break;
 					case "Not supported":
-						warningText.push("WARNING - Not supported : " + i);
+						var info=jsondata.Warning[warnType][i];
+						warningText.push("WARNING - Not supported : " + i
+										+ (info ? " ("+info+")":""));
 					break;
 				}
 			}
