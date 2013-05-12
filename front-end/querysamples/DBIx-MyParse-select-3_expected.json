@@ -1,0 +1,27 @@
+{
+   "Warning" : {
+      "Not supported" : {
+         "Natural joins" : "between table1 and table2"
+      }
+   },
+   "Tables" : {
+      "table1" : {
+         "table1" : {
+            "OUTPUT" : {
+               "*" : {
+                  "-1" : ""
+               }
+            }
+         }
+      },
+      "table2" : {
+         "table2" : {
+            "OUTPUT" : {
+               "*" : {
+                  "-1" : ""
+               }
+            }
+         }
+      }
+   }
+}
