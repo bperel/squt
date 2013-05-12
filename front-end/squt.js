@@ -262,7 +262,7 @@ function build(jsondata) {
 													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
 												}
 												var joinType=null;
-												switch(data[otherField]) {
+												switch(data.JOIN[otherField]) {
 													case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
 													case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
 													case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
@@ -324,10 +324,10 @@ function build(jsondata) {
 		var sourceTableId = parseInt(fieldToTableId(links[i].source));
 		var targetTableId = parseInt(fieldToTableId(links[i].target));
 		if (l[sourceTableId+","+targetTableId]) {
-			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: l[sourceTableId+","+targetTableId].value+1};
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: l[sourceTableId+","+targetTableId].value+1};
 		}
 		else {
-			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, value: 1};
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: 1};
 		}
 	}
 	for (var i in linksToOutput) {
