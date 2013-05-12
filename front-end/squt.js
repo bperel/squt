@@ -475,8 +475,7 @@ var table,
 	
 	path, 
 	pathToFunction,
-	pathToOutput, 
-	outputTexts;
+	pathToOutput;
 
 function buildGraph() {	
 
@@ -581,18 +580,6 @@ function buildGraph() {
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 	
-
-	outputTexts = g.append("svg:g").selectAll("g")
-		.data(linksToOutput)
-	  .enter().append("svg:text")
-	    .attr("class","outputname")
-		.append("textPath")
-		  .attr("xlink:href",function(d,i) { return "#outputpath"+i;})
-		    .attr({"startOffset":20})
-		    .append("tspan")
-		      .attr("dy",-5)
-		      .text(function(d) { return d.outputName; });
-	
 	force
 		.nodes(n)
 		.links(l)
@@ -624,10 +611,6 @@ function positionPathsToOutput(origin,d) {
 	  
 	  return getPath(this, source, target);
   });
-  
-  outputTexts.filter(function(link) {
-	return filterFunction(link,origin,d);
-  }).attr("dy",OUTPUT_NAME_TOP_PADDING); // Refreshing an attribute on the textPath allows it to be correctly positionned on its corresponding path
   
   d3.selectAll("text.outputname").filter(function(link) {
 	return filterFunction(link,origin,d);
