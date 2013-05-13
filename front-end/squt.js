@@ -1,6 +1,23 @@
 var force = d3.layout.force()
 			.gravity(0.2)
-			.charge(-150)
+			.charge(function(d) {
+				var charge = 0;
+				switch(d.type) {
+					case "table":
+						charge = d3.max([
+							parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("width"))
+							 + d3.sum(tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })[0], function(f) { 
+	  		                    	return parseInt(d3.select(f).attr("width")); 
+	  		                    }),
+	  		                parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("height"))]);
+					break;
+					
+					case "function":
+						charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
+						                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+				}
+				return -1*charge*charge;
+			})
 			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
 
@@ -585,6 +602,8 @@ function buildGraph() {
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 	
+	positionAll();
+	
 	force
 		.nodes(n)
 		.links(l)
@@ -752,9 +771,18 @@ function getNode(pathInfo, args) {
 	}
 }
 
+function positionAll() {
+	tableBoxes.each(function(d,i) {
+		positionTable.call(this,d,i);
+	});
+	func.each(function(d,i) {
+		positionFunction.call(this,d,i);
+	});
+}
+
 function positionTable(d, i) {
-	var x = d.x;
-	var y = d.y;
+	var x = d.x || 0;
+	var y = d.y || 0;
 	
 	var relatedAliases = tableAlias.filter(function(ta) { return ta.table == d.name; });
 	var relatedAliasesBoxes = tableAliasBoxes.filter(function(ta) { return ta.table == d.name; });
@@ -848,8 +876,8 @@ function positionTable(d, i) {
 }
 
 function positionFunction(d, i) {
-	var x=d.x;
-	var y=d.y;
+	var x=d.x || 0;
+	var y=d.y || 0;
 	
 	funcText.filter(function(func) { return func.functionAlias == d.functionAlias; })
 	  .attr("x", function(func) { return x - func.name.length*CHAR_WIDTH/2;})
@@ -909,144 +937,8 @@ function extractUrlParams(){
 	return f;
 }
 
-var collisions;
-
 function tick() {
-	collisions="";
-	var q = d3.geom.quadtree(n),
-      	i = 0,
-      	nl = n.length;
-
-	while (++i < nl) {
-		q.visit(collide(n[i]));
-	}
-
-	tableBoxes.each(function(d,i) {
-		positionTable.call(this,d,i);
-	});
-	func.each(function(d,i) {
-		positionFunction.call(this,d,i);
-	});
-	console.log("tick");
-	logCollision();
-}
-
-function collide(node) {
-	var p1 = getElementBoundaries(node);
-	if (p1 === null || p1 === undefined)
-		return function() { return true; };
-		
-	return function(quad, x1, y1, x2, y2) {
-		if (quad.point && (quad.point !== node)) {
-			var p2 = getElementBoundaries(quad.point);
-			if (p2 === null || p2 === undefined)
-				return true;
-			
-			var x = node.x - quad.point.x, 
-				y = node.y - quad.point.y, 
-				distance = Math.sqrt(x * x + y * y), 
-				r = (p1.width+p1.height)/4 
-				  + (p2.width+p2.height)/4;
-
-			//if (l < r) {
-			if (p1.left <= p2.right
-	         && p2.left <= p1.right
-	         && p1.top  <= p2.bottom
-	         && p2.top  <= p1.bottom) {
-				collisions+=(node.type+"/"+quad.point.type)+" ";
-				distance = repulsion * (Math.abs(distance - r)) / distance;
-				x *= distance;
-				y *= distance;
-				node.x = p1.left - x;
-				node.y = p1.top  - y;
-				quad.point.x = p2.left + x;
-				quad.point.y = p2.top  + y;
-			}
-		}
-		return x1 > p1.x2
-			|| x2 < p1.x1 
-			|| y1 > p1.y2 
-			|| y2 < p1.y1;
-	};
-}
-
-function getElementBoundaries(point) {
-	switch(point.type) {
-		case "table":
-			return getBoundaries(getElementsByTypeAndName("table",			  point.name)[0]
-				  		 .concat(getElementsByTypeAndName("aliasByTableName", point.name))
-			);
-		break;
-		case "function":
-			return getBoundaries(getElementsByTypeAndName("function",		  point.functionAlias)[0]);
-		break;
-	}
-}
-
-function getElementsByTypeAndName(type,name) {
-	var elements = [];
-	switch(type) {
-		case "field":
-			elements = field.filter(function(d) { return d.fullName == name; });
-		break;
-		case "table":
-			elements = tableBoxes.filter(function(d) { return d.name == name; });
-		break;
-		case "aliasByTableName":
-			elements = tableAliasBoxes.filter(function(d) { return d.table == name; });
-		break;
-		case "function":
-			elements = func.filter(function(d) { return d.functionAlias == name; });
-	}
-	return elements;
-}
-	
-function getBoundaries(elements) {
-	elements = [].concat.apply([], elements);
-	var left, right, top, bottom;
-	d3.selectAll(elements).each(function(d) {
-		var boundaries=[];
-		switch(d.type) {
-			case "table":
-				var pos = d.x === undefined 
-					? [parseInt(d3.select(this).attr("x")), parseInt(d3.select(this).attr("y"))]
-					: [d.x, d.y];
-				boundaries = {left:   pos[0],
-							  right:  pos[0]+parseInt(d3.select(this).attr("width")),
-							  top:    pos[1],
-							  bottom: pos[1]+parseInt(d3.select(this).attr("height"))};
-			break;
-			case "function":
-				var c = [parseInt(d3.select(this).attr("cx")), parseInt(d3.select(this).attr("cy"))];
-				var r = [parseInt(d3.select(this).attr("rx")), parseInt(d3.select(this).attr("ry"))];
-				boundaries = {left:   c[0]-r[0],
-							  right:  c[0]+r[0],
-							  top:    c[1]-r[1],
-							  bottom: c[1]+r[1]};
-			break;
-		}
-		
-		if (left === undefined || left > boundaries.left)
-			left = boundaries.left;
-		if (top  === undefined || top  > boundaries.top)
-			top  = boundaries.top;
-		if (right === undefined || right < boundaries.right)
-			right = boundaries.right;
-		if (bottom  === undefined || bottom  < boundaries.bottom)
-			bottom  = boundaries.bottom;
-	});
-	
-	return {
-		left:  	left, 
-		right: 	right, 
-		top: 	top, 
-		bottom: bottom,
-		width: 	right-left,
-		height:	bottom-top};
-}
-
-function logCollision() {
-	d3.select('#collision').text(collisions);
+	positionAll();
 }
 
 function domElementToMyObject(element) {
