@@ -1,22 +1,7 @@
 var force = d3.layout.force()
 			.gravity(0.2)
 			.charge(function(d) {
-				var charge = 0;
-				switch(d.type) {
-					case "table":
-						charge = d3.max([
-							parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("width"))
-							 + d3.sum(tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })[0], function(f) { 
-	  		                    	return parseInt(d3.select(f).attr("width")); 
-	  		                    }),
-	  		                parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("height"))]);
-					break;
-					
-					case "function":
-						charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
-						                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
-				}
-				return -1*charge*charge;
+				return getNodeCharge(d);
 			})
 			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
@@ -400,6 +385,7 @@ var table,
 	fieldOrder, 
 	fieldText,
 	funcText,
+	repulsionRay,
 	
 	path, 
 	pathToFunction,
@@ -438,7 +424,13 @@ function buildGraph() {
 		.data(d3.values(tableAliases))
 	  .enter().append("svg:rect")
 		.attr("class", function(d) { return "alias"+(d.name==="/OUTPUT/" ? " output":"");});
-		
+
+	repulsionRay = g.append("svg:g").selectAll("circle")
+		.data(d3.values(n))
+	  .enter().append("svg:circle")
+		.attr("stroke", "black")
+		.attr("fill", "transparent");
+	
 	field = g.append("svg:g").selectAll("circle")
 		.data(d3.values(fields))
 	  .enter().append("svg:circle")
@@ -677,6 +669,25 @@ function getNode(pathInfo, args) {
 	}
 }
 
+function getNodeCharge(d) {
+	var charge = 0;
+	switch(d.type) {
+		case "table":
+			charge = d3.max([
+				parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("width"))
+				 + d3.sum(tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })[0], function(f) { 
+	                    	return parseInt(d3.select(f).attr("width")); 
+	                    }),
+	                parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("height"))]);
+		break;
+		
+		case "function":
+			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
+			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+	}
+	return -1*charge*charge;
+}
+
 function positionAll() {
 	tableBoxes.each(function(d,i) {
 		positionTable.call(this,d,i);
@@ -684,6 +695,23 @@ function positionAll() {
 	func.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
+	
+	repulsionRay
+		.attr("r",function(d,i) {
+			return 2*Math.sqrt(-1*getNodeCharge(d));
+		})
+	
+		.attr("cx",function(d,i) {
+			return d.type==="table" 
+				? tableBoxes.filter(function(d2) { return d === d2;}).attr("x") 
+				: func.filter(function(d2) { return d === d2;}).attr("cx");
+		})
+		
+		.attr("cy",function(d,i) {
+			return d.type==="table" 
+				? tableBoxes.filter(function(d2) { return d === d2;}).attr("y") 
+				: func.filter(function(d2) { return d === d2;}).attr("cy");
+		});
 }
 
 function positionTable(d, i) {
