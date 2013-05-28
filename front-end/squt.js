@@ -1,22 +1,7 @@
 var force = d3.layout.force()
 			.gravity(0.2)
 			.charge(function(d) {
-				var charge = 0;
-				switch(d.type) {
-					case "table":
-						charge = d3.max([
-							parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("width"))
-							 + d3.sum(tableAliasBoxes.filter(function(ta) { return ta.table == d.name; })[0], function(f) { 
-	  		                    	return parseInt(d3.select(f).attr("width")); 
-	  		                    }),
-	  		                parseInt(tableBoxes.filter(function(d2) { return d2.name === d.name;}).attr("height"))]);
-					break;
-					
-					case "function":
-						charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
-						                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
-				}
-				return -1*charge*charge;
+				return getNodeCharge(d);
 			})
 			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
@@ -241,14 +226,16 @@ function build(jsondata) {
 	for(var key in fields) {
 	  fields[key].id=i++;
 	};
+	
+	tableAliases = d3.values(tableAliases);
 
 	n = 	  d3.values(tables)
 	  .concat(d3.values(functions));
 	l = [];
 	
 	for (var i in links) {
-		var sourceTableId = parseInt(fieldToTableId(links[i].source));
-		var targetTableId = parseInt(fieldToTableId(links[i].target));
+		var sourceTableId = parseInt(fieldNameToTableId(links[i].source));
+		var targetTableId = parseInt(fieldNameToTableId(links[i].target));
 		if (l[sourceTableId+","+targetTableId]) {
 			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: l[sourceTableId+","+targetTableId].value+1};
 		}
@@ -259,7 +246,7 @@ function build(jsondata) {
 	for (var i in linksToOutput) {
 		var sourceId;
 		if (linksToOutput[i].from == "field") {
-			sourceId = parseInt(fieldToTableId(linksToOutput[i].fieldName));
+			sourceId = parseInt(fieldNameToTableId(linksToOutput[i].fieldName));
 		}
 		else if (linksToOutput[i].from == "function") {
 			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
@@ -277,7 +264,7 @@ function build(jsondata) {
 			sourceId = parseInt(getFunctionId(linksToFunctions[i].sourceFunctionId));
 		}
 		else {
-			sourceId = parseInt(fieldToTableId(linksToFunctions[i].fieldName));
+			sourceId = parseInt(fieldNameToTableId(linksToFunctions[i].fieldName));
 		}
 		var targetId = parseInt(getFunctionId(linksToFunctions[i].functionAlias));
 		if (l[sourceId+","+targetId]) {
@@ -393,6 +380,7 @@ function processJson(jsondata) {
 }
 
 var table, 
+	groups,
 	tableText, 
 	tableSeparator, 
 	tableAlias, 
@@ -406,60 +394,138 @@ var table,
 	pathToOutput;
 
 function buildGraph() {	
+	
+	tables = d3.values(tables);
+	tableAliases = d3.values(tableAliases);
+	fields = d3.values(fields);
 
 	//cleanup
 	svg.selectAll('image,svg>g').remove();
+	
 	var g = svg.append("svg:g");
-	  
-	tableBoxes = g.append("svg:g").selectAll("rect.table")
-		.data(d3.values(tables))
-	  .enter().append("svg:rect")
-		.attr("class", function(d) { return "table"+(d.name==="/OUTPUT/" ? " output":"");})
-		.attr("name", function(d) { return d.name;})
-		.call(force.drag);
-		
-	tableText = g.append("svg:g").selectAll("g")
-		.data(d3.values(tables))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; })
-		.attr("class", function(d) { return d.name==="/OUTPUT/" ? "tablename output":"";});
-		
-	tableSeparator = g.append("svg:g").selectAll("line")
-		.data(d3.values(tables))
-	  .enter().append("svg:line")
-		.attr("stroke", "black");
-		
-	tableAlias = g.append("svg:g").selectAll("g")
-		.data(d3.values(tableAliases))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; });
-		
-	tableAliasBoxes = g.append("svg:g").selectAll("g")
-		.data(d3.values(tableAliases))
-	  .enter().append("svg:rect")
-		.attr("class", function(d) { return "alias"+(d.name==="/OUTPUT/" ? " output":"");});
-		
-	field = g.append("svg:g").selectAll("circle")
-		.data(d3.values(fields))
-	  .enter().append("svg:circle")
-		.attr("r",CIRCLE_RADIUS)
-		.attr("class",function(d) { return (d.filtered === true ? "filtered" : "")+" "
-										  +(d.sort 	   === true ? "sort" 	 : "");
-								  });
-		
-	fieldOrder = g.append("svg:g").selectAll("image.order")
-		.data(d3.values(fields).filter(function(f) { return f.sort;}))
-	  .enter().append("svg:image")
-	    .attr("xlink:href", function(f) { return "images/sort_"+f.sort+".svg";})
-	    .attr("class", "order")
-		.attr("width",SORT_SIDE)
-		.attr("height",SORT_SIDE);
-	  
-	fieldText = g.append("svg:g").selectAll("g")
-		.data(d3.values(fields))
-	  .enter().append("svg:text")
-		.attr("name",function(d) { return d.tableAlias+"."+d.name; })
-		.text(function(d) { return d.name; });
+	
+	groups = g.append("svg:g").selectAll("g")
+		.data(tables)
+	  .enter().append("svg:g")
+		.attr("name", function(currentTable) { return currentTable.name; })
+		.attr("class", "tableGroup")
+		.call(force.drag)
+		.each(function(currentTable) {
+			var relatedAliases = tableAliases.filter(function(ta) { return ta.table == currentTable.name; });
+			var relatedFields = fields.filter(function(currentField) { 
+				return isFieldInTable(currentField, currentTable); 
+			});
+			var relatedUniqueFields = relatedFields.filter(function(currentField, i) { 
+				for (var j=0; j<i; j++) {
+					  if (relatedFields[j].name === currentField.name) {
+						  return false;
+					  }
+				  }
+				  return true;
+			});
+
+			var tableWidth=TABLE_NAME_PADDING.left
+	  		   			 + CHAR_WIDTH*d3.max([currentTable.name.length,
+	  		   			                      d3.max(relatedFields, function(field) { 
+	  		   			                    	  return field.name.length; 
+	  		   			                      })
+	  		   			                     ]);
+			var tableHeight=MIN_TABLE_HEIGHT
+						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
+			
+			d3.select(this)
+			  .append("svg:rect")
+				.attr("class", "table"+(currentTable.name==="/OUTPUT/" ? " output":""))
+				
+				.attr("height", tableHeight)
+				.attr("width",  tableWidth );
+			
+			d3.select(this)
+			  .append("svg:text")
+				.text(currentTable.name)
+				.attr("class", currentTable.name==="/OUTPUT/" ? "tablename output":"")
+				.attr("x", TABLE_NAME_PADDING.left)
+				.attr("y", TABLE_NAME_PADDING.top);
+			
+			d3.select(this)
+			  .append("svg:line")
+				.attr("stroke", "black")
+				.attr("x1", 0)
+				.attr("x2", tableWidth)
+				.attr("y1", LINE_SEPARATOR_TOP)
+				.attr("y2", LINE_SEPARATOR_TOP);
+			
+			d3.select(this)
+			  .selectAll("g.aliasGroup")
+			    .data(relatedAliases)
+			  .enter().append("svg:g")
+				.attr("name", function(currentAlias) { return currentAlias.name; })
+				.attr("class", "aliasGroup")
+				.each(function(currentAlias,i) {
+
+					d3.select(this)
+					  .append("svg:text")
+						.text(currentAlias.name)
+						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth)+ALIAS_NAME_PADDING.left)
+						.attr("y", ALIAS_NAME_PADDING.top);
+
+					d3.select(this)
+					  .append("svg:rect")
+						.attr("class", "alias"+(currentAlias.name==="/OUTPUT/" ? " output":""))
+						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth))
+						.attr("y", ALIAS_BOX_MARGIN.top)
+						.attr("width", ALIAS_NAME_PADDING.left 
+							  		 + Math.max(currentAlias.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
+							  					CIRCLE_RADIUS/2 + SORT_SIDE))
+						.attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
+				});
+			
+			var fieldIndex = 0;
+			
+			d3.select(this)
+			  .selectAll("g.fieldGroup")
+			    .data(relatedFields)
+			  .enter().append("svg:g")
+				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
+				.attr("class", "fieldGroup")
+				.each(function(currentField,i) {
+					var isSorted = 	 currentField.sort;
+					var isFiltered = currentField.filtered;
+					var preexistingField = d3.select("g.tableGroup[name=\""+currentTable.name+"\"] g.fieldGroup[name$=\""+currentField.name+"\"] circle");
+					
+					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
+										  y: preexistingField.empty() ? (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2) : parseInt(preexistingField.attr("cy")) };
+					
+					d3.select(this)
+					  .append("svg:circle")
+						.attr("r",CIRCLE_RADIUS)
+						.attr("class", (isFiltered ? "filtered" : "")+" "
+									  +(isSorted   ? "sort" 	: ""))
+						.attr("cx", circlePosition.x)
+						.attr("cy", circlePosition.y);
+					
+					if (isSorted) {
+						d3.select(this)
+						  .append("svg:image")
+						    .attr("xlink:href", "images/sort_"+f.sort+".svg")
+						    .attr("class", "order")
+							.attr("width", SORT_SIDE)
+							.attr("height",SORT_SIDE)
+							.attr("x", circlePosition.x)
+							.attr("y", circlePosition.y-SORT_SIDE/2);
+					}
+
+					if (preexistingField.empty()) {
+						d3.select(this)
+						  .append("svg:text")
+						    .text(currentField.name)
+							.attr("x", FIELD_PADDING.left)
+							.attr("y", FIELD_PADDING.top + FIELD_LINEHEIGHT*fieldIndex);
+						
+						fieldIndex++;
+					}
+				});
+		});
 	
 	path = g.append("svg:g").selectAll("path.join")
 		.data(links)
@@ -487,7 +553,7 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter().append("svg:ellipse")
 		.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
-		.attr("name", function(d) { return d.name;})
+		.attr("name", function(d) { return d.functionAlias;})
 		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
 		.call(force.drag);
 
@@ -508,7 +574,7 @@ function buildGraph() {
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
 	
-	positionAll();
+	//positionAll();
 	
 	force
 		.nodes(n)
@@ -517,11 +583,25 @@ function buildGraph() {
 		.start();
 }
 
-function filterFunction(fieldOrFunction, origin, d) {
+
+function getAliasPosX(relatedAliases, currentAlias, tableWidth) {
+	var pos = tableWidth;
+	for (var i=0; i<relatedAliases.length; i++) {
+		if (relatedAliases[i].name === currentAlias) {
+			return pos;
+		}
+		pos+=ALIAS_NAME_PADDING.left
+  			+relatedAliases[i].name.length*CHAR_WIDTH
+			+ALIAS_NAME_PADDING.right;
+	}
+	return pos;
+}
+
+function filterFieldOrFunction(fieldOrFunction, origin, d) {
   if (origin == "all")
 	return true;
   if (origin == "field") {
-	return fieldOrFunction.fieldName == d.fullName;
+	return fieldOrFunction.fieldName == d.fieldName;
   }
   if (origin == "function") {
 	 return fieldOrFunction.functionAlias == d.functionAlias 
@@ -531,25 +611,21 @@ function filterFunction(fieldOrFunction, origin, d) {
 
 function positionPathsToOutput(origin,d) {
   pathToOutput.filter(function(link) {
-	return filterFunction(link,origin,d);
+	return filterFieldOrFunction(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
 	  
-	  var target = field.filter(function(f) { 
-		  return f.tableAlias === "/OUTPUT/" && f.fullName === link.outputName; 
-	  });
+	  var target = 
+		  groups.filter(function(group) { return group.name === "/OUTPUT/"; })
+	  		.select('[name="/OUTPUT/.'+link.outputName+'"] circle');
 	  
 	  return getPath(this, source, target);
-  });
-  
-  d3.selectAll("text.outputname").filter(function(link) {
-	return filterFunction(link,origin,d);
   });
 }
 
 function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
-	  return filterFunction(link,origin,d);
+	  return filterFieldOrFunction(link,origin,d);
 	}).attr("d", function(d) {
 		var source = getNode(d, {role: "source"});
 		var target = getNode(d, {role: "target"});
@@ -559,8 +635,8 @@ function positionPathsToFunctions(origin,d) {
 }
 
 function getPath(pathElement, source, target) {
-	var sourceCoords = getNodeCoords(source);
-	var targetCoords = getNodeCoords(target);
+	var sourceCoords = getAbsoluteCoords(source);
+	var targetCoords = getAbsoluteCoords(target);
 	var isArc = !(source.data()[0].type === "constant" && target.data()[0].type === "function");
 	
 	var pathCoords=getPathFromCoords(sourceCoords.x, sourceCoords.y, targetCoords.x, targetCoords.y, isArc);
@@ -617,19 +693,29 @@ function getDistance(x1, y1, x2, y2) {
   	return Math.sqrt(dx * dx + dy * dy);
 }
 
-function getNodeCoords(element) {
-	var coords;
+function getAbsoluteCoords(element) {
+	var coords = {};
 	if (element.attr("x") !== null) {
 		coords = {x: parseFloat(element.attr("x")), 
 				  y: parseFloat(element.attr("y"))};
 	}
-	else {
+	else if (element.attr("cx") !== null) {
 		coords = {x: parseFloat(element.attr("cx")), 
 				  y: parseFloat(element.attr("cy"))};
 	}
+	else if (element.attr("transform") !== null) {
+		coords = element.attr("transform").replace(/translate\(([-0-9.]+ [-0-9.]+)\)/g,'$1');
+		coords = {x: parseFloat(coords.split(/ /g)[0]),
+				  y: parseFloat(coords.split(/ /g)[1])};
+	}
 	
 	if (!coords.x || !coords.y) {
-		return {x:0, y:0};
+		coords = {x:0, y:0};
+	}
+	if (element.node().parentNode.tagName !== "svg") {
+		var parentCoords = getAbsoluteCoords(d3.select(element.node().parentNode));
+		coords.x+=parentCoords.x;
+		coords.y+=parentCoords.y;
 	}
 	return coords;
 }
@@ -638,23 +724,17 @@ function getNode(pathInfo, args) {
 	args = args || {};
 	switch (pathInfo.type) {
 		case "field":
-			return field.filter(function(f) { 
-				return f.fullName == pathInfo.fullName; 
-			});
+			return d3.select('[name="'+pathInfo.fieldName+'"] circle');
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
 				switch (pathInfo.from) {
 					case "field":
-						return field.filter(function(f) { 
-							return pathInfo.fieldName == f.fullName; 
-						});
+						return d3.select('[name="'+pathInfo.fieldName+'"] circle');
 					break;
 					case "function":
-						return func.filter(function(f) { 
-							return pathInfo.sourceFunctionId == f.functionAlias; 
-						});
+						return d3.select('[name="'+pathInfo.sourceFunctionId+'"]');
 					break;
 					case "constant":
 						return constantText.filter(function(c) { 
@@ -664,9 +744,7 @@ function getNode(pathInfo, args) {
 				}
 			}
 			else {
-				return func.filter(function(f) { 
-					return pathInfo.functionAlias == f.functionAlias; 
-				});
+				return d3.select('[name="'+pathInfo.functionAlias+'"]');
 			}
 		break;
 		case "constant":
@@ -677,12 +755,32 @@ function getNode(pathInfo, args) {
 	}
 }
 
+function getNodeCharge(d) {
+	var charge = 0;
+	switch(d.type) {
+		case "table":
+			charge = d3.max([
+				groups.filter(function(d2) { return d2.name === d.name;}).node().getBoundingClientRect().width,
+				groups.filter(function(d2) { return d2.name === d.name;}).node().getBoundingClientRect().height]);
+		break;
+		
+		case "function":
+			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
+			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+	}
+	return -1*charge*charge;
+}
+
 function positionAll() {
-	tableBoxes.each(function(d,i) {
+	groups.each(function(d,i) {
 		positionTable.call(this,d,i);
 	});
 	func.each(function(d,i) {
 		positionFunction.call(this,d,i);
+	});
+	
+	pathToOutput.each(function(d,i) {
+		positionPathsToOutput(d.from,d);
 	});
 }
 
@@ -690,92 +788,13 @@ function positionTable(d, i) {
 	var x = d.x || 0;
 	var y = d.y || 0;
 	
-	var relatedAliases = tableAlias.filter(function(ta) { return ta.table == d.name; });
-	var relatedAliasesBoxes = tableAliasBoxes.filter(function(ta) { return ta.table == d.name; });
-	
-	var tableFields = field.filter(function(f) { return isFieldInTable(f, d); });
-	
 	d3.select(this)
-	  .attr("x", this.x = x)
-	  .attr("y", this.y = y)
-	  .attr("height", MIN_TABLE_HEIGHT+tableFields.data().length * FIELD_LINEHEIGHT)
-	  .attr("width", TABLE_NAME_PADDING.left
-			  		+CHAR_WIDTH*d3.max([d.name.length,
-			  		                    d3.max(tableFields.data(), function(f) { 
-			  		                    	return f.name.length; 
-			  		                    })
-			  		                   ]));
-	
-	var tableWidth=parseInt(d3.select(this).attr("width"));
-	var tableHeight=parseInt(d3.select(this).attr("height"));
+	  .attr("transform", "translate("+x+" "+y+")");
 	  
-	tableText.filter(function(tt) { return tt.name == d.name; })
-	  .attr("x", x+TABLE_NAME_PADDING.left)
-	  .attr("y", y+TABLE_NAME_PADDING.top);
-	  
-	tableSeparator.filter(function(ts) { return ts.name == d.name; })
-	  .attr("x1", x)
-	  .attr("x2", x+tableWidth)
-	  .attr("y1", y+LINE_SEPARATOR_TOP)
-	  .attr("y2", y+LINE_SEPARATOR_TOP);
-	  
-	relatedAliases
-	  .attr("x", function(ta,j) { 
-		  if (j == 0) {
-			  return x+tableWidth+ALIAS_NAME_PADDING.left;
-		  }
-		  else {
-			  var previousAlias = relatedAliases.filter(function(ta2,j2) { 
-									return j2 === j-1; 
-								  });
-			  return parseInt(previousAlias.attr("x"))
-		  			+ALIAS_NAME_PADDING.right
-			  		+previousAlias.data()[0].name.length*CHAR_WIDTH
-			  		+ALIAS_NAME_PADDING.left;
-		  }
-	  })
-	  .attr("y", y+ALIAS_NAME_PADDING.top);
-	  
-	relatedAliasesBoxes
-	  .attr("x", function(ta,j) { 
-		return parseInt(relatedAliases.filter(function(ta2,j2) {
-										        return j === j2; 
-										      })
-											.attr("x"))
-			   -ALIAS_NAME_PADDING.left;
-	  })
-	  .attr("y", y+ALIAS_BOX_MARGIN.top)
-	  .attr("width",function(ta,j) { return ALIAS_NAME_PADDING.left 
-		  								  + Math.max(ta.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
-		  										  	 CIRCLE_RADIUS/2 + SORT_SIDE);
-	  							   })
-	  .attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
-	  
-	  
-	fieldText.filter(function(f) { return isFieldInTable(f,d);})
-	  .attr("x", x+FIELD_PADDING.left)
-	  .attr("y", function(f, i) { return y + FIELD_PADDING.top + FIELD_LINEHEIGHT*i; });
-		
-	
-	tableFields
-	  .attr("cx", function(f) { return relatedAliases.filter(function(a) { return a.name == f.tableAlias; }).attr("x");})
-	  .attr("cy", function(f, i) { return y +FIELD_PADDING.top
-		  									+FIELD_LINEHEIGHT*i
-		  									-CIRCLE_RADIUS/2; })
-	  .each(function(f) {
-		positionPathsToFunctions("field", f);
-		positionPathsToOutput("field", f);
-	  });
-		
-	
-	fieldOrder.filter(function(f) { return isFieldInTable(f,d);})
-	  .attr("x", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cx"));})
-	  .attr("y", function(f) { return parseInt(field.filter(function(a) { return f.fullName == a.fullName; }).attr("cy"))-SORT_SIDE/2;});
-
 	// Paths between fields
 	path.attr("d", function(d) {
-	  var source=field.filter(function(f) { return d.source == f.fullName; });
-	  var target=field.filter(function(f) { return d.target == f.fullName; });
+	  var source=d3.select('[name="'+d.source+'"] circle');
+	  var target=d3.select('[name="'+d.target+'"] circle');
 	  
 	  return getPath(this, source, target, true);
 	});
@@ -808,21 +827,39 @@ function positionFunction(d, i) {
 	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
 	  .each(function(func) {
 		positionPathsToFunctions("function",func);
-		positionPathsToOutput("function",func);
 	  });
 	
 }
 
 function isFieldInTable(field,table) {
-	return tableAliases[field.tableAlias] && tableAliases[field.tableAlias].table == table.name;
+	return tableAliases.filter(function(tableAlias) { 
+		return tableAlias.name === field.tableAlias && tableAlias.table == table.name; 
+	}).length > 0;
 }
 
-function fieldToTableId(fieldname) {
+function fieldNameToTableId(fieldname) {
+	return fieldNameToTable(fieldname, "index");
+}
+
+function fieldNameToTableObject(fieldname) {
+	return fieldNameToTable(fieldname, "object");
+}
+	
+function fieldNameToTable(fieldname, indexOrObject) {
 	for (var i in n) {
-		if (isFieldInTable(fields[fieldname],n[i]))
-			return i;
+		if (n[i].type === "table") {
+			var fieldAlias = tableAliases.filter(function(tableAlias) {
+				var currentField = 
+					d3.values(fields).filter(function(f) { 
+						return fieldname === f.fullName;
+					});
+				return currentField.length > 0 && tableAlias.name === currentField[0].tableAlias;
+			});
+			if (fieldAlias.length > 0 && fieldAlias[0].table === n[i].name) {
+				return indexOrObject === "index" ? i : n[i];
+			}
+		}
 	}
-	return null;
 }
 
 function getFunctionId(funcName) {
