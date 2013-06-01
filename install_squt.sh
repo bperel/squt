@@ -11,7 +11,7 @@ tar xvzf $MYSQL_ARCHIVE_NAME.tar.gz
 rm $MYSQL_ARCHIVE_NAME.tar.gz
 
 cd $MYSQL_ARCHIVE_NAME
-cat $DIR/parser/DBIx-MyParse-0.88/mysql.patch | patch -p1
+cat $DIR/parser/DBIx-MyParse-0.88/patches/$MYSQL_ARCHIVE_NAME.patch | patch -p1
 
 export CC="gcc -fPIC"
 export CXX="g++ -fPIC"
