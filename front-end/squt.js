@@ -433,6 +433,13 @@ function buildGraph() {
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
 			
+			if (currentTable.subqueryGroup !== undefined 
+			 && d3.select(".subquery[name=\""+currentTable.subqueryGroup+"\"]").node() === null) {
+				g.append("svg:rect")
+				  .attr("class","subquery")
+				  .attr("name",currentTable.subqueryGroup);
+			}
+			
 			d3.select(this)
 			  .append("svg:rect")
 				.attr("class", "table"+(currentTable.name==="/OUTPUT/" ? " output":""))
@@ -772,9 +779,30 @@ function getNodeCharge(d) {
 }
 
 function positionAll() {
+	var subqueryBoundaries=[];
 	groups.each(function(d,i) {
-		positionTable.call(this,d,i);
+		var tableBoundaries = positionTable.call(this,d,i);
+		if (d.subqueryGroup !== undefined) {
+			if (!subqueryBoundaries[d.subqueryGroup]) {
+				subqueryBoundaries[d.subqueryGroup]=[];
+			}
+			subqueryBoundaries[d.subqueryGroup].push(tableBoundaries);
+		}
 	});
+	for (var subqueryGroup in subqueryBoundaries) {
+		var boundaries = subqueryBoundaries[subqueryGroup];
+		var topBoundary = 	 d3.min(boundaries, function(coord) { return coord.y1; }) - SUBQUERY_PADDING;
+		var rightBoundary =  d3.max(boundaries, function(coord) { return coord.x2; }) + SUBQUERY_PADDING;
+		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
+		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
+		
+		d3.select(".subquery[name=\""+subqueryGroup+"\"]")
+			.attr("x",leftBoundary)
+			.attr("y",topBoundary)
+			.attr("width",rightBoundary-leftBoundary)
+			.attr("height",bottomBoundary-topBoundary);
+	}
+	
 	func.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
@@ -790,7 +818,7 @@ function positionTable(d, i) {
 	
 	d3.select(this)
 	  .attr("transform", "translate("+x+" "+y+")");
-	  
+		
 	// Paths between fields
 	path.attr("d", function(d) {
 	  var source=d3.select('[name="'+d.source+'"] circle');
@@ -798,6 +826,8 @@ function positionTable(d, i) {
 	  
 	  return getPath(this, source, target, true);
 	});
+	
+	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};
 }
 
 function positionFunction(d, i) {
