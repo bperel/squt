@@ -15,14 +15,15 @@ our $curQuery;
 our $debug = $ARGV[1] eq "debug";
 our %sqlv_tables_final; # Includes sub-selects
 our %sqlv_tables;
+our $subquery_id=-1;
 
 if ($debug) {
 	print "Dumped:\n";
 	print Dumper $query;
 }
 
-sub handleQuery($$) {
-	my ($queryToHandle,$subquery_id) = @_;
+sub handleQuery($) {
+	my ($queryToHandle) = @_;
 	$curQuery = dclone($queryToHandle);
 	
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
@@ -57,10 +58,9 @@ sub handleQuery($$) {
 	else {
 		$sqlv_tables_final{"Subqueries"}{$subquery_id} = dclone (\%sqlv_tables);
 	}
-	%sqlv_tables=();
 }
 
-handleQuery($query,-1);
+handleQuery($query);
 
 print $json->pretty->encode( \%sqlv_tables_final );
 
@@ -142,11 +142,16 @@ sub handleSelectItem($$$) {
 		
 	}
 	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
-		my $subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+		my $superQuery_id=$subquery_id;
 		my $superQuery=dclone($curQuery);
-		handleQuery($item->getSubselectQuery(), $subquery_id);
+		my $superQueryTables=dclone (\%sqlv_tables);
+		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+		%sqlv_tables = ();
+		handleQuery($item->getSubselectQuery());
 		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
+		%sqlv_tables = %{$superQueryTables};
 		$curQuery=$superQuery;
+		$subquery_id=$superQuery_id;
 	}
 	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
 		|| $item->getType() eq 'STRING_ITEM') {
@@ -358,4 +363,8 @@ sub getSqlTableNameFromTable($$) {
 			return $table->getTableName();
 		}
 	}
+}
+
+sub getCurrentContext() {
+	
 }

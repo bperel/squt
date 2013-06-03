@@ -202,6 +202,7 @@ function build(jsondata) {
 		d3.select('#log').text("");
 	}
 	
+	subqueries=		 [],
 	tables= 	 	 [],
 	tableAliases=	 [],
 	fields= 	 	 [],
@@ -230,7 +231,8 @@ function build(jsondata) {
 	tableAliases = d3.values(tableAliases);
 
 	n = 	  d3.values(tables)
-	  .concat(d3.values(functions));
+	  .concat(d3.values(functions))
+	  .concat(d3.values(subqueries));
 	l = [];
 	
 	for (var i in links) {
@@ -282,7 +284,9 @@ function build(jsondata) {
 }
 
 function processJson(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias;
+	var subqueryGroup=jsondata.SubqueryAlias === undefined ? "main" : jsondata.SubqueryAlias;
+	subqueries[subqueryGroup]={type:"subquery",
+							   name: subqueryGroup};
 	for (var tableName in jsondata.Tables) {
 		tables[tableName]=({type: "table",
 			  				name:tableName,
@@ -433,7 +437,7 @@ function buildGraph() {
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
 			
-			if (currentTable.subqueryGroup !== undefined 
+			if (currentTable.subqueryGroup !== "main" 
 			 && d3.select(".subquery[name=\""+currentTable.subqueryGroup+"\"]").node() === null) {
 				g.append("svg:rect")
 				  .attr("class","subquery")

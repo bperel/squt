@@ -55,6 +55,11 @@ svg#graph {
 	outline:1px solid gray;
 }
 
+rect.subquery {
+	stroke: #ccc;
+	fill: none;	
+}
+
 marker#arrow polyline {
 	stroke: black;
 	fill: white;
