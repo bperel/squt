@@ -9,6 +9,16 @@ body {
 	display: none;
 }
 
+div#mysql_version {
+	width: 100%;
+    position: absolute;
+	padding-left: 50%;
+}
+
+div#mysql_version span {
+	background: #eee;
+}
+
 div#panel {
 	width: 400px;
 	position: fixed;

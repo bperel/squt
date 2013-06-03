@@ -124,16 +124,19 @@ d3.select("defs").append("svg:g").selectAll("marker")
 
 var no_parser=false;
 
-d3.text(URL,function(data) {
+d3.json(URL,function(data) {
 	if (data === undefined || data === null || data === "") {
 		no_parser=true;
 		editor.setOption('readOnly',true);
 		d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
 		d3.select('#no-parser').attr("class","");
 	}
+	else {
+		d3.select('#mysql_version .version').text(d3.values(data.Functions[-1].Constants)[0]);
+	}
 })
   .header("Content-Type","application/x-www-form-urlencoded")
-  .send("POST","query=SELECT b.a FROM b");
+  .send("POST","query=SELECT VERSION()");
 
 d3.select("#OK").on("click",function() {
 	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
