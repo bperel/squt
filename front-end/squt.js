@@ -305,7 +305,13 @@ function processJson(jsondata) {
 					switch(type) {
 						case 'OUTPUT':
 							for (var functionAlias in data) {
-								var outputAlias = data[functionAlias];
+								var outputAlias;
+								if (jsondata.SubqueryAlias && jsondata.SubqueryAlias!=="") {
+									outputAlias = jsondata.SubqueryAlias;
+								}
+								else {
+									outputAlias = data[functionAlias];
+								}
 								if (functionAlias == -1) { // Directly to output
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
 									fields[outputAlias]={type: "field", tableAlias:"/OUTPUT/", name:outputAlias, fullName:outputAlias, filtered: false, sort: false};
