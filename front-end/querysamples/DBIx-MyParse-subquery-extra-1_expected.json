@@ -1,0 +1,30 @@
+{
+   "Tables" : {
+      "a" : {
+         "a" : {
+            "OUTPUT" : {
+               "b" : {
+                  "-1" : "b"
+               }
+            }
+         }
+      }
+   },
+   "Subqueries" : {
+      "0" : {
+         "SubqueryAlias" : "e",
+         "Tables" : {
+            "c" : {
+               "c" : {
+                  "OUTPUT" : {
+                     "d" : {
+                        "-1" : "d"
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
