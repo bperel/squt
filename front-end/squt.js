@@ -288,6 +288,7 @@ function build(jsondata) {
 
 function processJson(jsondata) {
 	var subqueryGroup=jsondata.SubqueryAlias === undefined ? "main" : jsondata.SubqueryAlias;
+	var ignoreOutput=jsondata.SubqueryType !== undefined && jsondata.SubqueryType !== "SINGLEROW_SUBS";
 	subqueries[subqueryGroup]={type:"subquery",
 							   name: subqueryGroup};
 	for (var tableName in jsondata.Tables) {
@@ -307,20 +308,22 @@ function processJson(jsondata) {
 					}
 					switch(type) {
 						case 'OUTPUT':
-							for (var functionAlias in data) {
-								var outputAlias;
-								if (jsondata.SubqueryAlias && jsondata.SubqueryAlias!=="") {
-									outputAlias = jsondata.SubqueryAlias;
-								}
-								else {
-									outputAlias = data[functionAlias];
-								}
-								if (functionAlias == -1) { // Directly to output
-									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
-									fields[outputAlias]={type: "field", tableAlias:"/OUTPUT/", name:outputAlias, fullName:outputAlias, filtered: false, sort: false};
-								}
-								else { // To a function
-									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
+							if (!ignoreOutput) {
+								for (var functionAlias in data) {
+									var outputAlias;
+									if (jsondata.SubqueryAlias && jsondata.SubqueryAlias!=="") {
+										outputAlias = jsondata.SubqueryAlias;
+									}
+									else {
+										outputAlias = data[functionAlias];
+									}
+									if (functionAlias == -1) { // Directly to output
+										linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
+										fields[outputAlias]={type: "field", tableAlias:"/OUTPUT/", name:outputAlias, fullName:outputAlias, filtered: false, sort: false};
+									}
+									else { // To a function
+										linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
+									}
 								}
 							}
 							

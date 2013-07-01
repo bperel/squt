@@ -149,6 +149,7 @@ sub handleSelectItem($$$) {
 		%sqlv_tables = ();
 		handleQuery($item->getSubselectQuery());
 		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
+		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
 		%sqlv_tables = %{$superQueryTables};
 		$curQuery=$superQuery;
 		$subquery_id=$superQuery_id;
@@ -200,6 +201,28 @@ sub handleWhere(\@) {
 		}
 	}
 	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
+		my $superQuery_id=$subquery_id;
+		my $superQuery=dclone($curQuery);
+		my $superQueryTables=dclone (\%sqlv_tables);
+		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+		%sqlv_tables = ();
+		handleQuery($where->getSubselectQuery());
+		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_id;
+		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$where->getSubselectType();
+		%sqlv_tables = %{$superQueryTables};
+		$curQuery=$superQuery;
+		
+		my $subselectExpr=$where->getSubselectExpr();
+		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
+			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
+			if (@fieldInfos ne undef) {
+				my($tablename, $fieldname) = @fieldInfos;
+				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+							{"CONDITION"}{$fieldname}{"ANY"}=$subquery_id;
+			}
+		}
+		$subquery_id=$superQuery_id;
+		
 		setWarning("Not supported","Sub-selects","");
 	}
 	elsif ($where->getItemType() eq 'FUNC_ITEM') {
