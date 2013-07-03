@@ -291,7 +291,7 @@ function build(jsondata) {
 function processJson(jsondata) {
 	var subqueryGroup=jsondata.SubqueryAlias === undefined ? "main" : jsondata.SubqueryAlias;
 	
-	var outputTableAlias="/OUTPUT/"+subqueryGroup;
+	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
 	tables[outputTableAlias]=({type: "table",
 							   output: true,
 		  				  	   name: outputTableAlias,
@@ -314,7 +314,7 @@ function processJson(jsondata) {
 				for (var field in actionFields) {
 					var data=actionFields[field];
 					if (fields[tableAlias+"."+field] == undefined) {
-						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
+						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 					}
 					switch(type) {
 						case 'OUTPUT':
@@ -322,7 +322,7 @@ function processJson(jsondata) {
 								var outputAlias = data[functionAlias];
 								if (functionAlias == -1) { // Directly to output
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
-									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false};
+									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 								}
 								else { // To a function
 									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
@@ -344,7 +344,7 @@ function processJson(jsondata) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
 												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
 													var tableAliasAndField=otherField.split('.');
-													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
+													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 												}
 												var joinType=null;
 												switch(data[otherField]) {
@@ -361,7 +361,7 @@ function processJson(jsondata) {
 										}
 									break;
 									case 'ANY':
-										links.push({source: tableAlias+"."+field, target: "/OUTPUT/"+conditionData, type: conditionType});
+										links.push({source: tableAlias+"."+field, target: OUTPUT_PREFIX+conditionData, type: conditionType});
 									break;
 								}
 							}
@@ -384,7 +384,7 @@ function processJson(jsondata) {
 								 };
 		if (functionDestination === "OUTPUT") {
 			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"], outputTableAlias: outputTableAlias});
-			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name:functionAlias, fullName:functionAlias, filtered: false, sort: false};
+			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name:functionAlias, fullName:functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 		}
 		else if (functionDestination !== "NOWHERE") {
 			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
@@ -668,13 +668,13 @@ function getPath(pathElement, source, target) {
 	d3.select(pathElement).attr("d",pathCoords);
 	var pathObject = domElementToMyObject(pathElement);
 	
-	sourceCoords = getCorrectedPathPoint(pathObject, source, sourceCoords, targetCoords);
-	targetCoords = getCorrectedPathPoint(pathObject, target, targetCoords, sourceCoords);
+	sourceCoords = getCorrectedPathPoint(pathObject, source, sourceCoords, target, targetCoords);
+	targetCoords = getCorrectedPathPoint(pathObject, target, targetCoords, source, sourceCoords);
 	
 	return getPathFromCoords(sourceCoords.x, sourceCoords.y, targetCoords.x, targetCoords.y, isArc);
 }
 
-function getCorrectedPathPoint(pathObject, element, elementCoords, otherElementCoords) {
+function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement, otherElementCoords) {
 	var elementData = element.data()[0];
 	switch (elementData.type) {
 		case "function":
@@ -698,6 +698,29 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElementC
 		case "constant":
 			return {x: elementCoords.x+elementData.name.length/2*CHAR_WIDTH, 
 				 	y: elementCoords.y};
+		break;
+		case "field":
+			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
+				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
+				if (subqueryName !== "main" && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
+					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
+					if (!!pathObject && !!elementObject) {
+						var intersection = Intersection.intersectShapes(pathObject, elementObject);
+						if (intersection.points.length > 0) {
+							var minDistance = undefined;
+							var closest = null;
+							for (var i=0; i<intersection.points.length; i++) {
+								var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
+								if (!minDistance || distance < minDistance) {
+									minDistance = distance;
+									closest = intersection.points[i];
+								}
+							}
+							return {x: closest.x, y: closest.y};
+						}
+					}
+				}
+			}
 	}
 	return elementCoords;
 }
