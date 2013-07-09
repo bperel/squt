@@ -237,11 +237,11 @@ function build(jsondata) {
 	for (var i in links) {
 		var sourceTableId = parseInt(fieldNameToTableId(links[i].source));
 		var targetTableId;
-		if (links[i].type === "ANY") {
+		if (SUBSELECT_TYPES.indexOf(links[i].type) !== -1) {
 			targetTableId = parseInt(tableNameToId(links[i].target));
 		}
 		else {
-			targetTableId = parseInt(fieldNameToTableId(targetField));
+			targetTableId = parseInt(fieldNameToTableId(links[i].target));
 		}
 		if (l[sourceTableId+","+targetTableId]) {
 			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: l[sourceTableId+","+targetTableId].value+1};
@@ -360,8 +360,10 @@ function processJson(jsondata) {
 											}
 										}
 									break;
-									case 'ANY':
-										links.push({source: tableAlias+"."+field, target: OUTPUT_PREFIX+conditionData, type: conditionType});
+									default:
+										if (SUBSELECT_TYPES.indexOf(conditionType) !== -1) {
+											links.push({source: tableAlias+"."+field, target: OUTPUT_PREFIX+conditionData, type: conditionType});
+										}
 									break;
 								}
 							}
@@ -679,21 +681,7 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement,
 	switch (elementData.type) {
 		case "function":
 			var elementObject = domElementToMyObject(element[0][0]);
-			if (!!pathObject && !!elementObject) {
-				var intersection = Intersection.intersectShapes(pathObject, elementObject);
-				if (intersection.points.length > 0) {
-					var minDistance = undefined;
-					var closest = null;
-					for (var i=0; i<intersection.points.length; i++) {
-						var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
-						if (!minDistance || distance < minDistance) {
-							minDistance = distance;
-							closest = intersection.points[i];
-						}
-					}
-					return {x: closest.x, y: closest.y};
-				}
-			}
+			return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
 		break;
 		case "constant":
 			return {x: elementCoords.x+elementData.name.length/2*CHAR_WIDTH, 
@@ -704,25 +692,29 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement,
 				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
 				if (subqueryName !== "main" && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
 					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
-					if (!!pathObject && !!elementObject) {
-						var intersection = Intersection.intersectShapes(pathObject, elementObject);
-						if (intersection.points.length > 0) {
-							var minDistance = undefined;
-							var closest = null;
-							for (var i=0; i<intersection.points.length; i++) {
-								var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
-								if (!minDistance || distance < minDistance) {
-									minDistance = distance;
-									closest = intersection.points[i];
-								}
-							}
-							return {x: closest.x, y: closest.y};
-						}
-					}
+					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
 				}
 			}
 	}
 	return elementCoords;
+}
+
+function getIntersection(object1, object2, otherElementCoords) {
+	if (!!object1 && !!object2) {
+		var intersection = Intersection.intersectShapes(object1, object2);
+		if (intersection.points.length > 0) {
+			var minDistance = undefined;
+			var closest = null;
+			for (var i=0; i<intersection.points.length; i++) {
+				var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
+				if (!minDistance || distance < minDistance) {
+					minDistance = distance;
+					closest = intersection.points[i];
+				}
+			}
+			return {x: closest.x, y: closest.y};
+		}
+	}
 }
 
 function getPathFromCoords(x1, y1, x2, y2, isArc) {

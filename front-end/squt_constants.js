@@ -1,6 +1,11 @@
 var URL="analyze.php";
 var QUERY_MAX_LENGTH = 2000;
 var OUTPUT_PREFIX="/OUTPUT/";
+var SUBSELECT_TYPES=["SINGLEROW_SUBS",
+                     "IN_SUBS",
+                     "EXISTS_SUBS",
+                     "ANY_SUBS",
+                     "ALL_SUBS"];
 
 var W = 960,
     H = 500;

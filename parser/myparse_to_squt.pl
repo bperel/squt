@@ -218,12 +218,10 @@ sub handleWhere(\@) {
 			if (@fieldInfos ne undef) {
 				my($tablename, $fieldname) = @fieldInfos;
 				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-							{"CONDITION"}{$fieldname}{"ANY"}=$subquery_id;
+							{"CONDITION"}{$fieldname}{$where->getSubselectType()}=$subquery_id;
 			}
 		}
 		$subquery_id=$superQuery_id;
-		
-		setWarning("Not supported","Sub-selects","");
 	}
 	elsif ($where->getItemType() eq 'FUNC_ITEM') {
 		handleFunctionInWhere($where);
