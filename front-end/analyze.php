@@ -26,7 +26,7 @@ else {
 	}
 	ob_start();
 	$command = '"'.$path_to_perl.'perl" '
-			  .'"'.$conf['path_to_squt'].'squt/parser/myparse_to_squt.pl" '
+			  .'"'.$conf['path_to_squt'].'parser/myparse_to_squt.pl" '
 			  .'"'.$query.'" '
 			  .($is_debug ? '"debug" ':'')
 			  .($is_win ? ('2> '.$error_output_file) : ('2>&1'));
