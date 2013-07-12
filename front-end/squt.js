@@ -102,6 +102,20 @@ d3.select("defs").append("svg:g").selectAll("marker")
     .attr("points", "0,0 10,5 0,10 1,5 0,0");
 
 d3.select("defs").append("svg:g").selectAll("marker")
+	.data(["subquery"])
+  .enter().append("marker")
+	.attr("id", String)
+	.attr("viewBox", "0 0 16 22")
+	.attr("refX", 16)
+	.attr("refY", 11)
+	.attr("markerUnits", "strokeWidth")
+	.attr("markerWidth", 16)
+	.attr("markerHeight", 12)
+	.attr("orient", "auto")
+  .append("polyline")
+	.attr("points", "0,8 16,0 16,2 2,10 20,10 20,12 2,12 16,20 16,22 0,14 0,8");
+
+d3.select("defs").append("svg:g").selectAll("marker")
       .data(["solidlink1","solidlink2"])
     .enter().append("marker")
       .attr("id", String)
@@ -237,7 +251,7 @@ function build(jsondata) {
 	for (var i in links) {
 		var sourceTableId = parseInt(fieldNameToTableId(links[i].source));
 		var targetTableId;
-		if (SUBSELECT_TYPES.indexOf(links[i].type) !== -1) {
+		if (d3.keys(SUBSELECT_TYPES).indexOf(links[i].type) !== -1) {
 			targetTableId = parseInt(tableNameToId(links[i].target));
 		}
 		else {
@@ -361,7 +375,7 @@ function processJson(jsondata) {
 										}
 									break;
 									default:
-										if (SUBSELECT_TYPES.indexOf(conditionType) !== -1) {
+										if (d3.keys(SUBSELECT_TYPES).indexOf(conditionType) !== -1) {
 											links.push({source: tableAlias+"."+field, target: OUTPUT_PREFIX+conditionData, type: conditionType});
 										}
 									break;
@@ -561,6 +575,7 @@ function buildGraph() {
 		.data(links)
 	  .enter().append("svg:path")
 		.attr("class", "link")
+		.attr("id", function(d,i) { return "link"+i; })
 		.attr("marker-start", function(d) { 
 			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
 				return "url(#solidlink1)";
@@ -569,6 +584,21 @@ function buildGraph() {
 		.attr("marker-end", function(d) { 
 			if (d.type == "innerjoin") {
 				return "url(#solidlink2)";
+			}
+			else if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
+				return "url(#subquery)";
+			}
+		})
+		.each(function(d,i) {
+			if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
+				g
+				  .append("svg:text")
+				  	.append("textPath")
+				  	  .attr("startOffset","50%")
+				  	  .attr("xlink:href","#link"+i)
+				  	  .append("tspan")
+				  	  	.attr("dy",SUBQUERY_TYPE_PADDING)
+				  	  	.text(SUBSELECT_TYPES[d.type]);
 			}
 		});
 

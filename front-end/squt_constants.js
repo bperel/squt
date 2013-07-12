@@ -1,11 +1,11 @@
 var URL="analyze.php";
 var QUERY_MAX_LENGTH = 2000;
 var OUTPUT_PREFIX="/OUTPUT/";
-var SUBSELECT_TYPES=["SINGLEROW_SUBS",
-                     "IN_SUBS",
-                     "EXISTS_SUBS",
-                     "ANY_SUBS",
-                     "ALL_SUBS"];
+var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
+                     IN_SUBS	   : "IN",
+                     EXISTS_SUBS   : "EXISTS",
+                     ANY_SUBS	   : "ANY",
+                     ALL_SUBS	   : "ALL"};
 
 var W = 960,
     H = 500;
@@ -25,7 +25,8 @@ var CIRCLE_RADIUS 	   		 = 6,
 	FUNCTION_BOX_RY			 = 20,
 	FUNCTION_ELLIPSE_PADDING = [],
 	CONSTANT_PADDING 		 = [],
-	SUBQUERY_PADDING		 = 5;
+	SUBQUERY_PADDING		 = 5,
+	SUBQUERY_TYPE_PADDING	 =-3;
 
 TABLE_NAME_PADDING.left 	 = 3;
 TABLE_NAME_PADDING.top  	 = 12;
