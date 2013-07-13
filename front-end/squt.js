@@ -12,6 +12,19 @@ d3.select('#repulsion').on("change",function() {
 	force.start();
 });
 
+d3.select('#create_link a').on('click', function() {
+	d3.select('#create_link a')
+		.attr('class', 'invisible');
+	d3.select('#create_link input')
+		.attr('class', '')
+		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query))
+});
+
+d3.select('#create_link input').on('click', function() {
+	d3.select('#create_link input').node()
+		.select();
+});
+
 var query_is_too_long = false;
 
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
@@ -64,6 +77,10 @@ if (!is_debug) {
 	d3.select("#debug_info").attr("class","invisible");
 }
 var no_graph=extractUrlParams()['no_graph'] !== undefined;
+var query_param=decodeURIComponent(extractUrlParams()['query']);
+if (query_param !== undefined) {
+	editor.setValue(query_param);
+}
 
 var tables= [],
 	tableAliases={},
@@ -123,6 +140,7 @@ d3.select("defs").append("svg:g").selectAll("marker")
         .attr("height",5);
 
 var no_parser=false;
+var query;
 
 d3.json(URL,function(data) {
 	if (data === undefined || data === null || data === "") {
@@ -139,10 +157,11 @@ d3.json(URL,function(data) {
   .send("POST","query=SELECT VERSION()");
 
 d3.select("#OK").on("click",function() {
-	analyzeAndBuild(editor.getValue().replace(/\n/g,' '));
+	query=editor.getValue().replace(/\n/g,' ');
+	analyzeAndBuild();
 });
 
-function analyzeAndBuild(query) {
+function analyzeAndBuild() {
 	var parameters;
 	if (no_parser) {
 		parameters="sample="+selected_query_sample;
@@ -176,6 +195,12 @@ function build(jsondata) {
 		svg.selectAll('image,g').remove();
 		return;
 	}
+	
+	d3.select('#create_link a')
+		.attr('class', '');
+	d3.select('#create_link input')
+		.attr('class', 'invisible');
+	
 	if (jsondata.Warning) {
 		var warningText=[];
 		for (var warnType in jsondata.Warning) {
