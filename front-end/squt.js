@@ -303,7 +303,7 @@ function build(jsondata) {
 }
 
 function processJson(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias === undefined ? "main" : jsondata.SubqueryAlias;
+	var subqueryGroup=jsondata.SubqueryAlias === undefined ? MAIN_QUERY_ALIAS : jsondata.SubqueryAlias;
 	
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
 	tables[outputTableAlias]=({type: "table",
@@ -338,9 +338,9 @@ function processJson(jsondata) {
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
 									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 									
-									if (subqueryGroup !== "main") { // We are in a subquery, the output must be transmitted to the superquery
-										linksToOutput.push({type: "link", from: "field", fieldName: outputTableAlias+"."+outputAlias, outputName: subqueryGroup, outputTableAlias: OUTPUT_PREFIX+"main"});
-										fields[subqueryGroup]={type: "field", tableAlias:OUTPUT_PREFIX+"main", name:subqueryGroup, fullName:OUTPUT_PREFIX+"main"+"."+subqueryGroup, filtered: false, sort: false, subqueryGroup: "main"};
+									if (subqueryGroup !== MAIN_QUERY_ALIAS) { // We are in a subquery, the output must be transmitted to the superquery
+										linksToOutput.push({type: "link", from: "field", fieldName: outputTableAlias+"."+outputAlias, outputName: subqueryGroup, outputTableAlias: OUTPUT_PREFIX+MAIN_QUERY_ALIAS});
+										fields[subqueryGroup]={type: "field", tableAlias:OUTPUT_PREFIX+MAIN_QUERY_ALIAS, name:subqueryGroup, fullName:OUTPUT_PREFIX+MAIN_QUERY_ALIAS+"."+subqueryGroup, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
 									}
 								}
 								else { // To a function
@@ -475,7 +475,7 @@ function buildGraph() {
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
 			
-			if (currentTable.subqueryGroup !== "main" 
+			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
 			 && d3.select(".subquery[name=\""+currentTable.subqueryGroup+"\"]").node() === null) {
 				g.append("svg:rect")
 				  .attr("class","subquery")
@@ -491,10 +491,10 @@ function buildGraph() {
 			
 			d3.select(this)
 			  .append("svg:text")
-				.text(currentTable.name)
+				.text(currentTable.output ? OUTPUT_LABEL : currentTable.name)
 				.attr("class", "tablename"+(currentTable.output ? " output":""))
 				.attr("x", TABLE_NAME_PADDING.left)
-				.attr("y", TABLE_NAME_PADDING.top);
+				.attr("y", currentTable.output ? TABLE_NAME_PADDING.output_top : TABLE_NAME_PADDING.top);
 			
 			d3.select(this)
 			  .append("svg:line")
@@ -514,7 +514,7 @@ function buildGraph() {
 
 					d3.select(this)
 					  .append("svg:text")
-						.text(currentAlias.name)
+						.text(currentTable.output ? "" : currentAlias.name)
 						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth)+ALIAS_NAME_PADDING.left)
 						.attr("y", ALIAS_NAME_PADDING.top);
 
@@ -725,7 +725,7 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement,
 		case "field":
 			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
 				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
-				if (subqueryName !== "main" && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
+				if (subqueryName !== MAIN_QUERY_ALIAS && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
 					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
 					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
 				}

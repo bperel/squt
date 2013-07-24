@@ -1,11 +1,23 @@
+/* Query config */
+
 var URL="analyze.php";
 var QUERY_MAX_LENGTH = 2000;
-var OUTPUT_PREFIX="/OUTPUT/";
+
+
+/* MySQL enums */
+
 var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
                      IN_SUBS	   : "IN",
                      EXISTS_SUBS   : "EXISTS",
                      ANY_SUBS	   : "ANY",
                      ALL_SUBS	   : "ALL"};
+
+/* Labels */
+
+var OUTPUT_LABEL="OUTPUT";
+
+
+/* Measures */
 
 var W = 960,
     H = 500;
@@ -30,6 +42,7 @@ var CIRCLE_RADIUS 	   		 = 6,
 
 TABLE_NAME_PADDING.left 	 = 3;
 TABLE_NAME_PADDING.top  	 = 12;
+TABLE_NAME_PADDING.output_top= 13;
 
 ALIAS_BOX_MARGIN.left 		 = 0;
 ALIAS_BOX_MARGIN.top  		 = 20;
@@ -45,3 +58,8 @@ FUNCTION_ELLIPSE_PADDING.left= 10;
 FUNCTION_ELLIPSE_PADDING.top = 0;
 
 CONSTANT_PADDING.bottom		 = 50;
+
+/* Misc */
+
+var OUTPUT_PREFIX="/OUTPUT/";
+var MAIN_QUERY_ALIAS="main";
