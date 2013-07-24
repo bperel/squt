@@ -337,6 +337,11 @@ function processJson(jsondata) {
 								if (functionAlias == -1) { // Directly to output
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
 									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+									
+									if (subqueryGroup !== "main") { // We are in a subquery, the output must be transmitted to the superquery
+										linksToOutput.push({type: "link", from: "field", fieldName: outputTableAlias+"."+outputAlias, outputName: subqueryGroup, outputTableAlias: OUTPUT_PREFIX+"main"});
+										fields[subqueryGroup]={type: "field", tableAlias:OUTPUT_PREFIX+"main", name:subqueryGroup, fullName:OUTPUT_PREFIX+"main"+"."+subqueryGroup, filtered: false, sort: false, subqueryGroup: "main"};
+									}
 								}
 								else { // To a function
 									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
