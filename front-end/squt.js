@@ -540,7 +540,7 @@ function buildGraph() {
 				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
 				.attr("class", "fieldGroup")
 				.each(function(currentField,i) {
-					var isSorted = 	 currentField.sort;
+					var sort = 	 currentField.sort;
 					var isFiltered = currentField.filtered;
 					var preexistingField = d3.select("g.tableGroup[name=\""+currentTable.name+"\"] g.fieldGroup[name$=\""+currentField.name+"\"] circle");
 					
@@ -551,14 +551,14 @@ function buildGraph() {
 					  .append("svg:circle")
 						.attr("r",CIRCLE_RADIUS)
 						.attr("class", (isFiltered ? "filtered" : "")+" "
-									  +(isSorted   ? "sort" 	: ""))
+									  +(sort   	   ? "sort" 	: ""))
 						.attr("cx", circlePosition.x)
 						.attr("cy", circlePosition.y);
 					
-					if (isSorted) {
+					if (sort) {
 						d3.select(this)
 						  .append("svg:image")
-						    .attr("xlink:href", "images/sort_"+f.sort+".svg")
+						    .attr("xlink:href", "images/sort_"+sort+".svg")
 						    .attr("class", "order")
 							.attr("width", SORT_SIDE)
 							.attr("height",SORT_SIDE)
