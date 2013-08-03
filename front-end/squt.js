@@ -304,6 +304,7 @@ function build(jsondata) {
 
 function processJson(jsondata) {
 	var subqueryGroup=jsondata.SubqueryAlias === undefined ? MAIN_QUERY_ALIAS : jsondata.SubqueryAlias;
+	var subqueryType=jsondata.SubqueryType;
 	
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
 	tables[outputTableAlias]=({type: "table",
@@ -338,7 +339,8 @@ function processJson(jsondata) {
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
 									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 									
-									if (subqueryGroup !== MAIN_QUERY_ALIAS) { // We are in a subquery, the output must be transmitted to the superquery
+									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
+									if (subqueryGroup !== MAIN_QUERY_ALIAS && subqueryType === "SINGLEROW_SUBS") { 
 										linksToOutput.push({type: "link", from: "field", fieldName: outputTableAlias+"."+outputAlias, outputName: subqueryGroup, outputTableAlias: OUTPUT_PREFIX+MAIN_QUERY_ALIAS});
 										fields[subqueryGroup]={type: "field", tableAlias:OUTPUT_PREFIX+MAIN_QUERY_ALIAS, name:subqueryGroup, fullName:OUTPUT_PREFIX+MAIN_QUERY_ALIAS+"."+subqueryGroup, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
 									}
