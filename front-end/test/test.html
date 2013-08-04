@@ -44,6 +44,7 @@
 	
 	<div id="report" class="hidden"></div>
   	<script type="text/javascript">
+  		window.console.log = function() {};
 		QUnit.jUnitReport = function(report) {
 			d3.select("#report").text(report.xml);
 		};
@@ -65,8 +66,9 @@
 	  	
 	  	function test_next_query() {
 			current_query++;
-	  		if (queries[current_query] === undefined)
+	  		if (queries[current_query] === undefined) {
 	  			return;
+	  		}
 			var sql_name=queries[current_query].replace(/^[0-9]+\-(.*)\.sql/g,'$1');
 			console.log("Testing query "+queries[current_query]);
 			d3.text(
@@ -97,7 +99,6 @@
 									
 									if (Object.identical(processed_jsonLC, expected_jsonLC)) {
 										equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
-										equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
 										
 										jsErrors = [];
 										try {
