@@ -56,6 +56,19 @@ pre#query {
 	display: none;
 }
 
+#OK {
+	float: left;
+}
+
+#create_link {
+	float: right;
+	margin: 4px 8px;
+}
+
+#create_link input {
+	width: 150px;
+}
+
 #collision {
 	color: red;
 }
