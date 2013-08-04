@@ -97,11 +97,11 @@
 							var expected_json_file = queries[current_query].replace(/\.sql$/g,'_expected.json');
 							d3.json("../querysamples/"+expected_json_file, function (expected_json) {
 								test("query "+sql_name, function() {
-									processed_json=objectToLowerCase(processed_json);
-									expected_json=objectToLowerCase(expected_json);
-									ok (Object.identical(processed_json, expected_json),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
+									var processed_jsonLC=objectToLowerCase(processed_json);
+									var expected_jsonLC=objectToLowerCase(expected_json);
+									ok (Object.identical(processed_jsonLC, expected_jsonLC),"Parse results are not the same as expected : "+JSON.stringify(processed_json)+" vs "+JSON.stringify(expected_json));
 									
-									if (Object.identical(processed_json, expected_json)) {
+									if (Object.identical(processed_jsonLC, expected_jsonLC)) {
 										equal(undefined,processed_json.Error,JSON.stringify(processed_json.Error));
 										equal(undefined,processed_json.Warning,JSON.stringify(processed_json.Warning));
 										
@@ -112,7 +112,7 @@
 										catch(e) {
 											jsErrors.push(e);
 										}
-										deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s)");
+										deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s) : "+jsErrors.join(" ; "));
 									}
 								});
 								test_next_query();
