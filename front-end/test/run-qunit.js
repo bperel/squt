@@ -11,6 +11,9 @@ if (phantom.args.length === 2 && phantom.args[1] == "debug") {
 	};
 }
 
+page.onError = function (msg, trace) { };
+
+
 page.open(phantom.args[0], function(status){
     if (status !== "success") {
         console.log("Unable to access network");
@@ -18,7 +21,7 @@ page.open(phantom.args[0], function(status){
     }
 	console.log(page.evaluate(function(){
 		return document.getElementById('report').innerText;
-	}));
+	}).match(/<\?xml(.|\n)*/)[0]);
 	phantom.exit(0);
 });
 
