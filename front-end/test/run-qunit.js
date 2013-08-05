@@ -21,7 +21,7 @@ page.open(phantom.args[0], function(status){
     }
 	console.log(page.evaluate(function(){
 		return document.getElementById('report').innerText;
-	}).match(/<\?xml(.|\n)*/)[0]);
+	}));
 	phantom.exit(0);
 });
 
