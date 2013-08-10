@@ -77,9 +77,9 @@ if (!is_debug) {
 	d3.select("#debug_info").attr("class","invisible");
 }
 var no_graph=extractUrlParams()['no_graph'] !== undefined;
-var query_param=decodeURIComponent(extractUrlParams()['query']);
+var query_param=extractUrlParams()['query'];
 if (query_param !== undefined) {
-	editor.setValue(query_param);
+	editor.setValue(decodeURIComponent(query_param));
 }
 
 var tables= [],
