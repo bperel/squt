@@ -1,9 +1,8 @@
 var force = d3.layout.force()
-			.gravity(0.2)
+			.gravity(0.5)
 			.charge(function(d) {
 				return getNodeCharge(d);
 			})
-			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
 
 var repulsion = d3.select('#repulsion').attr("value");
@@ -17,7 +16,7 @@ d3.select('#create_link a').on('click', function() {
 		.attr('class', 'invisible');
 	d3.select('#create_link input')
 		.attr('class', '')
-		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query))
+		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
 });
 
 d3.select('#create_link input').on('click', function() {
@@ -535,7 +534,7 @@ function buildGraph() {
 					if (isSorted) {
 						d3.select(this)
 						  .append("svg:image")
-						    .attr("xlink:href", "images/sort_"+f.sort+".svg")
+						    .attr("xlink:href", "images/sort_"+is_sorted+".svg")
 						    .attr("class", "order")
 							.attr("width", SORT_SIDE)
 							.attr("height",SORT_SIDE)
