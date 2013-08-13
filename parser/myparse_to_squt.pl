@@ -41,6 +41,9 @@ sub handleQuery($) {
 				if ($item->getType() eq "JOIN_ITEM") {
 					handleJoin($item);
 				}
+				elsif ($item->getType() eq "SUBSELECT_ITEM") {
+					handleSubquery($item,0);
+				}
 			}
 		}
 		if ($curQuery->getOrder() ne undef) {
@@ -142,17 +145,7 @@ sub handleSelectItem($$$) {
 		
 	}
 	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
-		my $superQuery_id=$subquery_id;
-		my $superQuery=dclone($curQuery);
-		my $superQueryTables=dclone (\%sqlv_tables);
-		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
-		%sqlv_tables = ();
-		handleQuery($item->getSubselectQuery());
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
-		%sqlv_tables = %{$superQueryTables};
-		$curQuery=$superQuery;
-		$subquery_id=$superQuery_id;
+		handleSubquery($item,0);
 	}
 	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
 		|| $item->getType() eq 'STRING_ITEM') {
@@ -201,27 +194,7 @@ sub handleWhere(\@) {
 		}
 	}
 	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
-		my $superQuery_id=$subquery_id;
-		my $superQuery=dclone($curQuery);
-		my $superQueryTables=dclone (\%sqlv_tables);
-		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
-		%sqlv_tables = ();
-		handleQuery($where->getSubselectQuery());
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_id;
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$where->getSubselectType();
-		%sqlv_tables = %{$superQueryTables};
-		$curQuery=$superQuery;
-		
-		my $subselectExpr=$where->getSubselectExpr();
-		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
-			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
-			if (@fieldInfos ne undef) {
-				my($tablename, $fieldname) = @fieldInfos;
-				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-							{"CONDITION"}{$fieldname}{$where->getSubselectType()}=$subquery_id;
-			}
-		}
-		$subquery_id=$superQuery_id;
+		handleSubquery($where, 1);
 	}
 	elsif ($where->getItemType() eq 'FUNC_ITEM') {
 		handleFunctionInWhere($where);
@@ -322,6 +295,32 @@ sub handleOrderBy($) {
 		$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
 					{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
 	}
+}
+
+sub handleSubquery($$) {
+	my ($item, $isWhere) = @_;
+	my $superQuery_id=$subquery_id;
+	my $superQuery=dclone($curQuery);
+	my $superQueryTables=dclone (\%sqlv_tables);
+	$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+	%sqlv_tables = ();
+	handleQuery($item->getSubselectQuery());
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || $subquery_id;
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
+	%sqlv_tables = %{$superQueryTables};
+	$curQuery=$superQuery;
+	if ($isWhere) {
+		my $subselectExpr=$item->getSubselectExpr();
+		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
+			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
+			if (@fieldInfos ne undef) {
+				my($tablename, $fieldname) = @fieldInfos;
+				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+							{"CONDITION"}{$fieldname}{$item->getSubselectType()}=$subquery_id;
+			}
+		}
+	}
+	$subquery_id=$superQuery_id;
 }
 
 sub setWarning {
