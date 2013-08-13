@@ -61,5 +61,5 @@ CONSTANT_PADDING.bottom		 = 50;
 
 /* Misc */
 
-var OUTPUT_PREFIX="/OUTPUT/";
+var OUTPUT_PREFIX="_OUTPUT_";
 var MAIN_QUERY_ALIAS="main";

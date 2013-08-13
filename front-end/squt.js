@@ -3,7 +3,6 @@ var force = d3.layout.force()
 			.charge(function(d) {
 				return getNodeCharge(d);
 			})
-			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
 
 var repulsion = d3.select('#repulsion').attr("value");
@@ -298,7 +297,8 @@ function build(jsondata) {
 			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
 		}
 		else continue;
-		l[sourceId+",0"] = {source: sourceId, target: 0, value: 1};
+		var targetId = parseInt(getOutputId(linksToOutput[i].outputTableAlias.replace(OUTPUT_PREFIX,'')));
+		l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
 	}
 
 	for (var i in linksToFunctions) {
@@ -328,7 +328,7 @@ function build(jsondata) {
 }
 
 function processJson(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias === undefined ? MAIN_QUERY_ALIAS : jsondata.SubqueryAlias;
+	var subqueryGroup=jsondata.SubqueryAlias === undefined ? MAIN_QUERY_ALIAS : "sq"+jsondata.SubqueryAlias;
 	var subqueryType=jsondata.SubqueryType;
 	
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
@@ -869,6 +869,13 @@ function getNodeCharge(d) {
 		case "function":
 			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
 			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+		break;
+		case "subquery":
+			if (d.name !== MAIN_QUERY_ALIAS) {
+				charge = d3.max([
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().width,
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().height]);
+			}
 	}
 	return -1*charge*charge;
 }
@@ -994,6 +1001,14 @@ function tableNameToId(tablename) {
 		}
 	}
 	return;
+}
+
+function getOutputId(outputAlias) {
+	for (var i in n) {
+		if (outputAlias == n[i].name)
+			return i;
+	}
+	return null;
 }
 
 function getFunctionId(funcName) {
