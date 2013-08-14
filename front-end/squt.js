@@ -362,7 +362,7 @@ function processJson(jsondata) {
 								var outputAlias = data[functionAlias];
 								if (functionAlias == -1) { // Directly to output
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
-									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+									fields[outputTableAlias+"."+outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 									
 									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
 									if (subqueryGroup !== MAIN_QUERY_ALIAS && subqueryType === "SINGLEROW_SUBS") { 
