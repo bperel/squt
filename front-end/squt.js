@@ -1,5 +1,5 @@
 var force = d3.layout.force()
-			.gravity(0.2)
+			.gravity(0.5)
 			.charge(function(d) {
 				return getNodeCharge(d);
 			})
@@ -16,7 +16,7 @@ d3.select('#create_link a').on('click', function() {
 		.attr('class', 'invisible');
 	d3.select('#create_link input')
 		.attr('class', '')
-		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query))
+		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
 });
 
 d3.select('#create_link input').on('click', function() {
