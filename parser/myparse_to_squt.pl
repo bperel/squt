@@ -14,6 +14,7 @@ our $query = $parser->parse($ARGV[0]);
 our $curQuery;
 our $debug = $ARGV[1] eq "debug";
 our %sqlv_tables_final; # Includes sub-selects
+our %outputAliases;
 our %sqlv_tables;
 our $subquery_id=-1;
 
@@ -27,10 +28,10 @@ sub handleQuery($) {
 	$curQuery = dclone($queryToHandle);
 	
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
-		$sqlv_tables{"Error"}=$curQuery->getErrstr();
+		$sqlv_tables_final{"Error"}=$curQuery->getErrstr();
 	}
 	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT") {
-		$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
+		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
 	}
 	else {
 		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
@@ -40,6 +41,9 @@ sub handleQuery($) {
 			foreach my $item (@{$curQuery->getTables()}) {
 				if ($item->getType() eq "JOIN_ITEM") {
 					handleJoin($item);
+				}
+				elsif ($item->getType() eq "SUBSELECT_ITEM") {
+					handleSubquery($item,0);
 				}
 			}
 		}
@@ -142,17 +146,7 @@ sub handleSelectItem($$$) {
 		
 	}
 	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
-		my $superQuery_id=$subquery_id;
-		my $superQuery=dclone($curQuery);
-		my $superQueryTables=dclone (\%sqlv_tables);
-		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
-		%sqlv_tables = ();
-		handleQuery($item->getSubselectQuery());
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
-		%sqlv_tables = %{$superQueryTables};
-		$curQuery=$superQuery;
-		$subquery_id=$superQuery_id;
+		handleSubquery($item,0);
 	}
 	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
 		|| $item->getType() eq 'STRING_ITEM') {
@@ -201,27 +195,7 @@ sub handleWhere(\@) {
 		}
 	}
 	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
-		my $superQuery_id=$subquery_id;
-		my $superQuery=dclone($curQuery);
-		my $superQueryTables=dclone (\%sqlv_tables);
-		$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
-		%sqlv_tables = ();
-		handleQuery($where->getSubselectQuery());
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_id;
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$where->getSubselectType();
-		%sqlv_tables = %{$superQueryTables};
-		$curQuery=$superQuery;
-		
-		my $subselectExpr=$where->getSubselectExpr();
-		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
-			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
-			if (@fieldInfos ne undef) {
-				my($tablename, $fieldname) = @fieldInfos;
-				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-							{"CONDITION"}{$fieldname}{$where->getSubselectType()}=$subquery_id;
-			}
-		}
-		$subquery_id=$superQuery_id;
+		handleSubquery($where, 1);
 	}
 	elsif ($where->getItemType() eq 'FUNC_ITEM') {
 		handleFunctionInWhere($where);
@@ -324,11 +298,44 @@ sub handleOrderBy($) {
 	}
 }
 
+sub handleSubquery($$) {
+	my ($item, $isWhere) = @_;
+	my $superQuery_id=$subquery_id;
+	my $superQuery=dclone($curQuery);
+	my $superQueryTables=dclone (\%sqlv_tables);
+	$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+	%sqlv_tables = ();
+	handleQuery($item->getSubselectQuery());
+	
+	my $subquery_alias = $item->getAlias();
+	if ($subquery_alias eq undef) {
+		setWarning("No alias","subquery #".$subquery_id);
+		$subquery_alias="subquery1";
+	}
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_alias || $subquery_id;
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
+	%sqlv_tables = %{$superQueryTables};
+	$curQuery=$superQuery;
+	
+	my $subselectExpr=$item->getSubselectExpr();
+	if ($isWhere && $subselectExpr ne undef) {
+		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
+			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
+			if (@fieldInfos ne undef) {
+				my($tablename, $fieldname) = @fieldInfos;
+				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+							{"CONDITION"}{$fieldname}{$item->getSubselectType()}=$subquery_id;
+			}
+		}
+	}
+	$subquery_id=$superQuery_id;
+}
+
 sub setWarning {
 	my $warning_type = $_[0];
 	my $concerned_field = $_[1];
-	my $extra_info = $_[2];
-	$sqlv_tables{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
+	my $extra_info = $_[2] || "";
+	$sqlv_tables_final{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
 }
 
 sub getItemTableName($) {

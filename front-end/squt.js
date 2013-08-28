@@ -3,7 +3,6 @@ var force = d3.layout.force()
 			.charge(function(d) {
 				return getNodeCharge(d);
 			})
-			.linkDistance(300)
 			.size([W*2/3, H*2/3]);
 
 var repulsion = d3.select('#repulsion').attr("value");
@@ -222,7 +221,7 @@ function build(jsondata) {
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
 						var field_location=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause "
+						warningText.push("WARNING - No named alias for field " + i + (field_location ? " located in "+field_location+" clause " : "")
 										 +(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 					
 					break;
@@ -298,7 +297,8 @@ function build(jsondata) {
 			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
 		}
 		else continue;
-		l[sourceId+",0"] = {source: sourceId, target: 0, value: 1};
+		var targetId = parseInt(getOutputId(linksToOutput[i].outputTableAlias.replace(OUTPUT_PREFIX,'')));
+		l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
 	}
 
 	for (var i in linksToFunctions) {
@@ -361,13 +361,23 @@ function processJson(jsondata) {
 							for (var functionAlias in data) {
 								var outputAlias = data[functionAlias];
 								if (functionAlias == -1) { // Directly to output
+									var fullName = outputTableAlias+"."+outputAlias;
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
-									fields[outputAlias]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName:outputTableAlias+"."+outputAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+									fields[fullName]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 									
 									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
-									if (subqueryGroup !== MAIN_QUERY_ALIAS && subqueryType === "SINGLEROW_SUBS") { 
-										linksToOutput.push({type: "link", from: "field", fieldName: outputTableAlias+"."+outputAlias, outputName: subqueryGroup, outputTableAlias: OUTPUT_PREFIX+MAIN_QUERY_ALIAS});
-										fields[subqueryGroup]={type: "field", tableAlias:OUTPUT_PREFIX+MAIN_QUERY_ALIAS, name:subqueryGroup, fullName:OUTPUT_PREFIX+MAIN_QUERY_ALIAS+"."+subqueryGroup, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+									if (subqueryGroup !== MAIN_QUERY_ALIAS) {
+										var mainSubqueryOutputAlias = OUTPUT_PREFIX+MAIN_QUERY_ALIAS;
+										if (subqueryType === "SINGLEROW_SUBS") {
+											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+subqueryGroup;
+											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: subqueryGroup, outputTableAlias: mainSubqueryOutputAlias});
+											fields[subqueryGroup]={type: "field", tableAlias: mainSubqueryOutputAlias, name: subqueryGroup, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+										}
+										else if (subqueryType === null) { // Derived table
+											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+outputAlias;
+											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputAlias, outputTableAlias: mainSubqueryOutputAlias});
+											fields[fullNameInMainSubquery]={type: "field", tableAlias: mainSubqueryOutputAlias, name: outputAlias, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+										}
 									}
 								}
 								else { // To a function
@@ -869,6 +879,13 @@ function getNodeCharge(d) {
 		case "function":
 			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
 			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+		break;
+		case "subquery":
+			if (d.name !== MAIN_QUERY_ALIAS) {
+				charge = d3.max([
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().width,
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().height]);
+			}
 	}
 	return -1*charge*charge;
 }
@@ -994,6 +1011,14 @@ function tableNameToId(tablename) {
 		}
 	}
 	return;
+}
+
+function getOutputId(outputAlias) {
+	for (var i in n) {
+		if (outputAlias == n[i].name)
+			return i;
+	}
+	return null;
 }
 
 function getFunctionId(funcName) {
