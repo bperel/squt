@@ -16,6 +16,6 @@ All of them are integrated into squt as submodules : no need to install them man
 
 Want to know more and install it ? Have a look at the [Installation guide](../../wiki/Installation Guide) !
 
-... Or play with the online [demo](http://87.106.165.63/squt/master/front-end/squt.html) :-)
+... Or play with the online [demo](http://62.210.239.25//squt/master/front-end/squt.html) :-)
 
 <img alt="Licence Creative Commons" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/fr/88x31.png" />
