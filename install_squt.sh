@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage(){
-	echo "Usage: $0 [--mysql-path=<existing MySQL path>] [--no-mysql-make] [--no-mysql-patch]"
+	echo "Usage: $0 [--help] [--mysql-path=<existing MySQL path>] [--no-mysql-make] [--no-mysql-patch]"
 	exit 1
 }
 
@@ -28,6 +28,10 @@ do
 		--no-mysql-make)
 			DO_MYSQL_MAKE=false
             shift
+            ;;
+		--help)
+			usage
+			exit
             ;;
         --) # End of all options
             shift
