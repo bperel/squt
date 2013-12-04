@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage(){
-	echo "Usage: $0 [--help] [--mysql-path=<existing MySQL path>] [--no-mysql-make] [--no-mysql-patch]"
+	echo "Usage: $0 [--help | [--mysql-version=<custom MySQL version>] | [[--mysql-path=<existing MySQL path>] [--no-mysql-make] [--no-mysql-patch]]]"
 	exit 1
 }
 
@@ -10,6 +10,7 @@ DIR=$PWD
 DEFAULT_MYSQL_PATH=true
 DO_PATCH=true
 DO_MYSQL_MAKE=true
+MYSQL_VERSION="5.0.67"
 
 while :
 do
@@ -19,6 +20,10 @@ do
         	MYSQL_FULL_DIR=${MYSQL_FULL_DIR%/}
         	MYSQL_ARCHIVE_NAME=${MYSQL_FULL_DIR##*/}
 			DEFAULT_MYSQL_PATH=false
+            shift
+            ;;
+        --mysql-version=*)
+            MYSQL_VERSION=${1#*=}
             shift
             ;;
 		--no-mysql-patch)
@@ -52,13 +57,16 @@ done
 if $DEFAULT_MYSQL_PATH == true; then
 	MYSQL_DL_DIR="/usr/src/"
 	MYSQL_ARCHIVE_PREFIX="mysql-"
-	MYSQL_VERSION="5.0.67"
 	MYSQL_ARCHIVE_NAME=$MYSQL_ARCHIVE_PREFIX$MYSQL_VERSION
 	MYSQL_FULL_DIR=$MYSQL_DL_DIR$MYSQL_ARCHIVE_NAME
 	MYSQL_FULL_ARCHIVE_NAME=$MYSQL_ARCHIVE_NAME.tar.gz
 	
 	cd $MYSQL_DL_DIR
 	wget http://downloads.mysql.com/archives/mysql-5.0/$MYSQL_FULL_ARCHIVE_NAME
+	OUT=$?
+	if [ $OUT -ne 0 ]; then
+		exit;
+	fi
 	tar xvzf $MYSQL_FULL_ARCHIVE_NAME
 	rm $MYSQL_FULL_ARCHIVE_NAME
 else
