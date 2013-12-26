@@ -1,11 +1,11 @@
 {
 	"Warning": {
-		"No alias field ignored": 
+		"No alias field ignored": {
 			"field1": "SELECT"
 		}
 	},
-	"Subqueries": 
-		"0": 
+	"Subqueries": {
+		"0": {
 			"SubqueryType": null,
 			"SubqueryAlias": "derived1",
 			"Tables": {
