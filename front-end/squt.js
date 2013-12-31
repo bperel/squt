@@ -256,7 +256,7 @@ function build(jsondata) {
 	processJson(jsondata);
 	if (jsondata.Subqueries) {
 		for (var i in jsondata.Subqueries) {
-			processJson(jsondata.Subqueries[i]);
+			processJson(jsondata.Subqueries[i], i);
 		}
 	}
 	
@@ -327,8 +327,8 @@ function build(jsondata) {
 	buildGraph();
 }
 
-function processJson(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias === undefined ? MAIN_QUERY_ALIAS : jsondata.SubqueryAlias;
+function processJson(jsondata, subqueryIndex) {
+	var subqueryGroup=subqueryIndex || MAIN_QUERY_ALIAS;
 	var subqueryType=jsondata.SubqueryType;
 	
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
