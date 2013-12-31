@@ -5,7 +5,32 @@ var force = d3.layout.force()
 			})
 			.size([W*2/3, H*2/3]);
 
+var nodeDragging = false;
+			
+function dragstart(d, i) {
+	force.stop();
+}
+
+function dragmove(d, i) {	
+	d.px += d3.event.dx;
+	d.py += d3.event.dy;
+	d.x += d3.event.dx;
+	d.y += d3.event.dy;	
+	tick();
+}
+
+function dragend(d, i) {
+	d.fixed = true;
+	tick();
+}
+
+var node_drag = d3.behavior.drag()
+	.on("dragstart", dragstart)
+	.on("drag", dragmove)
+	.on("dragend", dragend);
+
 var repulsion = d3.select('#repulsion').attr("value");
+
 d3.select('#repulsion').on("change",function() {
 	repulsion = this.value;
 	force.start();
@@ -97,8 +122,10 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("width", W)
 	.attr("height", H)
 	.call(d3.behavior.zoom()
-		.on("zoom",function() {
-			svg.select("svg>g").attr("transform", "translate(" +  d3.event.translate[0] + "," + d3.event.translate[1] + ") scale(" +  d3.event.scale + ")"); 	
+		.on("zoom",function(a,b) {
+			if (!nodeDragging) {
+				svg.select("svg>g").attr("transform", "translate(" +  d3.event.translate[0] + "," + d3.event.translate[1] + ") scale(" +  d3.event.scale + ")"); 	
+			}
 		}));
 
 svg.append("defs");
@@ -488,7 +515,7 @@ function buildGraph() {
 	  .enter().append("svg:g")
 		.attr("name",  function(currentTable) { return currentTable.name; })
 		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
-		.call(force.drag)
+		.call(node_drag)
 		.each(function(currentTable) {
 			var relatedAliases = tableAliases.filter(function(ta) { return ta.table == currentTable.name; });
 			var relatedFields = fields.filter(function(currentField) { 
@@ -611,7 +638,9 @@ function buildGraph() {
 						fieldIndex++;
 					}
 				});
-		});
+		})
+		.on('mousedown', preventGlobalDrag)
+		.on('mouseup', allowGlobalDrag);
 	
 	path = g.append("svg:g").selectAll("path.join")
 		.data(links)
@@ -657,7 +686,9 @@ function buildGraph() {
 		.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
 		.attr("name", function(d) { return d.functionAlias;})
 		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
-		.call(force.drag);
+		.call(node_drag)
+		.on('mousedown', preventGlobalDrag)
+		.on('mouseup', allowGlobalDrag);
 
 	pathToFunction = g.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
@@ -1002,6 +1033,14 @@ function fieldNameToTable(fieldname, indexOrObject) {
 			}
 		}
 	}
+}
+
+function preventGlobalDrag() {
+	nodeDragging = true;
+}
+
+function allowGlobalDrag() {
+	nodeDragging = false;
 }
 
 function tableNameToId(tablename) {
