@@ -96,12 +96,14 @@ d3.text("list_samples.php?test=false",function(text) {
 	}
 });
 
-var is_debug=extractUrlParams()['debug'] !== undefined;
+var params = extractUrlParams();
+
+var is_debug=params.debug !== undefined;
 if (!is_debug) {
 	d3.select("#debug_info").attr("class","invisible");
 }
-var no_graph=extractUrlParams()['no_graph'] !== undefined;
-var query_param=extractUrlParams()['query'];
+var no_graph=params.no_graph !== undefined;
+var query_param=params.query;
 if (query_param !== undefined) {
 	editor.setValue(decodeURIComponent(query_param));
 }
@@ -439,7 +441,7 @@ function processJson(jsondata, subqueryIndex) {
 												links.push({source: tableAlias+"."+field, target: otherField, type: joinType});
 											}
 											else { // It's a value
-												fields[tableAlias+"."+field]['filtered']=true;
+												fields[tableAlias+"."+field].filtered=true;
 											}
 										}
 									break;
@@ -452,7 +454,7 @@ function processJson(jsondata, subqueryIndex) {
 							}
 						break;
 						case 'SORT':
-							fields[tableAlias+"."+field]['sort']=data;
+							fields[tableAlias+"."+field].sort=data;
 						break;
 					}
 				}
