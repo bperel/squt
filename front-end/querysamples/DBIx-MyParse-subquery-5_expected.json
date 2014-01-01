@@ -1,0 +1,40 @@
+{
+   "Warning" : {
+      "No alias" : {
+         "subquery #0" : ""
+      }
+   },
+   "Subqueries" : {
+      "0" : {
+         "SubqueryType" : "EXISTS_SUBS",
+         "Tables" : {
+            "table1" : {
+               "table1" : {
+                  "CONDITION" : {
+                     "cond1" : {
+                        "EXISTS" : "1"
+                     }
+                  },
+                  "OUTPUT" : {
+                     "field1" : {
+                        "-1" : "field1"
+                     }
+                  }
+               }
+            }
+         },
+         "SubqueryAlias" : "subquery1"
+      }
+   },
+   "Tables" : {
+      "table2" : {
+         "table2" : {
+            "OUTPUT" : {
+               "field2" : {
+                  "-1" : "field2"
+               }
+            }
+         }
+      }
+   }
+}
