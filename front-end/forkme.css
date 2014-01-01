@@ -1,5 +1,11 @@
 @CHARSET "ISO-8859-1";
 
+#forkongithub {
+	position: fixed;
+	top: 0;
+	left: 0;	
+}
+
 #forkongithub
 a {
 	background: rgb(255, 0, 0);
@@ -38,26 +44,4 @@ a::after {
 a::before {
 	bottom: 1px;
 	top: auto;
-}
- 
-@media screen and (min-width:800px) {
-	#forkongithub {
-		position: absolute;
-		display: block;
-		top: 0;
-		left: 0;
-		width: 200px;
-		overflow: hidden;
-		height: 200px;
-	}
-	#forkongithub
-a {
-		width: 200px;
-		position: absolute;
-		top: 60px;
-		left: -60px;
-		transform: rotate(-45deg);
-		-webkit-transform: rotate(-45deg);
-		box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8);
-	}
 }

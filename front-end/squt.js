@@ -562,7 +562,7 @@ function buildGraph() {
 					if (isSorted) {
 						d3.select(this)
 						  .append("svg:image")
-						    .attr("xlink:href", "images/sort_"+is_sorted+".svg")
+						    .attr("xlink:href", "images/sort_"+isSorted+".svg")
 						    .attr("class", "order")
 							.attr("width", SORT_SIDE)
 							.attr("height",SORT_SIDE)
