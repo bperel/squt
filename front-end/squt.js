@@ -791,13 +791,13 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement,
 				 	y: elementCoords.y};
 		break;
 		case "field":
-			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
-				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
-				if (subqueryName !== MAIN_QUERY_ALIAS && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
-					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
-					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
-				}
-			}
+//			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
+//				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
+//				if (subqueryName !== MAIN_QUERY_ALIAS && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
+//					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
+//					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
+//				}
+//			}
 	}
 	return elementCoords;
 }
