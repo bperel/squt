@@ -1,29 +1,24 @@
 {
-	"Warning": {
-		"No alias field ignored": {
-			"field1": "SELECT"
-		}
-	},
-	"Subqueries": {
-		"0": {
-			"SubqueryType": null,
-			"SubqueryAlias": "derived1",
-			"Tables": {
-				"table1": {
-					"table1": {
-						"OUTPUT": {
-							"field1": {
-								"-1": "field1"
-							}
-						},
-						"CONDITION": {
-							"cond1": {
-								"EXISTS": "1"
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+   "Subqueries" : {
+      "0" : {
+         "SubqueryType" : null,
+         "Tables" : {
+            "table1" : {
+               "table1" : {
+                  "OUTPUT" : {
+                     "field1" : {
+                        "-1" : "field1"
+                     }
+                  },
+                  "CONDITION" : {
+                     "cond1" : {
+                        "EXISTS" : "1"
+                     }
+                  }
+               }
+            }
+         },
+         "SubqueryAlias" : "derived1"
+      }
+   }
 }

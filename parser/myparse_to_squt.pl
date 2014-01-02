@@ -120,6 +120,9 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
+		if ($tableName == -1 && $item->getFieldName() ne "*") {
+			return;
+		}
 		my $fieldAlias = $item->getAlias() || $item->getFieldName();
 		if ($tableName eq "?") {
 			if ($item->getFieldName() eq "*") {
@@ -347,14 +350,16 @@ sub getItemTableName($) {
 		return undef;
 	}
 	else {
-	 	if (scalar @{$curQuery->getTables()} == 1 
-	 			&& @{$curQuery->getTables()}[0]->getType() eq "TABLE_ITEM") {
-	 		return @{$curQuery->getTables()}[0]->getTableName();
-	 	}
-	 	else {
-	 		return "?";
+	 	if (scalar @{$curQuery->getTables()} == 1) {
+	 		if (@{$curQuery->getTables()}[0]->getType() eq "TABLE_ITEM") {
+	 			return @{$curQuery->getTables()}[0]->getTableName();
+	 		}
+	 		elsif (@{$curQuery->getTables()}[0]->getType() eq "SUBSELECT_ITEM") {
+	 			return -1;
+	 		}
 	 	}
 	 }
+	 return "?";
 }
 
 sub getSqlTableName($) {
