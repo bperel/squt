@@ -357,7 +357,7 @@ function build(jsondata) {
 }
 
 function processJson(jsondata, subqueryIndex) {
-	var subqueryGroup=subqueryIndex || MAIN_QUERY_ALIAS;
+	var subqueryGroup=jsondata.SubqueryAlias || MAIN_QUERY_ALIAS;
 	var subqueryType=jsondata.SubqueryType;
 	
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
