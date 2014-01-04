@@ -6,24 +6,24 @@
    },
    "Subqueries" : {
       "0" : {
-         "SubqueryType" : "SINGLEROW_SUBS",
-         "SubqueryAlias" : "subquery1",
          "Tables" : {
             "table1" : {
                "table1" : {
-                  "OUTPUT" : {
-                     "field1" : {
-                        "-1" : "field1"
-                     }
-                  },
                   "CONDITION" : {
                      "cond1" : {
                         "EXISTS" : "1"
                      }
+                  },
+                  "OUTPUT" : {
+                     "field1" : {
+                        "-1" : "field1"
+                     }
                   }
                }
             }
-         }
+         },
+         "SubqueryAlias" : "field1",
+         "SubqueryType" : "SINGLEROW_SUBS"
       }
    }
 }

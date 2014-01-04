@@ -313,7 +313,6 @@ sub handleSubquery($$) {
 	my $subquery_alias = $item->getAlias();
 	if ($subquery_alias eq undef) {
 		setWarning("No alias","subquery #".$subquery_id);
-		$subquery_alias="subquery1";
 	}
 	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_alias || $subquery_id;
 	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
