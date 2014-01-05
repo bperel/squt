@@ -312,7 +312,13 @@ sub handleSubquery($$) {
 	
 	my $subquery_alias = $item->getAlias();
 	if ($subquery_alias eq undef) {
-		setWarning("No alias","subquery #".$subquery_id);
+		my $uniqueSubqueryOutputField = getUniqueSubqueryOutputField($subquery_id);
+		if ($isWhere || $uniqueSubqueryOutputField eq undef) {
+			setWarning("No alias","subquery #".$subquery_id);
+		}
+		else {
+			$subquery_alias = $uniqueSubqueryOutputField;
+		}
 	}
 	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_alias || $subquery_id;
 	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
@@ -397,6 +403,20 @@ sub getSqlTableNameFromTable($$) {
 	}
 }
 
-sub getCurrentContext() {
-	
+sub getUniqueSubqueryOutputField($) {
+	my ($subquery_id) = @_;
+	my %subqueryTables = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}};
+ 	if (scalar %subqueryTables == 1) {
+ 		my @subqueryTableNames = keys(%subqueryTables);
+ 		my %subqueryTableAliases = %{$subqueryTables{$subqueryTableNames[0]}};
+		if (scalar %subqueryTableAliases == 1) {
+ 			my @subqueryTableFieldNames = keys(%subqueryTableAliases);
+ 			my %subqueryTableFields = %{$subqueryTableAliases{$subqueryTableFieldNames[0]}{"OUTPUT"}};
+			if (scalar %subqueryTableFields == 1) {
+ 				my @tableFields = keys(%subqueryTableFields);
+ 				return $tableFields[0];
+			}
+		}
+	}
+	return undef;
 }

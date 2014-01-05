@@ -1,9 +1,4 @@
 {
-   "Warning" : {
-      "No alias" : {
-         "subquery #0" : ""
-      }
-   },
    "Subqueries" : {
       "0" : {
          "Tables" : {
