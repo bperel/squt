@@ -30,6 +30,7 @@ var node_drag = d3.behavior.drag()
 	.on("dragend", dragend);
 
 var repulsion = d3.select('#repulsion').attr("value");
+
 d3.select('#repulsion').on("change",function() {
 	repulsion = this.value;
 	force.start();
@@ -146,6 +147,20 @@ d3.select("defs").append("svg:g").selectAll("marker")
     .attr("points", "0,0 10,5 0,10 1,5 0,0");
 
 d3.select("defs").append("svg:g").selectAll("marker")
+	.data(["subquery"])
+  .enter().append("marker")
+	.attr("id", String)
+	.attr("viewBox", "0 0 16 22")
+	.attr("refX", 16)
+	.attr("refY", 11)
+	.attr("markerUnits", "strokeWidth")
+	.attr("markerWidth", 16)
+	.attr("markerHeight", 12)
+	.attr("orient", "auto")
+  .append("polyline")
+	.attr("points", "0,8 16,0 16,2 2,10 20,10 20,12 2,12 16,20 16,22 0,14 0,8");
+
+d3.select("defs").append("svg:g").selectAll("marker")
       .data(["solidlink1","solidlink2"])
     .enter().append("marker")
       .attr("id", String)
@@ -235,7 +250,7 @@ function build(jsondata) {
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
 						var field_location=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - No named alias for field " + i + " located in "+field_location+" clause "
+						warningText.push("WARNING - No named alias for field " + i + (field_location ? " located in "+field_location+" clause " : "")
 										 +(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 					
 					break;
@@ -257,6 +272,7 @@ function build(jsondata) {
 		d3.select('#log').text("");
 	}
 	
+	subqueries=		 [],
 	tables= 	 	 [],
 	tableAliases=	 [],
 	fields= 	 	 [],
@@ -266,14 +282,10 @@ function build(jsondata) {
 	linksToFunctions=[],
 	linksToOutput=	 [];
 
-	tables["/OUTPUT/"]=({type: "table",
-		  				name:"/OUTPUT/"});
-	tableAliases["/OUTPUT/"]={table: "/OUTPUT/",name: "/OUTPUT/"};
-
 	processJson(jsondata);
 	if (jsondata.Subqueries) {
 		for (var i in jsondata.Subqueries) {
-			processJson(jsondata.Subqueries[i]);
+			processJson(jsondata.Subqueries[i], i);
 		}
 	}
 	
@@ -285,12 +297,19 @@ function build(jsondata) {
 	tableAliases = d3.values(tableAliases);
 
 	n = 	  d3.values(tables)
-	  .concat(d3.values(functions));
+	  .concat(d3.values(functions))
+	  .concat(d3.values(subqueries));
 	l = [];
 	
 	for (var i in links) {
 		var sourceTableId = parseInt(fieldNameToTableId(links[i].source));
-		var targetTableId = parseInt(fieldNameToTableId(links[i].target));
+		var targetTableId;
+		if (d3.keys(SUBSELECT_TYPES).indexOf(links[i].type) !== -1) {
+			targetTableId = parseInt(tableNameToId(links[i].target));
+		}
+		else {
+			targetTableId = parseInt(fieldNameToTableId(links[i].target));
+		}
 		if (l[sourceTableId+","+targetTableId]) {
 			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: l[sourceTableId+","+targetTableId].value+1};
 		}
@@ -307,7 +326,8 @@ function build(jsondata) {
 			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
 		}
 		else continue;
-		l[sourceId+",0"] = {source: sourceId, target: 0, value: 1};
+		var targetId = parseInt(getOutputId(linksToOutput[i].outputTableAlias.replace(OUTPUT_PREFIX,'')));
+		l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
 	}
 
 	for (var i in linksToFunctions) {
@@ -336,8 +356,20 @@ function build(jsondata) {
 	buildGraph();
 }
 
-function processJson(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias;
+function processJson(jsondata, subqueryIndex) {
+	var subqueryGroup=jsondata.SubqueryAlias || MAIN_QUERY_ALIAS;
+	var subqueryType=jsondata.SubqueryType;
+	
+	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
+	tables[outputTableAlias]=({type: "table",
+							   output: true,
+		  				  	   name: outputTableAlias,
+				  			   subqueryGroup: subqueryGroup});
+	tableAliases[outputTableAlias]={table: outputTableAlias,
+							   		name:  outputTableAlias};
+	
+	subqueries[subqueryGroup]={type: "subquery",
+							   name: subqueryGroup};
 	for (var tableName in jsondata.Tables) {
 		tables[tableName]=({type: "table",
 			  				name:tableName,
@@ -351,15 +383,31 @@ function processJson(jsondata) {
 				for (var field in actionFields) {
 					var data=actionFields[field];
 					if (fields[tableAlias+"."+field] == undefined) {
-						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false};
+						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 					}
 					switch(type) {
 						case 'OUTPUT':
 							for (var functionAlias in data) {
 								var outputAlias = data[functionAlias];
 								if (functionAlias == -1) { // Directly to output
-									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias});
-									fields[outputAlias]={type: "field", tableAlias:"/OUTPUT/", name:outputAlias, fullName:outputAlias, filtered: false, sort: false};
+									var fullName = outputTableAlias+"."+outputAlias;
+									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
+									fields[fullName]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+									
+									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
+									if (subqueryGroup !== MAIN_QUERY_ALIAS) {
+										var mainSubqueryOutputAlias = OUTPUT_PREFIX+MAIN_QUERY_ALIAS;
+										if (subqueryType === "SINGLEROW_SUBS") {
+											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+subqueryGroup;
+											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: subqueryGroup, outputTableAlias: mainSubqueryOutputAlias});
+											fields[subqueryGroup]={type: "field", tableAlias: mainSubqueryOutputAlias, name: subqueryGroup, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+										}
+										else if (subqueryType === null) { // Derived table
+											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+outputAlias;
+											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputAlias, outputTableAlias: mainSubqueryOutputAlias});
+											fields[fullNameInMainSubquery]={type: "field", tableAlias: mainSubqueryOutputAlias, name: outputAlias, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+										}
+									}
 								}
 								else { // To a function
 									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
@@ -381,7 +429,7 @@ function processJson(jsondata) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
 												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
 													var tableAliasAndField=otherField.split('.');
-													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false};
+													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 												}
 												var joinType=null;
 												switch(data[otherField]) {
@@ -395,6 +443,11 @@ function processJson(jsondata) {
 											else { // It's a value
 												fields[tableAlias+"."+field].filtered=true;
 											}
+										}
+									break;
+									default:
+										if (d3.keys(SUBSELECT_TYPES).indexOf(conditionType) !== -1) {
+											links.push({source: tableAlias+"."+field, target: OUTPUT_PREFIX+conditionData, type: conditionType});
 										}
 									break;
 								}
@@ -417,8 +470,8 @@ function processJson(jsondata) {
 							      isCondition: functionDestination === "NOWHERE"
 								 };
 		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"]});
-			fields[functionAlias]={type: "field", tableAlias:"/OUTPUT/", name:functionAlias, fullName:functionAlias, filtered: false, sort: false};
+			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"], outputTableAlias: outputTableAlias});
+			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name:functionAlias, fullName:functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 		}
 		else if (functionDestination !== "NOWHERE") {
 			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
@@ -462,8 +515,8 @@ function buildGraph() {
 	groups = g.append("svg:g").selectAll("g")
 		.data(tables)
 	  .enter().append("svg:g")
-		.attr("name", function(currentTable) { return currentTable.name; })
-		.attr("class", "tableGroup")
+		.attr("name",  function(currentTable) { return currentTable.name; })
+		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
 		.call(node_drag)
 		.each(function(currentTable) {
 			var relatedAliases = tableAliases.filter(function(ta) { return ta.table == currentTable.name; });
@@ -488,19 +541,26 @@ function buildGraph() {
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
 			
+			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
+			 && d3.select(".subquery[name=\""+currentTable.subqueryGroup+"\"]").node() === null) {
+				g.append("svg:rect")
+				  .attr("class","subquery")
+				  .attr("name",currentTable.subqueryGroup);
+			}
+			
 			d3.select(this)
 			  .append("svg:rect")
-				.attr("class", "table"+(currentTable.name==="/OUTPUT/" ? " output":""))
+				.attr("class", "table"+(currentTable.output ? " output":""))
 				
 				.attr("height", tableHeight)
 				.attr("width",  tableWidth );
 			
 			d3.select(this)
 			  .append("svg:text")
-				.text(currentTable.name)
-				.attr("class", currentTable.name==="/OUTPUT/" ? "tablename output":"")
+				.text(currentTable.output ? OUTPUT_LABEL : currentTable.name)
+				.attr("class", "tablename"+(currentTable.output ? " output":""))
 				.attr("x", TABLE_NAME_PADDING.left)
-				.attr("y", TABLE_NAME_PADDING.top);
+				.attr("y", currentTable.output ? TABLE_NAME_PADDING.output_top : TABLE_NAME_PADDING.top);
 			
 			d3.select(this)
 			  .append("svg:line")
@@ -520,13 +580,13 @@ function buildGraph() {
 
 					d3.select(this)
 					  .append("svg:text")
-						.text(currentAlias.name)
+						.text(currentTable.output ? "" : currentAlias.name)
 						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth)+ALIAS_NAME_PADDING.left)
 						.attr("y", ALIAS_NAME_PADDING.top);
 
 					d3.select(this)
 					  .append("svg:rect")
-						.attr("class", "alias"+(currentAlias.name==="/OUTPUT/" ? " output":""))
+						.attr("class", "alias"+(currentAlias.output ? " output":""))
 						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth))
 						.attr("y", ALIAS_BOX_MARGIN.top)
 						.attr("width", ALIAS_NAME_PADDING.left 
@@ -544,7 +604,7 @@ function buildGraph() {
 				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
 				.attr("class", "fieldGroup")
 				.each(function(currentField,i) {
-					var isSorted = 	 currentField.sort;
+					var sort = 	 currentField.sort;
 					var isFiltered = currentField.filtered;
 					var preexistingField = d3.select("g.tableGroup[name=\""+currentTable.name+"\"] g.fieldGroup[name$=\""+currentField.name+"\"] circle");
 					
@@ -555,14 +615,14 @@ function buildGraph() {
 					  .append("svg:circle")
 						.attr("r",CIRCLE_RADIUS)
 						.attr("class", (isFiltered ? "filtered" : "")+" "
-									  +(isSorted   ? "sort" 	: ""))
+									  +(sort   	   ? "sort" 	: ""))
 						.attr("cx", circlePosition.x)
 						.attr("cy", circlePosition.y);
 					
-					if (isSorted) {
+					if (sort) {
 						d3.select(this)
 						  .append("svg:image")
-						    .attr("xlink:href", "images/sort_"+isSorted+".svg")
+						    .attr("xlink:href", "images/sort_"+sort+".svg")
 						    .attr("class", "order")
 							.attr("width", SORT_SIDE)
 							.attr("height",SORT_SIDE)
@@ -588,6 +648,7 @@ function buildGraph() {
 		.data(links)
 	  .enter().append("svg:path")
 		.attr("class", "link")
+		.attr("id", function(d,i) { return "link"+i; })
 		.attr("marker-start", function(d) { 
 			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
 				return "url(#solidlink1)";
@@ -596,6 +657,21 @@ function buildGraph() {
 		.attr("marker-end", function(d) { 
 			if (d.type == "innerjoin") {
 				return "url(#solidlink2)";
+			}
+			else if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
+				return "url(#subquery)";
+			}
+		})
+		.each(function(d,i) {
+			if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
+				g
+				  .append("svg:text")
+				  	.append("textPath")
+				  	  .attr("startOffset","50%")
+				  	  .attr("xlink:href","#link"+i)
+				  	  .append("tspan")
+				  	  	.attr("dy",SUBQUERY_TYPE_PADDING)
+				  	  	.text(SUBSELECT_TYPES[d.type]);
 			}
 		});
 
@@ -673,10 +749,7 @@ function positionPathsToOutput(origin,d) {
 	return filterFieldOrFunction(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
-	  
-	  var target = 
-		  groups.filter(function(group) { return group.name === "/OUTPUT/"; })
-	  		.select('[name="/OUTPUT/.'+link.outputName+'"] circle');
+	  var target = d3.select('.tableGroup.output [name="'+link.outputTableAlias+'.'+link.outputName+'"] circle');
 	  
 	  return getPath(this, source, target);
   });
@@ -702,38 +775,51 @@ function getPath(pathElement, source, target) {
 	d3.select(pathElement).attr("d",pathCoords);
 	var pathObject = domElementToMyObject(pathElement);
 	
-	sourceCoords = getCorrectedPathPoint(pathObject, source, sourceCoords, targetCoords);
-	targetCoords = getCorrectedPathPoint(pathObject, target, targetCoords, sourceCoords);
+	sourceCoords = getCorrectedPathPoint(pathObject, source, sourceCoords, target, targetCoords);
+	targetCoords = getCorrectedPathPoint(pathObject, target, targetCoords, source, sourceCoords);
 	
 	return getPathFromCoords(sourceCoords.x, sourceCoords.y, targetCoords.x, targetCoords.y, isArc);
 }
 
-function getCorrectedPathPoint(pathObject, element, elementCoords, otherElementCoords) {
+function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement, otherElementCoords) {
 	var elementData = element.data()[0];
 	switch (elementData.type) {
 		case "function":
 			var elementObject = domElementToMyObject(element[0][0]);
-			if (!!pathObject && !!elementObject) {
-				var intersection = Intersection.intersectShapes(pathObject, elementObject);
-				if (intersection.points.length > 0) {
-					var minDistance = undefined;
-					var closest = null;
-					for (var i=0; i<intersection.points.length; i++) {
-						var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
-						if (!minDistance || distance < minDistance) {
-							minDistance = distance;
-							closest = intersection.points[i];
-						}
-					}
-					return {x: closest.x, y: closest.y};
-				}
-			}
+			return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
 		break;
 		case "constant":
 			return {x: elementCoords.x+elementData.name.length/2*CHAR_WIDTH, 
 				 	y: elementCoords.y};
+		break;
+		case "field":
+//			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
+//				var subqueryName=elementData.tableAlias.substring(OUTPUT_PREFIX.length);
+//				if (subqueryName !== MAIN_QUERY_ALIAS && element.data()[0].subqueryGroup !== otherElement.data()[0].subqueryGroup) {
+//					var elementObject = domElementToMyObject(d3.select('.subquery[name="'+subqueryName+'"]')[0][0]);
+//					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
+//				}
+//			}
 	}
 	return elementCoords;
+}
+
+function getIntersection(object1, object2, otherElementCoords) {
+	if (!!object1 && !!object2) {
+		var intersection = Intersection.intersectShapes(object1, object2);
+		if (intersection.points.length > 0) {
+			var minDistance = undefined;
+			var closest = null;
+			for (var i=0; i<intersection.points.length; i++) {
+				var distance = getDistance(otherElementCoords.x, otherElementCoords.y, intersection.points[i].x, intersection.points[i].y);
+				if (!minDistance || distance < minDistance) {
+					minDistance = distance;
+					closest = intersection.points[i];
+				}
+			}
+			return {x: closest.x, y: closest.y};
+		}
+	}
 }
 
 function getPathFromCoords(x1, y1, x2, y2, isArc) {
@@ -826,14 +912,42 @@ function getNodeCharge(d) {
 		case "function":
 			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
 			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+		break;
+		case "subquery":
+			if (d.name !== MAIN_QUERY_ALIAS) {
+				charge = d3.max([
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().width,
+	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().height]);
+			}
 	}
 	return -1*charge*charge;
 }
 
 function positionAll() {
+	var subqueryBoundaries=[];
 	groups.each(function(d,i) {
-		positionTable.call(this,d,i);
+		var tableBoundaries = positionTable.call(this,d,i);
+		if (d.subqueryGroup !== undefined) {
+			if (!subqueryBoundaries[d.subqueryGroup]) {
+				subqueryBoundaries[d.subqueryGroup]=[];
+			}
+			subqueryBoundaries[d.subqueryGroup].push(tableBoundaries);
+		}
 	});
+	for (var subqueryGroup in subqueryBoundaries) {
+		var boundaries = subqueryBoundaries[subqueryGroup];
+		var topBoundary = 	 d3.min(boundaries, function(coord) { return coord.y1; }) - SUBQUERY_PADDING;
+		var rightBoundary =  d3.max(boundaries, function(coord) { return coord.x2; }) + SUBQUERY_PADDING;
+		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
+		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
+		
+		d3.select(".subquery[name=\""+subqueryGroup+"\"]")
+			.attr("x",leftBoundary)
+			.attr("y",topBoundary)
+			.attr("width",rightBoundary-leftBoundary)
+			.attr("height",bottomBoundary-topBoundary);
+	}
+	
 	func.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
@@ -849,7 +963,7 @@ function positionTable(d, i) {
 	
 	d3.select(this)
 	  .attr("transform", "translate("+x+" "+y+")");
-	  
+		
 	// Paths between fields
 	path.attr("d", function(d) {
 	  var source=d3.select('[name="'+d.source+'"] circle');
@@ -857,6 +971,8 @@ function positionTable(d, i) {
 	  
 	  return getPath(this, source, target, true);
 	});
+	
+	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};
 }
 
 function positionFunction(d, i) {
@@ -927,6 +1043,23 @@ function preventGlobalDrag() {
 
 function allowGlobalDrag() {
 	nodeDragging = false;
+}
+
+function tableNameToId(tablename) {
+	for (var i in n) {
+		if (n[i].type === "table" && n[i].name === tablename) {
+			return i;
+		}
+	}
+	return;
+}
+
+function getOutputId(outputAlias) {
+	for (var i in n) {
+		if (outputAlias == n[i].name)
+			return i;
+	}
+	return null;
 }
 
 function getFunctionId(funcName) {

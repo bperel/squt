@@ -107,6 +107,11 @@ svg#graph {
 	position: fixed;
 }
 
+rect.subquery {
+	stroke: #ccc;
+	fill: none;	
+}
+
 marker#arrow polyline {
 	stroke: black;
 	fill: white;
@@ -159,9 +164,9 @@ text {
   pointer-events: none;
 }
 
-text.outputname {
-  font-size: 14px;
+text.output {
   font-weight: bold;
+  font-style: italic;
 }
 
 text.shadow {
