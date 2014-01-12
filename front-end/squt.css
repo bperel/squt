@@ -69,8 +69,15 @@ div#panel textarea#log {
 	border: 1px solid red;
 }
 
-div#panel textarea#log, .CodeMirror {
+div#panel textarea#log, #query_sample, #actions {
 	width: 97%;
+}
+
+.CodeMirror {
+	width: 96%;
+}
+
+div#panel textarea#log, .CodeMirror {
 	margin: 0em;
 	background-color: white;
 }
@@ -83,18 +90,35 @@ pre#query {
 	display: none;
 }
 
+#OK, #create_link {
+	margin: 4px 8px;
+}
+
 #OK {
 	float: left;
 	padding: 2px;
 }
 
 #create_link {
-	float: right;
+	float: left;
 	margin: 4px 8px;
+	position: absolute;
+	width: 85%;
+	padding: 1px 0px 0px 34px;
+}
+
+#create_link input, #create_link a {
+	padding: 3px;
+}
+
+#create_link a {
+	float: right;
 }
 
 #create_link input {
-	width: 150px;
+	width: 100%;
+	border: 0;
+	outline: 1px solid black;
 }
 
 #collision {
@@ -105,11 +129,6 @@ svg#graph {
 	outline:1px solid gray;
 	height: 100%;
 	position: fixed;
-}
-
-rect.subquery {
-	stroke: #ccc;
-	fill: none;	
 }
 
 marker#arrow polyline {
@@ -164,9 +183,9 @@ text {
   pointer-events: none;
 }
 
-text.output {
+text.outputname {
+  font-size: 14px;
   font-weight: bold;
-  font-style: italic;
 }
 
 text.shadow {

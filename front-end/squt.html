@@ -35,18 +35,20 @@
 		<br />
 		or type a custom one :<br />
 		<textarea id="query"></textarea>
-		<button id="OK">OK</button>
-		<div id="create_link">
-			<a href="#" class="invisible">Create link</a>
-			<input type="text" class="invisible" readonly="readonly" />
-			</div>
-		<span id="debug_info"><br />
-			Collisions : <span id="collision"></span><br />
-			Repulsion : <input id="repulsion" type="range" min="0.1" max="2" value="1" step="0.1">
-		</span>
-		<div id="no-parser" class="invisible">The MySQL parser is not available.<br />
-		This means that you can only use one of the sample queries listed above (for which the parsing results are known), 
-		but not write a custom query.</div>
+		<div id="actions">
+			<button id="OK">OK</button>
+			<div id="create_link">
+				<a href="#" class="invisible">Create link</a>
+				<input type="text" class="invisible" readonly="readonly" />
+				</div>
+			<span id="debug_info"><br />
+				Collisions : <span id="collision"></span><br />
+				Repulsion : <input id="repulsion" type="range" min="0.1" max="2" value="1" step="0.1">
+			</span>
+			<div id="no-parser" class="invisible">The MySQL parser is not available.<br />
+			This means that you can only use one of the sample queries listed above (for which the parsing results are known), 
+			but not write a custom query.</div>
+		</div>
 		<textarea id="log" readonly="readonly"></textarea>
 		<div id="error_texts">
 			<div id="error_query_too_long">For performance and security reasons, squt does not allow queries longer than 2000 characters.</div>
