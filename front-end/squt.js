@@ -106,6 +106,8 @@ var no_graph=params.no_graph !== undefined;
 var query_param=params.query;
 if (query_param !== undefined) {
 	editor.setValue(decodeURIComponent(query_param));
+	query=editor.getValue().replace(/\n/g,' ');
+	analyzeAndBuild();
 }
 
 var tables= [],
