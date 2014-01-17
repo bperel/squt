@@ -12,7 +12,7 @@ $Data::Dumper::Indent = 1;
 our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
 our $query = $parser->parse($ARGV[0]);
 our $curQuery;
-our $debug = $ARGV[1] eq "debug";
+our $debug = defined $ARGV[1] && $ARGV[1] eq "debug";
 our %sqlv_tables_final; # Includes sub-selects
 our %outputAliases;
 our %sqlv_tables;
@@ -37,7 +37,7 @@ sub handleQuery($) {
 		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
 			handleSelectItem($selectItem,-1,1);
 		}
-		if ($curQuery->getTables() ne undef) {
+		if (defined $curQuery->getTables()) {
 			foreach my $item (@{$curQuery->getTables()}) {
 				if ($item->getType() eq "JOIN_ITEM") {
 					handleJoin($item);
@@ -47,12 +47,12 @@ sub handleQuery($) {
 				}
 			}
 		}
-		if ($curQuery->getOrder() ne undef) {
+		if (defined $curQuery->getOrder()) {
 			foreach my $orderByItem (@{$curQuery->getOrder()}) {
 				handleOrderBy($orderByItem);
 			}
 		}
-		if ($curQuery->getWhere() ne undef) {
+		if (defined $curQuery->getWhere()) {
 			handleWhere($curQuery->getWhere());
 		}
 	}
@@ -91,12 +91,12 @@ sub handleJoin {
 		my $field1;
 		my $field2;
 		if ($two_tables) {
-			if ($joinCond ne undef 
+			if (defined $joinCond
 			 && $joinCond->getType() eq "FUNC_ITEM") {
 				$field1 = @{$joinCond->getArguments()}[0];
 				$field2 = @{$joinCond->getArguments()}[1];
 			}
-			elsif ($joinFields ne undef) {
+			elsif (defined $joinFields) {
 				$field1 = $field2 = @{$joinFields}[0];
 			}
 			else {
@@ -104,12 +104,12 @@ sub handleJoin {
 			}
 			
 			my $joinType = $item->getJoinType();
-			if ($joinType eq undef) {
+			if (!defined $joinType) {
 				$joinType = "JOIN_TYPE_STRAIGHT";
 			}
 			$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
 														  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
-			if ($sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()} eq undef) {
+			if (!defined $sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}) {
 				$sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}{"EXISTS"}=1;
 			}
 		}
@@ -120,11 +120,11 @@ sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
 	if ($item->getType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
-		if ($tableName == -1 && $item->getFieldName() ne "*") {
+		if (defined $tableName && $tableName == -1 && $item->getFieldName() ne "*") {
 			return;
 		}
 		my $fieldAlias = $item->getAlias() || $item->getFieldName();
-		if ($tableName eq "?") {
+		if (defined $tableName && $tableName eq "?") {
 			if ($item->getFieldName() eq "*") {
 				foreach my $tableOrJoin (@{$curQuery->getTables()}) {
 					if ($tableOrJoin->getType() eq "JOIN_ITEM") {
@@ -168,7 +168,7 @@ sub handleSelectItem($$$) {
 	}
 	elsif ($item->getType() eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
-		if ($functionAlias eq undef) {
+		if (!defined $functionAlias) {
 			if ($directOutput) {
 				setWarning("No alias",$item->getFuncName(),"SELECT");
 			}
@@ -191,7 +191,7 @@ sub handleWhere(\@) {
 	my $j=0;
 	if ($where->getItemType() eq 'FIELD_ITEM') {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
-		if (@fieldInfos ne undef) {
+		if (@fieldInfos) {
 			my($tablename, $fieldname) = @fieldInfos;
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
 						{"CONDITION"}{$fieldname}{"EXISTS"}="1";
@@ -210,10 +210,10 @@ sub handleWhere(\@) {
 			}
 			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
 				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, $fieldname);
-				if (@fieldInfos eq undef) {
+				if (! @fieldInfos) {
 					return;
 				}
-				if ($fieldInfos[1] ne undef) {
+				if (defined $fieldInfos[1]) {
 					$tablename=$fieldInfos[0];
 					$fieldname=$fieldInfos[1];
 				}
@@ -230,7 +230,7 @@ sub handleWhere(\@) {
 			#		handleWhere($sub_item);
 			#	}
 		}
-		if ($fieldname ne undef && $value ne undef) {
+		if (defined $fieldname && defined $value) {
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
 						{"CONDITION"}{$fieldname}{"VALUE"}=$value;
 		}
@@ -240,7 +240,7 @@ sub handleWhere(\@) {
 sub handleFunctionInWhere($$) {
 	my ($function,$destination) = @_;
 	my $functionAlias = $function->getAlias();
-	if ($functionAlias eq undef) {
+	if (!defined $functionAlias) {
 		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
 	}
 	my $tablename;
@@ -292,7 +292,7 @@ sub getInfosFromFieldInWhere($$) {
 
 sub handleOrderBy($) {
 	my ($orderByItem) = @_;
-	if ($orderByItem->getTableName() eq undef) {
+	if (!defined $orderByItem->getTableName()) {
 		setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
 	}
 	else {
@@ -311,9 +311,9 @@ sub handleSubquery($$) {
 	handleQuery($item->getSubselectQuery());
 	
 	my $subquery_alias = $item->getAlias();
-	if ($subquery_alias eq undef) {
+	if (!defined $subquery_alias) {
 		my $uniqueSubqueryOutputField = getUniqueSubqueryOutputField($subquery_id);
-		if ($isWhere || $uniqueSubqueryOutputField eq undef) {
+		if ($isWhere || !defined $uniqueSubqueryOutputField) {
 			setWarning("No alias","subquery #".$subquery_id);
 		}
 		else {
@@ -326,10 +326,10 @@ sub handleSubquery($$) {
 	$curQuery=$superQuery;
 	
 	my $subselectExpr=$item->getSubselectExpr();
-	if ($isWhere && $subselectExpr ne undef) {
+	if ($isWhere && defined $subselectExpr) {
 		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
 			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
-			if (@fieldInfos ne undef) {
+			if (@fieldInfos) {
 				my($tablename, $fieldname) = @fieldInfos;
 				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
 							{"CONDITION"}{$fieldname}{$item->getSubselectType()}=$subquery_id;
@@ -348,10 +348,10 @@ sub setWarning {
 
 sub getItemTableName($) {
 	my ($item) = @_;
-	if ($item->getTableName() ne undef) {
+	if (defined $item->getTableName()) {
 		return $item->getTableName();
 	}
-	if ($curQuery->getTables() eq undef) {
+	if (!defined $curQuery->getTables()) {
 		return undef;
 	}
 	else {
@@ -369,7 +369,7 @@ sub getItemTableName($) {
 
 sub getSqlTableName($) {
 	my ($tableAlias) = @_;
-	if ($curQuery->getTables() eq undef || $tableAlias eq undef) {
+	if (!defined $curQuery->getTables() || !defined $tableAlias) {
 		return undef;
 	}
 	elsif ($tableAlias eq "?") {
@@ -378,7 +378,7 @@ sub getSqlTableName($) {
 	my $tableName;
 	foreach my $table (@{$curQuery->getTables()}) {
 		$tableName = getSqlTableNameFromTable($tableAlias,$table);
-		if ($tableName ne undef) {
+		if (defined $tableName) {
 			return $tableName;
 		}
 	}
@@ -391,7 +391,7 @@ sub getSqlTableNameFromTable($$) {
 	if ($table->getType() eq "JOIN_ITEM") {
 		foreach my $sub_item (@{$table->getJoinItems()}) {
 			$tableName = getSqlTableNameFromTable($tableAlias,$sub_item);
-			if ($tableName ne undef) {
+			if (defined $tableName) {
 				return $tableName;
 			}
 		}
@@ -405,7 +405,7 @@ sub getSqlTableNameFromTable($$) {
 
 sub getUniqueSubqueryOutputField($) {
 	my ($subquery_id) = @_;
-	if ($sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"} eq undef) {
+	if (!defined $sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}) {
 		return undef;
 	}
 	my %subqueryTables = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}};
