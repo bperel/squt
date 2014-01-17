@@ -405,6 +405,9 @@ sub getSqlTableNameFromTable($$) {
 
 sub getUniqueSubqueryOutputField($) {
 	my ($subquery_id) = @_;
+	if ($sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"} eq undef) {
+		return undef;
+	}
 	my %subqueryTables = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}};
  	if (scalar %subqueryTables == 1) {
  		my @subqueryTableNames = keys(%subqueryTables);
