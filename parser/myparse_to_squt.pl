@@ -391,7 +391,7 @@ sub getSqlTableNameFromTable($$) {
 	if ($table->getType() eq "JOIN_ITEM") {
 		foreach my $sub_item (@{$table->getJoinItems()}) {
 			$tableName = getSqlTableNameFromTable($tableAlias,$sub_item);
-			if (defined $tableName) {
+			if ($tableName ne undef) {
 				return $tableName;
 			}
 		}
