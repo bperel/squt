@@ -102,8 +102,8 @@ pre#query {
 #create_link {
 	float: left;
 	margin: 4px 8px;
-	position: absolute;
-	width: 85%;
+	position: relative;
+	width: 75%;
 	padding: 1px 0px 0px 34px;
 }
 
