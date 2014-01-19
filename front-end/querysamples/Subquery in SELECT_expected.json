@@ -1,0 +1,30 @@
+{
+   "Subqueries" : {
+      "0" : {
+         "SubqueryAlias" : "e",
+         "Tables" : {
+            "c" : {
+               "c" : {
+                  "OUTPUT" : {
+                     "d" : {
+                        "-1" : "d"
+                     }
+                  }
+               }
+            }
+         },
+         "SubqueryType" : "SINGLEROW_SUBS"
+      }
+   },
+   "Tables" : {
+      "a" : {
+         "a" : {
+            "OUTPUT" : {
+               "b" : {
+                  "-1" : "b"
+               }
+            }
+         }
+      }
+   }
+}

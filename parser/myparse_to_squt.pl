@@ -12,42 +12,47 @@ $Data::Dumper::Indent = 1;
 our $parser = DBIx::MyParse->new( database => "test", datadir => "/tmp/myparse");
 our $query = $parser->parse($ARGV[0]);
 our $curQuery;
-our $debug = $ARGV[1] eq "debug";
+our $debug = defined $ARGV[1] && $ARGV[1] eq "debug";
 our %sqlv_tables_final; # Includes sub-selects
+our %outputAliases;
 our %sqlv_tables;
+our $subquery_id=-1;
 
 if ($debug) {
 	print "Dumped:\n";
 	print Dumper $query;
 }
 
-sub handleQuery($$) {
-	my ($queryToHandle,$subquery_id) = @_;
+sub handleQuery($) {
+	my ($queryToHandle) = @_;
 	$curQuery = dclone($queryToHandle);
 	
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
-		$sqlv_tables{"Error"}=$curQuery->getErrstr();
+		$sqlv_tables_final{"Error"}=$curQuery->getErrstr();
 	}
 	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT") {
-		$sqlv_tables{"Error"}="Only SELECT queries are supported for now";
+		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
 	}
 	else {
 		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
 			handleSelectItem($selectItem,-1,1);
 		}
-		if ($curQuery->getTables() ne undef) {
+		if (defined $curQuery->getTables()) {
 			foreach my $item (@{$curQuery->getTables()}) {
 				if ($item->getType() eq "JOIN_ITEM") {
 					handleJoin($item);
 				}
+				elsif ($item->getType() eq "SUBSELECT_ITEM") {
+					handleSubquery($item,0);
+				}
 			}
 		}
-		if ($curQuery->getOrder() ne undef) {
+		if (defined $curQuery->getOrder()) {
 			foreach my $orderByItem (@{$curQuery->getOrder()}) {
 				handleOrderBy($orderByItem);
 			}
 		}
-		if ($curQuery->getWhere() ne undef) {
+		if (defined $curQuery->getWhere()) {
 			handleWhere($curQuery->getWhere());
 		}
 	}
@@ -57,10 +62,9 @@ sub handleQuery($$) {
 	else {
 		$sqlv_tables_final{"Subqueries"}{$subquery_id} = dclone (\%sqlv_tables);
 	}
-	%sqlv_tables=();
 }
 
-handleQuery($query,-1);
+handleQuery($query);
 
 print $json->pretty->encode( \%sqlv_tables_final );
 
@@ -87,12 +91,12 @@ sub handleJoin {
 		my $field1;
 		my $field2;
 		if ($two_tables) {
-			if ($joinCond ne undef 
+			if (defined $joinCond
 			 && $joinCond->getType() eq "FUNC_ITEM") {
 				$field1 = @{$joinCond->getArguments()}[0];
 				$field2 = @{$joinCond->getArguments()}[1];
 			}
-			elsif ($joinFields ne undef) {
+			elsif (defined $joinFields) {
 				$field1 = $field2 = @{$joinFields}[0];
 			}
 			else {
@@ -100,12 +104,12 @@ sub handleJoin {
 			}
 			
 			my $joinType = $item->getJoinType();
-			if ($joinType eq undef) {
+			if (!defined $joinType) {
 				$joinType = "JOIN_TYPE_STRAIGHT";
 			}
 			$sqlv_tables{"Tables"}{$table->getTableName()}{$table->getAlias()}{"CONDITION"}{$field1->getFieldName()}{"JOIN"}
 														  {$table2->getAlias.".".$field2->getFieldName()}=$joinType;
-			if ($sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()} eq undef) {
+			if (!defined $sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}) {
 				$sqlv_tables{"Tables"}{$table2->getTableName()}{$table2->getAlias()}{"EXISTS"}=1;
 			}
 		}
@@ -114,10 +118,14 @@ sub handleJoin {
 
 sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
-	if ($item->getType() eq 'FIELD_ITEM') {
+	my $itemType = $item->getType();
+	if ($itemType eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
+		if (defined $tableName && $tableName == -1 && $item->getFieldName() ne "*") {
+			return;
+		}
 		my $fieldAlias = $item->getAlias() || $item->getFieldName();
-		if ($tableName eq "?") {
+		if (defined $tableName && $tableName eq "?") {
 			if ($item->getFieldName() eq "*") {
 				foreach my $tableOrJoin (@{$curQuery->getTables()}) {
 					if ($tableOrJoin->getType() eq "JOIN_ITEM") {
@@ -141,31 +149,40 @@ sub handleSelectItem($$$) {
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$fieldAlias;
 		
 	}
-	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
-		my $subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
-		my $superQuery=dclone($curQuery);
-		handleQuery($item->getSubselectQuery(), $subquery_id);
-		$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$item->getAlias() || "";
-		$curQuery=$superQuery;
+	elsif ($itemType eq 'SUBSELECT_ITEM') {
+		handleSubquery($item,0);
 	}
-	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
-		|| $item->getType() eq 'STRING_ITEM') {
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getValue()}=$item->getValue();
+	elsif( grep $_ eq $itemType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM NULL_ITEM INTERVAL_ITEM USER_VAR_ITEM SYSTEM_VAR_ITEM/) {
+		my $value;
+		if ($itemType eq 'INTERVAL_ITEM') {
+			$value=$item->getInterval();
+		}
+		elsif ($itemType eq 'USER_VAR_ITEM') {
+			$value=$item->getVarName();
+		}
+		elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
+			$value=$item->getVarComponent().".".$item->getVarName()
+		}
+		else {
+			$value=$item->getValue();
+		}
+		if ($functionId == -1) { # direct output
+			my $constantAlias=$item->getAlias();
+			if (!defined $constantAlias) {
+				$constantAlias=$value;
+			}
+			
+			$sqlv_tables{"Constants"}{$constantAlias}{"value"}=$value;
+			$sqlv_tables{"Constants"}{$constantAlias}{"alias"}=$constantAlias;
+			$sqlv_tables{"Constants"}{$constantAlias}{"to"}="OUTPUT";
+		}
+		else {
+			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
+		}
 	}
-	elsif ($item->getType() eq 'INTERVAL_ITEM') {
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getInterval()}=$item->getInterval();
-	}
-	elsif ($item->getType() eq 'USER_VAR_ITEM') {
-		my $var_item=$item->getVarName();
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$var_item}=$var_item;
-	}
-	elsif ($item->getType() eq 'SYSTEM_VAR_ITEM') {
-		my $component_and_variable=$item->getVarComponent().".".$item->getVarName();
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$component_and_variable}=$component_and_variable;
-	}
-	elsif ($item->getType() eq 'FUNC_ITEM') {
+	elsif ($itemType eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
-		if ($functionAlias eq undef) {
+		if (!defined $functionAlias) {
 			if ($directOutput) {
 				setWarning("No alias",$item->getFuncName(),"SELECT");
 			}
@@ -188,14 +205,14 @@ sub handleWhere(\@) {
 	my $j=0;
 	if ($where->getItemType() eq 'FIELD_ITEM') {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
-		if (@fieldInfos ne undef) {
+		if (@fieldInfos) {
 			my($tablename, $fieldname) = @fieldInfos;
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
 						{"CONDITION"}{$fieldname}{"EXISTS"}="1";
 		}
 	}
 	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
-		setWarning("Not supported","Sub-selects","");
+		handleSubquery($where, 1);
 	}
 	elsif ($where->getItemType() eq 'FUNC_ITEM') {
 		handleFunctionInWhere($where);
@@ -207,10 +224,10 @@ sub handleWhere(\@) {
 			}
 			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
 				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, $fieldname);
-				if (@fieldInfos eq undef) {
+				if (! @fieldInfos) {
 					return;
 				}
-				if ($fieldInfos[1] ne undef) {
+				if (defined $fieldInfos[1]) {
 					$tablename=$fieldInfos[0];
 					$fieldname=$fieldInfos[1];
 				}
@@ -227,7 +244,7 @@ sub handleWhere(\@) {
 			#		handleWhere($sub_item);
 			#	}
 		}
-		if ($fieldname ne undef && $value ne undef) {
+		if (defined $fieldname && defined $value) {
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
 						{"CONDITION"}{$fieldname}{"VALUE"}=$value;
 		}
@@ -237,7 +254,7 @@ sub handleWhere(\@) {
 sub handleFunctionInWhere($$) {
 	my ($function,$destination) = @_;
 	my $functionAlias = $function->getAlias();
-	if ($functionAlias eq undef) {
+	if (!defined $functionAlias) {
 		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
 	}
 	my $tablename;
@@ -289,7 +306,7 @@ sub getInfosFromFieldInWhere($$) {
 
 sub handleOrderBy($) {
 	my ($orderByItem) = @_;
-	if ($orderByItem->getTableName() eq undef) {
+	if (!defined $orderByItem->getTableName()) {
 		setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
 	}
 	else {
@@ -298,35 +315,75 @@ sub handleOrderBy($) {
 	}
 }
 
+sub handleSubquery($$) {
+	my ($item, $isWhere) = @_;
+	my $superQuery_id=$subquery_id;
+	my $superQuery=dclone($curQuery);
+	my $superQueryTables=dclone (\%sqlv_tables);
+	$subquery_id=scalar keys %{$sqlv_tables_final{"Subqueries"}};
+	%sqlv_tables = ();
+	handleQuery($item->getSubselectQuery());
+	
+	my $subquery_alias = $item->getAlias();
+	if (!defined $subquery_alias) {
+		my $uniqueSubqueryOutputField = getUniqueSubqueryOutputField($subquery_id);
+		if ($isWhere || !defined $uniqueSubqueryOutputField) {
+			setWarning("No alias","subquery #".$subquery_id);
+		}
+		else {
+			$subquery_alias = $uniqueSubqueryOutputField;
+		}
+	}
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryAlias"}=$subquery_alias || $subquery_id;
+	$sqlv_tables_final{"Subqueries"}{$subquery_id}{"SubqueryType"}=$item->getSubselectType();
+	%sqlv_tables = %{$superQueryTables};
+	$curQuery=$superQuery;
+	
+	my $subselectExpr=$item->getSubselectExpr();
+	if ($isWhere && defined $subselectExpr) {
+		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
+			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
+			if (@fieldInfos) {
+				my($tablename, $fieldname) = @fieldInfos;
+				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
+							{"CONDITION"}{$fieldname}{$item->getSubselectType()}=$subquery_id;
+			}
+		}
+	}
+	$subquery_id=$superQuery_id;
+}
+
 sub setWarning {
 	my $warning_type = $_[0];
 	my $concerned_field = $_[1];
-	my $extra_info = $_[2];
-	$sqlv_tables{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
+	my $extra_info = $_[2] || "";
+	$sqlv_tables_final{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
 }
 
 sub getItemTableName($) {
 	my ($item) = @_;
-	if ($item->getTableName() ne undef) {
+	if (defined $item->getTableName()) {
 		return $item->getTableName();
 	}
-	if ($curQuery->getTables() eq undef) {
+	if (!defined $curQuery->getTables()) {
 		return undef;
 	}
 	else {
-	 	if (scalar @{$curQuery->getTables()} == 1 
-	 			&& @{$curQuery->getTables()}[0]->getType() eq "TABLE_ITEM") {
-	 		return @{$curQuery->getTables()}[0]->getTableName();
-	 	}
-	 	else {
-	 		return "?";
+	 	if (scalar @{$curQuery->getTables()} == 1) {
+	 		if (@{$curQuery->getTables()}[0]->getType() eq "TABLE_ITEM") {
+	 			return @{$curQuery->getTables()}[0]->getTableName();
+	 		}
+	 		elsif (@{$curQuery->getTables()}[0]->getType() eq "SUBSELECT_ITEM") {
+	 			return -1;
+	 		}
 	 	}
 	 }
+	 return "?";
 }
 
 sub getSqlTableName($) {
 	my ($tableAlias) = @_;
-	if ($curQuery->getTables() eq undef || $tableAlias eq undef) {
+	if (!defined $curQuery->getTables() || !defined $tableAlias) {
 		return undef;
 	}
 	elsif ($tableAlias eq "?") {
@@ -335,7 +392,7 @@ sub getSqlTableName($) {
 	my $tableName;
 	foreach my $table (@{$curQuery->getTables()}) {
 		$tableName = getSqlTableNameFromTable($tableAlias,$table);
-		if ($tableName ne undef) {
+		if (defined $tableName) {
 			return $tableName;
 		}
 	}
@@ -358,4 +415,25 @@ sub getSqlTableNameFromTable($$) {
 			return $table->getTableName();
 		}
 	}
+}
+
+sub getUniqueSubqueryOutputField($) {
+	my ($subquery_id) = @_;
+	if (!defined $sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}) {
+		return undef;
+	}
+	my %subqueryTables = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}};
+ 	if (scalar %subqueryTables == 1) {
+ 		my @subqueryTableNames = keys(%subqueryTables);
+ 		my %subqueryTableAliases = %{$subqueryTables{$subqueryTableNames[0]}};
+		if (scalar %subqueryTableAliases == 1) {
+ 			my @subqueryTableFieldNames = keys(%subqueryTableAliases);
+ 			my %subqueryTableFields = %{$subqueryTableAliases{$subqueryTableFieldNames[0]}{"OUTPUT"}};
+			if (scalar %subqueryTableFields == 1) {
+ 				my @tableFields = keys(%subqueryTableFields);
+ 				return $tableFields[0];
+			}
+		}
+	}
+	return undef;
 }
