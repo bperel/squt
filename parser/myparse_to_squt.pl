@@ -118,7 +118,8 @@ sub handleJoin {
 
 sub handleSelectItem($$$) {
 	my ($item,$functionId,$directOutput) = @_;
-	if ($item->getType() eq 'FIELD_ITEM') {
+	my $itemType = $item->getType();
+	if ($itemType eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
 		if (defined $tableName && $tableName == -1 && $item->getFieldName() ne "*") {
 			return;
@@ -148,25 +149,38 @@ sub handleSelectItem($$$) {
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$fieldAlias;
 		
 	}
-	elsif ($item->getType() eq 'SUBSELECT_ITEM') {
+	elsif ($itemType eq 'SUBSELECT_ITEM') {
 		handleSubquery($item,0);
 	}
-	elsif ($item->getType() eq 'INT_ITEM' || $item->getType() eq 'DECIMAL_ITEM'|| $item->getType() eq 'REAL_ITEM'
-		|| $item->getType() eq 'STRING_ITEM') {
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getValue()}=$item->getValue();
+	elsif( grep $_ eq $itemType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM NULL_ITEM INTERVAL_ITEM USER_VAR_ITEM SYSTEM_VAR_ITEM/) {
+		my $value;
+		if ($itemType eq 'INTERVAL_ITEM') {
+			$value=$item->getInterval();
+		}
+		elsif ($itemType eq 'USER_VAR_ITEM') {
+			$value=$item->getVarName();
+		}
+		elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
+			$value=$item->getVarComponent().".".$item->getVarName()
+		}
+		else {
+			$value=$item->getValue();
+		}
+		if ($functionId == -1) { # direct output
+			my $constantAlias=$item->getAlias();
+			if (!defined $constantAlias) {
+				$constantAlias=$value;
+			}
+			
+			$sqlv_tables{"Constants"}{$constantAlias}{"value"}=$value;
+			$sqlv_tables{"Constants"}{$constantAlias}{"alias"}=$constantAlias;
+			$sqlv_tables{"Constants"}{$constantAlias}{"to"}="OUTPUT";
+		}
+		else {
+			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
+		}
 	}
-	elsif ($item->getType() eq 'INTERVAL_ITEM') {
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$item->getInterval()}=$item->getInterval();
-	}
-	elsif ($item->getType() eq 'USER_VAR_ITEM') {
-		my $var_item=$item->getVarName();
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$var_item}=$var_item;
-	}
-	elsif ($item->getType() eq 'SYSTEM_VAR_ITEM') {
-		my $component_and_variable=$item->getVarComponent().".".$item->getVarName();
-		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$component_and_variable}=$component_and_variable;
-	}
-	elsif ($item->getType() eq 'FUNC_ITEM') {
+	elsif ($itemType eq 'FUNC_ITEM') {
 		my $functionAlias=$item->getAlias();
 		if (!defined $functionAlias) {
 			if ($directOutput) {

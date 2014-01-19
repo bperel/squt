@@ -194,7 +194,7 @@ d3.json(URL,function(data) {
 		d3.select('#no-parser').attr("class","");
 	}
 	else {
-		d3.select('#mysql_version .version').text(d3.values(data.Functions[-1].Constants)[0]);
+		d3.select('#mysql_version .version').text(d3.values(data.Constants)[0].value);
 	}
 })
   .header("Content-Type","application/x-www-form-urlencoded")
@@ -300,6 +300,7 @@ function build(jsondata) {
 
 	n = 	  d3.values(tables)
 	  .concat(d3.values(functions))
+	  .concat(d3.values(constants))
 	  .concat(d3.values(subqueries));
 	l = [];
 	
@@ -321,13 +322,20 @@ function build(jsondata) {
 	}
 	for (var i in linksToOutput) {
 		var sourceId;
-		if (linksToOutput[i].from == "field") {
-			sourceId = parseInt(fieldNameToTableId(linksToOutput[i].fieldName));
+		switch(linksToOutput[i].from) {
+			case "field":
+				sourceId = parseInt(fieldNameToTableId(linksToOutput[i].fieldName));
+			break;
+			case "function":
+				sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
+			break;
+			case "constant":
+				sourceId = parseInt(getConstantId(linksToOutput[i].constantId));
+			break;
+			default:
+				continue;
+			break;
 		}
-		else if (linksToOutput[i].from == "function") {
-			sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
-		}
-		else continue;
 		var targetId = parseInt(getOutputId(linksToOutput[i].outputTableAlias.replace(OUTPUT_PREFIX,'')));
 		l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
 	}
@@ -485,6 +493,15 @@ function processJson(jsondata, subqueryIndex) {
 				constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
 				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
 			}
+		}
+	}
+	if (jsondata.Constants) {
+		for (var constantAlias in jsondata.Constants) {
+			var constantId=constants.length;
+			var constantValue = jsondata.Constants[constantAlias].value;
+			constants.push({id: constantId, name: constantValue, value: constantValue, type: "constant" });
+			linksToOutput.push({type: "link", from: "constant", outputTableAlias: outputTableAlias, outputName: constantAlias, constantId: constantId});
+			fields[constantAlias]={type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:constantAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 		}
 	}
 }
@@ -705,8 +722,8 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
-
-	constantText = g.append("svg:g").selectAll("g")
+	
+	constantText = g.append("svg:g").selectAll("text.constant")
 		.data(d3.values(constants))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
@@ -734,21 +751,24 @@ function getAliasPosX(relatedAliases, currentAlias, tableWidth) {
 	return pos;
 }
 
-function filterFieldOrFunction(fieldOrFunction, origin, d) {
+function filterPathOrigin(node, origin, d) {
   if (origin == "all")
 	return true;
   if (origin == "field") {
-	return fieldOrFunction.fieldName == d.fieldName;
+	return node.fieldName == d.fieldName;
+  }
+  if (origin == "constant") {
+	return node.constantId == d.constantId;
   }
   if (origin == "function") {
-	 return fieldOrFunction.functionAlias == d.functionAlias 
-	 	 || fieldOrFunction.sourceFunctionId == d.functionAlias;
+	 return node.functionAlias == d.functionAlias 
+	 	 || node.sourceFunctionId == d.functionAlias;
   }
 }
 
 function positionPathsToOutput(origin,d) {
   pathToOutput.filter(function(link) {
-	return filterFieldOrFunction(link,origin,d);
+	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
 	  var target = d3.select('.tableGroup.output [name="'+link.outputTableAlias+'.'+link.outputName+'"] circle');
@@ -759,7 +779,7 @@ function positionPathsToOutput(origin,d) {
 
 function positionPathsToFunctions(origin,d) {
 	pathToFunction.filter(function(link) {
-	  return filterFieldOrFunction(link,origin,d);
+	  return filterPathOrigin(link,origin,d);
 	}).attr("d", function(d) {
 		var source = getNode(d, {role: "source"});
 		var target = getNode(d, {role: "target"});
@@ -954,7 +974,7 @@ function positionAll() {
 		positionFunction.call(this,d,i);
 	});
 	
-	pathToOutput.each(function(d,i) {
+	pathToOutput.each(function(d) {
 		positionPathsToOutput(d.from,d);
 	});
 }
@@ -1067,6 +1087,14 @@ function getOutputId(outputAlias) {
 function getFunctionId(funcName) {
 	for (var i in n) {
 		if (funcName == n[i].functionAlias)
+			return i;
+	}
+	return null;
+}
+
+function getConstantId(constantId) {
+	for (var i in n) {
+		if (constantId == n[i].id)
 			return i;
 	}
 	return null;
