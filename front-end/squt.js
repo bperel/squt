@@ -561,7 +561,7 @@ function buildGraph() {
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
 			
 			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
-			 && d3.select(".subquery[name=\""+currentTable.subqueryGroup+"\"]").node() === null) {
+			 && d3.select(".subquery[name=\""+escapeQuote(currentTable.subqueryGroup)+"\"]").node() === null) {
 				g.append("svg:rect")
 				  .attr("class","subquery")
 				  .attr("name",currentTable.subqueryGroup);
@@ -625,7 +625,8 @@ function buildGraph() {
 				.each(function(currentField,i) {
 					var sort = 	 currentField.sort;
 					var isFiltered = currentField.filtered;
-					var preexistingField = d3.select("g.tableGroup[name=\""+currentTable.name+"\"] g.fieldGroup[name$=\""+currentField.name+"\"] circle");
+					var preexistingField = d3.select("g.tableGroup[name=\""+ escapeQuote(currentTable.name)+"\"]"
+												   +" g.fieldGroup[name$=\""+escapeQuote(currentField.name)+"\"] circle");
 					
 					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
 										  y: preexistingField.empty() ? (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2) : parseInt(preexistingField.attr("cy")) };
@@ -771,7 +772,7 @@ function positionPathsToOutput(origin,d) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
-	  var target = d3.select('.tableGroup.output [name="'+link.outputTableAlias+'.'+link.outputName+'"] circle');
+	  var target = d3.select('.tableGroup.output [name="'+escapeQuote(link.outputTableAlias+'.'+link.outputName)+'"] circle');
 	  
 	  return getPath(this, source, target);
   });
@@ -891,17 +892,17 @@ function getNode(pathInfo, args) {
 	args = args || {};
 	switch (pathInfo.type) {
 		case "field":
-			return d3.select('[name="'+pathInfo.fieldName+'"] circle');
+			return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
 				switch (pathInfo.from) {
 					case "field":
-						return d3.select('[name="'+pathInfo.fieldName+'"] circle');
+						return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
 					break;
 					case "function":
-						return d3.select('[name="'+pathInfo.sourceFunctionId+'"]');
+						return d3.select('[name="'+escapeQuote(pathInfo.sourceFunctionId)+'"]');
 					break;
 					case "constant":
 						return constantText.filter(function(c) { 
@@ -911,7 +912,7 @@ function getNode(pathInfo, args) {
 				}
 			}
 			else {
-				return d3.select('[name="'+pathInfo.functionAlias+'"]');
+				return d3.select('[name="'+escapeQuote(pathInfo.functionAlias)+'"]');
 			}
 		break;
 		case "constant":
@@ -937,9 +938,10 @@ function getNodeCharge(d) {
 		break;
 		case "subquery":
 			if (d.name !== MAIN_QUERY_ALIAS) {
+				var boudingRect = d3.select('.subquery[name="'+escapeQuote(d.name)+'"]').node().getBoundingClientRect();
 				charge = d3.max([
-	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().width,
-	 				d3.select('.subquery[name="'+d.name+'"]').node().getBoundingClientRect().height]);
+	 				boudingRect.width,
+	 				boudingRect.height]);
 			}
 	}
 	return -1*charge*charge;
@@ -963,7 +965,7 @@ function positionAll() {
 		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
 		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
 		
-		d3.select(".subquery[name=\""+subqueryGroup+"\"]")
+		d3.select(".subquery[name=\""+escapeQuote(subqueryGroup)+"\"]")
 			.attr("x",leftBoundary)
 			.attr("y",topBoundary)
 			.attr("width",rightBoundary-leftBoundary)
@@ -988,8 +990,8 @@ function positionTable(d, i) {
 		
 	// Paths between fields
 	path.attr("d", function(d) {
-	  var source=d3.select('[name="'+d.source+'"] circle');
-	  var target=d3.select('[name="'+d.target+'"] circle');
+	  var source=d3.select('[name="'+escapeQuote(d.source)+'"] circle');
+	  var target=d3.select('[name="'+escapeQuote(d.target)+'"] circle');
 	  
 	  return getPath(this, source, target, true);
 	});
@@ -1124,4 +1126,8 @@ function domElementToMyObject(element) {
 	    case "polygon": return new Polygon(element);   break;
 	    case "rect":    return new Rectangle(element); break;
 	}
+}
+
+function escapeQuote(str) {
+	return str.replace(/"/,'\\"');
 }
