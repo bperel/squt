@@ -514,7 +514,7 @@ var table,
 	field, 
 	fieldOrder, 
 	fieldText,
-	funcText,
+	funcGroups,
 	
 	path, 
 	pathToFunction,
@@ -623,7 +623,7 @@ function buildGraph() {
 				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
 				.attr("class", "fieldGroup")
 				.each(function(currentField,i) {
-					var sort = 	 currentField.sort;
+					var sort = currentField.sort;
 					var isFiltered = currentField.filtered;
 					var preexistingField = d3.select("g.tableGroup[name=\""+ escapeQuote(currentTable.name)+"\"]"
 												   +" g.fieldGroup[name$=\""+escapeQuote(currentField.name)+"\"] circle");
@@ -635,7 +635,7 @@ function buildGraph() {
 					  .append("svg:circle")
 						.attr("r",CIRCLE_RADIUS)
 						.attr("class", (isFiltered ? "filtered" : "")+" "
-									  +(sort   	   ? "sort" 	: ""))
+									  +(sort   	   ? "sort_"+sort 	: ""))
 						.attr("cx", circlePosition.x)
 						.attr("cy", circlePosition.y);
 					
@@ -702,12 +702,25 @@ function buildGraph() {
 		.attr("class", "output link ")
 		.attr("marker-end", "url(#arrow)");
 		
-	func = g.append("svg:g").selectAll("ellipse.function")
+	functionGroups  = g.append("svg:g").selectAll("g.functionGroup")
 		.data(d3.values(functions))
-	  .enter().append("svg:ellipse")
-		.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
-		.attr("name", function(d) { return d.functionAlias;})
-		.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2)
+	  .enter()
+	  	.append("svg:g")
+		.attr("class", "functionGroup")
+	  	.each(function(currentFunction) {
+	  		d3.select(this)
+	  			.append("svg:ellipse")
+		  			.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
+		  			.attr("name", function(d) { return d.functionAlias;})
+		  			.attr("rx",function(d) { return d.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
+		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
+	  		
+	  		d3.select(this)
+		  		.append("svg:text")
+				.text(function(d) { return d.name; })
+				.attr("x", function(d) { return -1*d.name.length*CHAR_WIDTH/2;});
+	  			
+	  	})
 		.call(node_drag)
 		.on('mousedown', preventGlobalDrag)
 		.on('mouseup', allowGlobalDrag);
@@ -718,13 +731,8 @@ function buildGraph() {
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
 		.attr("class", "link tofunction")
 		.attr("marker-end", "url(#arrow)");
-		
-	funcText = g.append("svg:g").selectAll("g")
-		.data(d3.values(functions))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; });
 	
-	constantText = g.append("svg:g").selectAll("text.constant")
+	constantText = g.append("svg:g").selectAll("g")
 		.data(d3.values(constants))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
@@ -925,24 +933,30 @@ function getNode(pathInfo, args) {
 
 function getNodeCharge(d) {
 	var charge = 0;
+	var element = null;
 	switch(d.type) {
 		case "table":
-			charge = d3.max([
-				groups.filter(function(d2) { return d2.name === d.name;}).node().getBoundingClientRect().width,
-				groups.filter(function(d2) { return d2.name === d.name;}).node().getBoundingClientRect().height]);
+			element = groups.filter(function(d2) { return d2.name === d.name;});
 		break;
 		
 		case "function":
-			charge = 2*d3.max([parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("rx")),
-			                   parseInt(func.filter(function(func) { return func.functionAlias == d.functionAlias; }).attr("ry"))]);
+			element = functionGroups.filter(function(d2) { return d2.functionAlias == d.functionAlias; });
 		break;
+		
 		case "subquery":
 			if (d.name !== MAIN_QUERY_ALIAS) {
-				var boudingRect = d3.select('.subquery[name="'+escapeQuote(d.name)+'"]').node().getBoundingClientRect();
-				charge = d3.max([
-	 				boudingRect.width,
-	 				boudingRect.height]);
+				element = d3.select('.subquery[name="'+escapeQuote(d.name)+'"]');
 			}
+		break;
+	}
+	
+	if (element) {
+		var boundingRect = element.node().getBoundingClientRect();
+		charge = d3.max([boundingRect.width, boundingRect.height]);
+	}
+	
+	if (isNaN(charge)) {
+		console.log("Charge for node "+JSON.stringify(d)+" is NaN");
 	}
 	return -1*charge*charge;
 }
@@ -972,7 +986,7 @@ function positionAll() {
 			.attr("height",bottomBoundary-topBoundary);
 	}
 	
-	func.each(function(d,i) {
+	functionGroups.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
 	
@@ -1002,11 +1016,10 @@ function positionTable(d, i) {
 function positionFunction(d, i) {
 	var x=d.x || 0;
 	var y=d.y || 0;
-	
-	funcText.filter(function(func) { return func.functionAlias == d.functionAlias; })
-	  .attr("x", function(func) { return x - func.name.length*CHAR_WIDTH/2;})
-	  .attr("y", y);
 
+	d3.select(this)
+	  .attr("transform", "translate("+x+" "+y+")");
+	
 	constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
 	  .attr("x", function(c,j) { 
 		  var offset=0;
@@ -1020,13 +1033,7 @@ function positionFunction(d, i) {
 	  })
 	  .attr("y", y-CONSTANT_PADDING.bottom);
 	
-	func.filter(function(func) { return func.functionAlias == d.functionAlias; })
-	  .attr("cx", x)
-	  .attr("cy", y)
-	  .attr("rx",function(func,j) { return func.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
-	  .each(function(func) {
-		positionPathsToFunctions("function",func);
-	  });
+	positionPathsToFunctions("function",d3.select(this).data()[0]);
 	
 }
 
@@ -1116,17 +1123,27 @@ function tick() {
 	positionAll();
 }
 
-function domElementToMyObject(element) {
+function domElementToMyObject(element) {	
 	var localName = element.localName;
 	switch ( localName ) {
-	    case "circle":  return new Circle(element);    break;
-	    case "ellipse": return new Ellipse(element);   break;
-	    case "line":    return new Line(element);      break;
-	    case "path":    return new Path(element);      break;
-	    case "polygon": return new Polygon(element);   break;
-	    case "rect":    return new Rectangle(element); break;
+	    case "ellipse":
+	    	var absolutePosition = getAbsoluteCoords(d3.select(element));
+	    	var absolutizedElement = d3.select(clone(element));
+	    	absolutizedElement
+	    		.attr("cx",absolutePosition.x)
+	    		.attr("cy",absolutePosition.y);
+	    	return new Ellipse(absolutizedElement.node());   
+	    break;
+	    case "path":
+	    	return new Path(element);
+	    break;
 	}
 }
+
+function clone(selector) {
+    var node = d3.select(selector).node();
+    return node.cloneNode(true);
+  }
 
 function escapeQuote(str) {
 	return str.replace(/"/,'\\"');
