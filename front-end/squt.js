@@ -100,7 +100,7 @@ var params = extractUrlParams();
 
 var is_debug=params.debug !== undefined;
 if (!is_debug) {
-	d3.select("#debug_info").attr("class","invisible");
+	d3.select("#debug_info").classed("invisible", true);
 }
 var no_graph=params.no_graph !== undefined;
 var query_param=params.query;
@@ -166,7 +166,6 @@ d3.select("defs").append("svg:g").selectAll("marker")
       .data(["solidlink1","solidlink2"])
     .enter().append("marker")
       .attr("id", String)
-      .attr("class","solidlink")
       .attr("refX", function(d) {
     	  if (d == "solidlink1") {
     		  return -4;
@@ -179,6 +178,7 @@ d3.select("defs").append("svg:g").selectAll("marker")
       .attr("markerWidth", 100)
       .attr("markerHeight", 100)
       .attr("orient", "auto")
+      .classed("solidlink", true)
       .append("rect")
         .attr("width",10)
         .attr("height",5);
@@ -563,7 +563,7 @@ function buildGraph() {
 			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
 			 && d3.select(".subquery[name=\""+escapeQuote(currentTable.subqueryGroup)+"\"]").node() === null) {
 				g.append("svg:rect")
-				  .attr("class","subquery")
+				  .classed("subquery", true)
 				  .attr("name",currentTable.subqueryGroup);
 			}
 			
@@ -594,7 +594,7 @@ function buildGraph() {
 			    .data(relatedAliases)
 			  .enter().append("svg:g")
 				.attr("name", function(currentAlias) { return currentAlias.name; })
-				.attr("class", "aliasGroup")
+				.classed("aliasGroup", true)
 				.each(function(currentAlias,i) {
 
 					d3.select(this)
@@ -621,7 +621,7 @@ function buildGraph() {
 			    .data(relatedFields)
 			  .enter().append("svg:g")
 				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
-				.attr("class", "fieldGroup")
+				.classed("fieldGroup", true)
 				.each(function(currentField,i) {
 					var sort = currentField.sort;
 					var isFiltered = currentField.filtered;
@@ -634,20 +634,20 @@ function buildGraph() {
 					d3.select(this)
 					  .append("svg:circle")
 						.attr("r",CIRCLE_RADIUS)
-						.attr("class", (isFiltered ? "filtered" : "")+" "
-									  +(sort   	   ? "sort_"+sort 	: ""))
 						.attr("cx", circlePosition.x)
-						.attr("cy", circlePosition.y);
+						.attr("cy", circlePosition.y)
+						.classed("filtered", isFiltered)
+						.classed("sort_"+sort, !!sort);
 					
 					if (sort) {
 						d3.select(this)
 						  .append("svg:image")
 						    .attr("xlink:href", "images/sort_"+sort+".svg")
-						    .attr("class", "order")
 							.attr("width", SORT_SIDE)
 							.attr("height",SORT_SIDE)
 							.attr("x", circlePosition.x)
-							.attr("y", circlePosition.y-SORT_SIDE/2);
+							.attr("y", circlePosition.y-SORT_SIDE/2)
+						    .classed("order", true);
 					}
 
 					if (preexistingField.empty()) {
@@ -667,7 +667,7 @@ function buildGraph() {
 	path = g.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
-		.attr("class", "link")
+		.classed("link", true)
 		.attr("id", function(d,i) { return "link"+i; })
 		.attr("marker-start", function(d) { 
 			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
@@ -699,18 +699,19 @@ function buildGraph() {
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
-		.attr("class", "output link ")
-		.attr("marker-end", "url(#arrow)");
+		.attr("marker-end", "url(#arrow)")
+		.classed({output: true, link: true});
 		
 	functionGroups  = g.append("svg:g").selectAll("g.functionGroup")
 		.data(d3.values(functions))
 	  .enter()
 	  	.append("svg:g")
-		.attr("class", "functionGroup")
+		.classed("functionGroup", true)
 	  	.each(function(currentFunction) {
 	  		d3.select(this)
 	  			.append("svg:ellipse")
-		  			.attr("class", function(d) { return "function "+(d.isCondition ? "conditional":""); })
+		  			.classed("function", true)
+		  			.classed("conditionnal", function(d) { return !!d.isCondition; })
 		  			.attr("name", function(d) { return d.functionAlias;})
 		  			.attr("rx",function(d) { return d.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
 		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
@@ -729,8 +730,8 @@ function buildGraph() {
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
-		.attr("class", "link tofunction")
-		.attr("marker-end", "url(#arrow)");
+		.attr("marker-end", "url(#arrow)")
+		.classed({link: true, tofunction: true});
 	
 	constantText = g.append("svg:g").selectAll("g")
 		.data(d3.values(constants))
