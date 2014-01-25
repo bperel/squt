@@ -7,11 +7,11 @@ var force = d3.layout.force()
 
 var nodeDragging = false;
 			
-function dragstart(d, i) {
+function dragstart() {
 	force.stop();
 }
 
-function dragmove(d, i) {	
+function dragmove(d) {
 	d.px += d3.event.dx;
 	d.py += d3.event.dy;
 	d.x += d3.event.dx;
@@ -19,7 +19,7 @@ function dragmove(d, i) {
 	tick();
 }
 
-function dragend(d, i) {
+function dragend(d) {
 	d.fixed = true;
 	tick();
 }
@@ -53,7 +53,7 @@ var query_is_too_long = false;
 
 var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
 	lineWrapping: true,
-	onKeyEvent: function(editor,event) {
+	onKeyEvent: function(editor) {
 		var new_query_is_too_long = editor.getValue().length > QUERY_MAX_LENGTH;
 		if (query_is_too_long && !new_query_is_too_long) {
 			d3.select("#log").text("");
@@ -110,14 +110,16 @@ if (query_param !== undefined) {
 	analyzeAndBuild();
 }
 
-var tables= [],
-	tableAliases={},
-	fields= {},
+var subqueries,
+	tables,
+	tableAliases,
+	fields,
+	functions,
+	constants,
 		 
-	links=[],
-	functions=[],
-	linksToFunctions=[],
-	linksToOutput=[];
+	links,
+	linksToFunctions,
+	linksToOutput;
 
 var n=[],l=[];
 
@@ -247,54 +249,49 @@ function build(jsondata) {
 	
 	if (jsondata.Warning) {
 		var warningText=[];
-		for (var warnType in jsondata.Warning) {
-			for (var i in jsondata.Warning[warnType]) {
+		d3.forEach(jsondata.Warning, function(warnings, warnType) {
+			d3.forEach(warnings, function(warning, relatedObject) {
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
-						var field_location=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - No named alias for field " + i + (field_location ? " located in "+field_location+" clause " : "")
+						warningText.push("WARNING - No named alias for field " + relatedObject + (warning ? " located in "+warning+" clause " : "")
 										 +(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
-					
+
 					break;
 					case "Invalid":
-						var field_location=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - Invalid statement '" + i + "' in "+field_location+" clause : the statement will be ignored");
+						warningText.push("WARNING - Invalid statement '" + relatedObject + "' in "+warning+" clause : the statement will be ignored");
 					break;
 					case "Not supported":
-						var info=jsondata.Warning[warnType][i];
-						warningText.push("WARNING - Not supported : " + i
-										+ (info ? " ("+info+")":""));
+						warningText.push("WARNING - Not supported : " + relatedObject
+										+ (warning ? " ("+warning+")":""));
 					break;
 				}
-			}
-		}
+			});
+		});
 		d3.select('#log').text(warningText.join("\n"));
 	}
 	else {
 		d3.select('#log').text("");
 	}
 	
-	subqueries=		 [],
-	tables= 	 	 [],
-	tableAliases=	 [],
-	fields= 	 	 [],
-	links= 			 [],
-	functions=		 [],
-	constants=		 [],
-	linksToFunctions=[],
+	subqueries=		 [];
+	tables= 	 	 [];
+	tableAliases=	 [];
+	fields= 	 	 [];
+	links= 			 [];
+	functions=		 [];
+	constants=		 [];
+	linksToFunctions=[];
 	linksToOutput=	 [];
 
+	d3.forEach(jsondata.Subqueries, function(subquery, i) {
+		processJson(subquery, i);
+	});
 	processJson(jsondata);
-	if (jsondata.Subqueries) {
-		for (var i in jsondata.Subqueries) {
-			processJson(jsondata.Subqueries[i], i);
-		}
-	}
-	
-	var i=0;
-	for(var key in fields) {
-	  fields[key].id=i++;
-	};
+
+	var fieldId = 0;
+	d3.forEach(d3.keys(fields), function(key) {
+	  fields[key].id=fieldId++;
+	});
 	
 	tableAliases = d3.values(tableAliases);
 
@@ -304,61 +301,64 @@ function build(jsondata) {
 	  .concat(d3.values(subqueries));
 	l = [];
 	
-	for (var i in links) {
-		var sourceTableId = parseInt(fieldNameToTableId(links[i].source));
+	d3.forEach(links, function(link) {
+		var sourceTableId = parseInt(fieldNameToTableId(link.source));
 		var targetTableId;
-		if (d3.keys(SUBSELECT_TYPES).indexOf(links[i].type) !== -1) {
-			targetTableId = parseInt(tableNameToId(links[i].target));
+		if (d3.keys(SUBSELECT_TYPES).indexOf(link.type) !== -1) {
+			targetTableId = parseInt(tableNameToId(link.target));
 		}
 		else {
-			targetTableId = parseInt(fieldNameToTableId(links[i].target));
+			targetTableId = parseInt(fieldNameToTableId(link.target));
 		}
 		if (l[sourceTableId+","+targetTableId]) {
-			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: l[sourceTableId+","+targetTableId].value+1};
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: link.type, value: l[sourceTableId+","+targetTableId].value+1};
 		}
 		else {
-			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: links[i].type, value: 1};
+			l[sourceTableId+","+targetTableId] = {source: sourceTableId, target: targetTableId, type: link.type, value: 1};
 		}
-	}
-	for (var i in linksToOutput) {
+	});
+
+
+	d3.forEach(linksToOutput, function(link) {
 		var sourceId;
-		switch(linksToOutput[i].from) {
+		switch(link.from) {
 			case "field":
-				sourceId = parseInt(fieldNameToTableId(linksToOutput[i].fieldName));
+				sourceId = parseInt(fieldNameToTableId(link.fieldName));
 			break;
 			case "function":
-				sourceId = parseInt(getFunctionId(linksToOutput[i].sourceFunctionId));
+				sourceId = parseInt(getFunctionId(link.sourceFunctionId));
 			break;
 			case "constant":
-				sourceId = parseInt(getConstantId(linksToOutput[i].constantId));
+				sourceId = parseInt(getConstantId(link.constantId));
 			break;
 			default:
-				continue;
-			break;
+				break;
 		}
-		var targetId = parseInt(getOutputId(linksToOutput[i].outputTableAlias.replace(OUTPUT_PREFIX,'')));
-		l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
-	}
-
-	for (var i in linksToFunctions) {
-		var sourceId;
-		if (linksToFunctions[i].constantId !== undefined) { // Not supported yet
-			continue;
-		}
-		else if (linksToFunctions[i].sourceFunctionId) {
-			sourceId = parseInt(getFunctionId(linksToFunctions[i].sourceFunctionId));
-		}
-		else {
-			sourceId = parseInt(fieldNameToTableId(linksToFunctions[i].fieldName));
-		}
-		var targetId = parseInt(getFunctionId(linksToFunctions[i].functionAlias));
-		if (l[sourceId+","+targetId]) {
-			l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: l[sourceId+","+targetId].value+1};
-		}
-		else {
+		if (sourceId) {
+			var targetId = parseInt(getOutputId(link.outputTableAlias.replace(OUTPUT_PREFIX,'')));
 			l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
 		}
-	}
+	});
+
+	d3.forEach(linksToFunctions, function(link) {
+		var sourceId;
+		if (link.constantId === undefined) {
+			if (link.sourceFunctionId) {
+				sourceId = parseInt(getFunctionId(link.sourceFunctionId));
+			}
+			else {
+				sourceId = parseInt(fieldNameToTableId(link.fieldName));
+			}
+			var targetId = parseInt(getFunctionId(link.functionAlias));
+			if (l[sourceId+","+targetId]) {
+				l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: l[sourceId+","+targetId].value+1};
+			}
+			else {
+				l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
+			}
+		}
+	});
+
 	l = d3.values(l);
 	console.log(n);
 	console.log(l);
@@ -380,25 +380,23 @@ function processJson(jsondata, subqueryIndex) {
 	
 	subqueries[subqueryGroup]={type: "subquery",
 							   name: subqueryGroup};
-	for (var tableName in jsondata.Tables) {
+	d3.forEach(jsondata.Tables, function(tableInfo, tableName) {
 		tables[tableName]=({type: "table",
 			  				name:tableName,
 			  				subqueryGroup: subqueryGroup});
-		var tableInfo = jsondata.Tables[tableName];
-		for (var tableAlias in tableInfo) {
+
+		d3.forEach(tableInfo, function(actions, tableAlias) {
 			tableAliases[tableAlias]={table: tableName,name: tableAlias};
-			var actions=tableInfo[tableAlias];
-			for (var type in actions) {
-				var actionFields=actions[type];
-				for (var field in actionFields) {
-					var data=actionFields[field];
+
+			d3.forEach(actions, function(actionFields, type) {
+
+				d3.forEach(actionFields, function(data, field) {
 					if (fields[tableAlias+"."+field] == undefined) {
 						fields[tableAlias+"."+field]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAlias+"."+field, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 					}
 					switch(type) {
 						case 'OUTPUT':
-							for (var functionAlias in data) {
-								var outputAlias = data[functionAlias];
+							d3.forEach(data, function(outputAlias, functionAlias) {
 								if (functionAlias == -1) { // Directly to output
 									var fullName = outputTableAlias+"."+outputAlias;
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAlias+"."+field, outputName: outputAlias, outputTableAlias: outputTableAlias});
@@ -407,42 +405,42 @@ function processJson(jsondata, subqueryIndex) {
 									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
 									if (subqueryGroup !== MAIN_QUERY_ALIAS) {
 										var mainSubqueryOutputAlias = OUTPUT_PREFIX+MAIN_QUERY_ALIAS;
+										var fullNameInMainSubquery;
 										if (subqueryType === "SINGLEROW_SUBS") {
-											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+subqueryGroup;
+											fullNameInMainSubquery = mainSubqueryOutputAlias+"."+subqueryGroup;
 											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: subqueryGroup, outputTableAlias: mainSubqueryOutputAlias});
 											fields[subqueryGroup]={type: "field", tableAlias: mainSubqueryOutputAlias, name: subqueryGroup, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
 										}
 										else if (subqueryType === null) { // Derived table
-											var fullNameInMainSubquery = mainSubqueryOutputAlias+"."+outputAlias;
+											fullNameInMainSubquery = mainSubqueryOutputAlias+"."+outputAlias;
 											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputAlias, outputTableAlias: mainSubqueryOutputAlias});
 											fields[fullNameInMainSubquery]={type: "field", tableAlias: mainSubqueryOutputAlias, name: outputAlias, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
 										}
 									}
 								}
 								else { // To a function
-									linksToFunctions.push({type: "field", type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
+									linksToFunctions.push({type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: functionAlias});
 								}
-							}
+							});
 							
 						break;
 						case 'CONDITION':
-							for (var conditionType in data) {
-								var conditionData = data[conditionType];
+							d3.forEach(data, function(conditionData, conditionType) {
 								switch(conditionType) {
 									case 'FUNCTION':
-										for (var destinationFunctionAlias in conditionData) {									
+										d3.forEach(d3.keys(conditionData), function(destinationFunctionAlias) {
 											linksToFunctions.push({type: "link", from: "field", fieldName: tableAlias+"."+field, functionAlias: destinationFunctionAlias});
-										}
+										});
 									break;
 									case 'JOIN': case 'VALUE': case 'EXISTS':
-										for (var otherField in conditionData) {
+										d3.forEach(conditionData, function(join, otherField) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
 												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
 													var tableAliasAndField=otherField.split('.');
 													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 												}
-												var joinType=null;
-												switch(data[otherField]) {
+												var joinType;
+												switch(join) {
 													case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
 													case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
 													case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
@@ -453,7 +451,7 @@ function processJson(jsondata, subqueryIndex) {
 											else { // It's a value
 												fields[tableAlias+"."+field].filtered=true;
 											}
-										}
+										});
 									break;
 									default:
 										if (d3.keys(SUBSELECT_TYPES).indexOf(conditionType) !== -1) {
@@ -461,64 +459,58 @@ function processJson(jsondata, subqueryIndex) {
 										}
 									break;
 								}
-							}
+							});
 						break;
 						case 'SORT':
 							fields[tableAlias+"."+field].sort=data;
 						break;
 					}
-				}
-			}
-		}
-	}
+				});
+			});
+		});
+	});
 	
-	for (var functionAlias in jsondata.Functions) {
-		var functionDestination=jsondata.Functions[functionAlias]["to"];
+	d3.forEach(jsondata.Functions, function(functionAliasInfo, functionAlias) {
+		var functionDestination=functionAliasInfo.to;
 		functions[functionAlias]={type: "function",
 								  functionAlias: functionAlias, 
-							      name: jsondata.Functions[functionAlias]["name"],
+							      name: functionAliasInfo.name,
 							      isCondition: functionDestination === "NOWHERE"
 								 };
 		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias]["functionAlias"], outputTableAlias: outputTableAlias});
-			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name:functionAlias, fullName:functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias].functionAlias, outputTableAlias: outputTableAlias});
+			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
 		}
 		else if (functionDestination !== "NOWHERE") {
 			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
 		}
-		if (jsondata.Functions[functionAlias]["Constants"] !== undefined) {
-			var functionConstants = jsondata.Functions[functionAlias]["Constants"];
-			for (var constant in functionConstants) {
+		var functionConstants = functionAliasInfo.Constants;
+		if (functionConstants !== undefined) {
+			d3.forEach(d3.keys(functionConstants), function(constant) {
 				var constantId=constants.length;
 				constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
 				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
-			}
+			});
 		}
-	}
+	});
 	if (jsondata.Constants) {
-		for (var constantAlias in jsondata.Constants) {
+		d3.forEach(jsondata.Constants, function(constant, constantAlias) {
 			var constantId=constants.length;
-			var constantValue = jsondata.Constants[constantAlias].value;
+			var constantValue = constant.value;
 			constants.push({id: constantId, name: constantValue, value: constantValue, type: "constant" });
 			linksToOutput.push({type: "link", from: "constant", outputTableAlias: outputTableAlias, outputName: constantAlias, constantId: constantId});
 			fields[constantAlias]={type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:constantAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
-		}
+		});
 	}
 }
 
-var table, 
-	groups,
-	tableText, 
-	tableSeparator, 
-	tableAlias, 
-	field, 
-	fieldOrder, 
-	fieldText,
-	funcGroups,
+var tableGroups,
+	functionGroups,
+	constantTexts,
 	
-	path, 
-	pathToFunction,
-	pathToOutput;
+	paths,
+	pathsToFunctions,
+	pathsToOutput;
 
 function buildGraph() {	
 	
@@ -531,7 +523,7 @@ function buildGraph() {
 	
 	var g = svg.append("svg:g");
 	
-	groups = g.append("svg:g").selectAll("g")
+	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
 	  .enter().append("svg:g")
 		.attr("name",  function(currentTable) { return currentTable.name; })
@@ -562,7 +554,7 @@ function buildGraph() {
 			
 			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
 			 && d3.select(".subquery[name=\""+escapeQuote(currentTable.subqueryGroup)+"\"]").node() === null) {
-				g.append("svg:rect")
+				g.insert("svg:rect", ":first-child")
 				  .classed("subquery", true)
 				  .attr("name",currentTable.subqueryGroup);
 			}
@@ -664,7 +656,7 @@ function buildGraph() {
 		.on('mousedown', preventGlobalDrag)
 		.on('mouseup', allowGlobalDrag);
 	
-	path = g.append("svg:g").selectAll("path.join")
+	paths = g.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
 		.classed("link", true)
@@ -673,6 +665,9 @@ function buildGraph() {
 			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
 				return "url(#solidlink1)";
 			}
+			else {
+				return "";
+			}
 		})
 		.attr("marker-end", function(d) { 
 			if (d.type == "innerjoin") {
@@ -680,6 +675,9 @@ function buildGraph() {
 			}
 			else if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
 				return "url(#subquery)";
+			}
+			else {
+				return "";
 			}
 		})
 		.each(function(d,i) {
@@ -695,7 +693,7 @@ function buildGraph() {
 			}
 		});
 
-	pathToOutput = g.append("svg:g").selectAll("path.output")
+	pathsToOutput = g.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
@@ -707,7 +705,7 @@ function buildGraph() {
 	  .enter()
 	  	.append("svg:g")
 		.classed("functionGroup", true)
-	  	.each(function(currentFunction) {
+	  	.each(function() {
 	  		d3.select(this)
 	  			.append("svg:ellipse")
 		  			.classed("function", true)
@@ -726,19 +724,17 @@ function buildGraph() {
 		.on('mousedown', preventGlobalDrag)
 		.on('mouseup', allowGlobalDrag);
 
-	pathToFunction = g.append("svg:g").selectAll("path.tofunction")
+	pathsToFunctions = g.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
 		.attr("marker-end", "url(#arrow)")
 		.classed({link: true, tofunction: true});
 	
-	constantText = g.append("svg:g").selectAll("g")
+	constantTexts = g.append("svg:g").selectAll("g")
 		.data(d3.values(constants))
 	  .enter().append("svg:text")
 		.text(function(d) { return d.name; });
-	
-	//positionAll();
 	
 	force
 		.nodes(n)
@@ -762,22 +758,27 @@ function getAliasPosX(relatedAliases, currentAlias, tableWidth) {
 }
 
 function filterPathOrigin(node, origin, d) {
-  if (origin == "all")
-	return true;
-  if (origin == "field") {
-	return node.fieldName == d.fieldName;
-  }
-  if (origin == "constant") {
-	return node.constantId == d.constantId;
-  }
-  if (origin == "function") {
-	 return node.functionAlias == d.functionAlias 
-	 	 || node.sourceFunctionId == d.functionAlias;
-  }
+	switch(origin) {
+		case "all":
+			return true;
+		break;
+		case "field":
+			return node.fieldName == d.fieldName;
+		break;
+		case "constant":
+			return node.constantId == d.constantId;
+		break;
+		case "function":
+			return node.functionAlias == d.functionAlias
+				|| node.sourceFunctionId == d.functionAlias;
+		break;
+		default:
+			return false;
+	}
 }
 
 function positionPathsToOutput(origin,d) {
-  pathToOutput.filter(function(link) {
+  pathsToOutput.filter(function(link) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
@@ -788,7 +789,7 @@ function positionPathsToOutput(origin,d) {
 }
 
 function positionPathsToFunctions(origin,d) {
-	pathToFunction.filter(function(link) {
+	pathsToFunctions.filter(function(link) {
 	  return filterPathOrigin(link,origin,d);
 	}).attr("d", function(d) {
 		var source = getNode(d, {role: "source"});
@@ -852,6 +853,7 @@ function getIntersection(object1, object2, otherElementCoords) {
 			return {x: closest.x, y: closest.y};
 		}
 	}
+	return null;
 }
 
 function getPathFromCoords(x1, y1, x2, y2, isArc) {
@@ -914,7 +916,7 @@ function getNode(pathInfo, args) {
 						return d3.select('[name="'+escapeQuote(pathInfo.sourceFunctionId)+'"]');
 					break;
 					case "constant":
-						return constantText.filter(function(c) { 
+						return constantTexts.filter(function(c) {
 							return pathInfo.constantId == c.id; 
 						});
 					break;
@@ -925,11 +927,13 @@ function getNode(pathInfo, args) {
 			}
 		break;
 		case "constant":
-			return constantText.filter(function(c) { 
+			return constantTexts.filter(function(c) {
 				return pathInfo.constantId == c.id; 
 			});
 		break;
 	}
+
+	return null;
 }
 
 function getNodeCharge(d) {
@@ -937,7 +941,7 @@ function getNodeCharge(d) {
 	var element = null;
 	switch(d.type) {
 		case "table":
-			element = groups.filter(function(d2) { return d2.name === d.name;});
+			element = tableGroups.filter(function(d2) { return d2.name === d.name;});
 		break;
 		
 		case "function":
@@ -964,7 +968,7 @@ function getNodeCharge(d) {
 
 function positionAll() {
 	var subqueryBoundaries=[];
-	groups.each(function(d,i) {
+	tableGroups.each(function(d,i) {
 		var tableBoundaries = positionTable.call(this,d,i);
 		if (d.subqueryGroup !== undefined) {
 			if (!subqueryBoundaries[d.subqueryGroup]) {
@@ -973,8 +977,7 @@ function positionAll() {
 			subqueryBoundaries[d.subqueryGroup].push(tableBoundaries);
 		}
 	});
-	for (var subqueryGroup in subqueryBoundaries) {
-		var boundaries = subqueryBoundaries[subqueryGroup];
+	d3.forEach(subqueryBoundaries, function(boundaries, subqueryGroup) {
 		var topBoundary = 	 d3.min(boundaries, function(coord) { return coord.y1; }) - SUBQUERY_PADDING;
 		var rightBoundary =  d3.max(boundaries, function(coord) { return coord.x2; }) + SUBQUERY_PADDING;
 		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
@@ -985,13 +988,13 @@ function positionAll() {
 			.attr("y",topBoundary)
 			.attr("width",rightBoundary-leftBoundary)
 			.attr("height",bottomBoundary-topBoundary);
-	}
+	});
 	
 	functionGroups.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
 	
-	pathToOutput.each(function(d) {
+	pathsToOutput.each(function(d) {
 		positionPathsToOutput(d.from,d);
 	});
 }
@@ -1004,11 +1007,11 @@ function positionTable(d, i) {
 	  .attr("transform", "translate("+x+" "+y+")");
 		
 	// Paths between fields
-	path.attr("d", function(d) {
+	paths.attr("d", function(d) {
 	  var source=d3.select('[name="'+escapeQuote(d.source)+'"] circle');
 	  var target=d3.select('[name="'+escapeQuote(d.target)+'"] circle');
 	  
-	  return getPath(this, source, target, true);
+	  return getPath(this, source, target);
 	});
 	
 	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};
@@ -1021,10 +1024,10 @@ function positionFunction(d, i) {
 	d3.select(this)
 	  .attr("transform", "translate("+x+" "+y+")");
 	
-	constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
+	constantTexts.filter(function(t) { return t.functionAlias == d.functionAlias; })
 	  .attr("x", function(c,j) { 
 		  var offset=0;
-		  constantText.filter(function(t) { return t.functionAlias == d.functionAlias; })
+		  constantTexts.filter(function(t) { return t.functionAlias == d.functionAlias; })
 		  	.each(function(c2,j2) {
 		  		if (j2<j) {
 		  			offset+=c2.name.length*CHAR_WIDTH;
@@ -1046,10 +1049,6 @@ function isFieldInTable(field,table) {
 
 function fieldNameToTableId(fieldname) {
 	return fieldNameToTable(fieldname, "index");
-}
-
-function fieldNameToTableObject(fieldname) {
-	return fieldNameToTable(fieldname, "object");
 }
 	
 function fieldNameToTable(fieldname, indexOrObject) {
@@ -1083,13 +1082,14 @@ function tableNameToId(tablename) {
 			return i;
 		}
 	}
-	return;
+	return null;
 }
 
 function getOutputId(outputAlias) {
 	for (var i in n) {
-		if (outputAlias == n[i].name)
+		if (outputAlias == n[i].name) {
 			return i;
+		}
 	}
 	return null;
 }
@@ -1138,6 +1138,9 @@ function domElementToMyObject(element) {
 	    case "path":
 	    	return new Path(element);
 	    break;
+		default:
+			return null;
+		break;
 	}
 }
 
@@ -1149,3 +1152,11 @@ function clone(selector) {
 function escapeQuote(str) {
 	return str.replace(/"/,'\\"');
 }
+
+d3.forEach = function (obj, callback) {
+	if (typeof obj === 'object') {
+		Array.prototype.forEach.call(Object.keys(obj), function (prop) {
+			callback(obj[prop], prop);
+		});
+	}
+};

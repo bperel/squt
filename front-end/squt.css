@@ -131,6 +131,11 @@ svg#graph {
 	position: fixed;
 }
 
+.subquery {
+    stroke: black;
+    fill: white;
+}
+
 marker#arrow polyline {
 	stroke: black;
 	fill: white;
