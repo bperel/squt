@@ -283,8 +283,8 @@ function build(jsondata) {
 	linksToFunctions=[];
 	linksToOutput=	 [];
 
-	d3.forEach(jsondata.Subqueries, function(subquery, i) {
-		processJson(subquery, i);
+	d3.forEach(jsondata.Subqueries, function(subquery) {
+		processJson(subquery);
 	});
 	processJson(jsondata);
 
@@ -587,8 +587,7 @@ function buildGraph() {
 			  .enter().append("svg:g")
 				.attr("name", function(currentAlias) { return currentAlias.name; })
 				.classed("aliasGroup", true)
-				.each(function(currentAlias,i) {
-
+				.each(function(currentAlias) {
 					d3.select(this)
 					  .append("svg:text")
 						.text(currentTable.output ? "" : currentAlias.name)
@@ -999,7 +998,7 @@ function positionAll() {
 	});
 }
 
-function positionTable(d, i) {
+function positionTable(d) {
 	var x = d.x || 0;
 	var y = d.y || 0;
 	
@@ -1017,7 +1016,7 @@ function positionTable(d, i) {
 	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};
 }
 
-function positionFunction(d, i) {
+function positionFunction(d) {
 	var x=d.x || 0;
 	var y=d.y || 0;
 
