@@ -223,16 +223,19 @@ function analyzeAndBuild() {
 
 function build(jsondata) {
 	console.log(jsondata);
+
 	if (jsondata == null) {
 		d3.select('#log').text("Error ! Make sure your paths are properly configured");
-		svg.selectAll('image,g').remove();
+		svg.selectAll('image,svg>g').remove();
 		return;
 	}
 	if (jsondata.Error !== undefined) {
 		d3.select('#log').text("ERROR - " + jsondata.Error);
-		svg.selectAll('image,g').remove();
+		svg.selectAll('image,svg>g').remove();
+		force.stop();
 		return;
 	}
+
 	
 	d3.select('#create_link a')
 		.attr('class', '');
@@ -264,7 +267,7 @@ function build(jsondata) {
 	else {
 		d3.select('#log').text("");
 	}
-	
+
 	subqueries=		 [];
 	tables= 	 	 [];
 	tableAliases=	 [];
