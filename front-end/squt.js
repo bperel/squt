@@ -4,18 +4,15 @@ var force = d3.layout.force()
 				return getNodeCharge(d);
 			})
 			.size([W*2/3, H*2/3]);
-
-var nodeDragging = false;
 			
 function dragstart() {
+	d3.event.sourceEvent.stopPropagation();
 	force.stop();
 }
 
 function dragmove(d) {
-	d.px += d3.event.dx;
-	d.py += d3.event.dy;
-	d.x += d3.event.dx;
-	d.y += d3.event.dy;
+	d.x = d3.event.x;
+	d.y = d3.event.y;
 	positionAll();
 }
 
@@ -25,6 +22,7 @@ function dragend(d) {
 }
 
 var node_drag = d3.behavior.drag()
+	.origin(function(d) { return d; })
 	.on("dragstart", dragstart)
 	.on("drag", dragmove)
 	.on("dragend", dragend);
@@ -129,10 +127,9 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("height", H)
 	.call(d3.behavior.zoom()
 		.on("zoom",function(a,b) {
-			if (!nodeDragging) {
-				svg.select("svg>g").attr("transform", "translate(" +  d3.event.translate[0] + "," + d3.event.translate[1] + ") scale(" +  d3.event.scale + ")"); 	
-			}
-		}));
+			svg.select("svg>g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+		})
+	);
 
 svg.append("defs");
 	
@@ -655,9 +652,7 @@ function buildGraph() {
 						fieldIndex++;
 					}
 				});
-		})
-		.on('mousedown', preventGlobalDrag)
-		.on('mouseup', allowGlobalDrag);
+		});
 	
 	paths = g.append("svg:g").selectAll("path.join")
 		.data(links)
@@ -723,9 +718,7 @@ function buildGraph() {
 				.attr("x", function(d) { return -1*d.name.length*CHAR_WIDTH/2;});
 	  			
 	  	})
-		.call(node_drag)
-		.on('mousedown', preventGlobalDrag)
-		.on('mouseup', allowGlobalDrag);
+		.call(node_drag);
 
 	pathsToFunctions = g.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
@@ -1070,14 +1063,6 @@ function fieldNameToTable(fieldname, indexOrObject) {
 		}
 	}
 	return null;
-}
-
-function preventGlobalDrag() {
-	nodeDragging = true;
-}
-
-function allowGlobalDrag() {
-	nodeDragging = false;
 }
 
 function getTableId(tablename) {
