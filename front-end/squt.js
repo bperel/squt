@@ -8,6 +8,7 @@ var force = d3.layout.force()
 var nodeDragging = false;
 			
 function dragstart() {
+	d3.event.sourceEvent.stopPropagation();
 	force.stop();
 }
 
@@ -25,6 +26,7 @@ function dragend(d) {
 }
 
 var node_drag = d3.behavior.drag()
+	.origin(function(d) { return d; })
 	.on("dragstart", dragstart)
 	.on("drag", dragmove)
 	.on("dragend", dragend);
@@ -129,10 +131,9 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("height", H)
 	.call(d3.behavior.zoom()
 		.on("zoom",function(a,b) {
-			if (!nodeDragging) {
-				svg.select("svg>g").attr("transform", "translate(" +  d3.event.translate[0] + "," + d3.event.translate[1] + ") scale(" +  d3.event.scale + ")"); 	
-			}
-		}));
+			svg.select("svg>g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+		})
+	);
 
 svg.append("defs");
 	
