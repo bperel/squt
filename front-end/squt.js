@@ -35,11 +35,7 @@ d3.select('#repulsion').on("change",function() {
 });
 
 d3.select('#create_link a').on('click', function() {
-	d3.select('#create_link a')
-		.attr('class', 'invisible');
-	d3.select('#create_link input')
-		.attr('class', '')
-		.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
+	toggleLinkDisplay(true);
 });
 
 d3.select('#create_link input').on('click', function() {
@@ -236,11 +232,7 @@ function build(jsondata) {
 		return;
 	}
 
-	
-	d3.select('#create_link a')
-		.attr('class', '');
-	d3.select('#create_link input')
-		.attr('class', 'invisible');
+	toggleLinkDisplay(false);
 	
 	if (jsondata.Warning) {
 		var warningText=[];
@@ -742,6 +734,17 @@ function buildGraph() {
 		.start();
 }
 
+function toggleLinkDisplay(toggle) {
+	d3.select('#create_link a')
+		.classed('invisible', toggle);
+
+	var input = d3.select('#create_link input');
+	input.classed('invisible', !toggle);
+
+	if (toggle) {
+		input.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
+	}
+}
 
 function getAliasPosX(relatedAliases, currentAlias, tableWidth) {
 	var pos = tableWidth;
