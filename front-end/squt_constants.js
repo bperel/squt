@@ -22,7 +22,8 @@ var OUTPUT_LABEL="OUTPUT";
 var W = 960,
     H = 500;
 
-var CHAR_WIDTH=8;
+var CHAR_WIDTH = 8,
+	CHAR_HEIGHT= 12;
 
 var CIRCLE_RADIUS 	   		 = 6,
 	SORT_SIDE	  	   		 = 30,
@@ -57,7 +58,8 @@ FIELD_PADDING.top 			 = 35;
 FUNCTION_ELLIPSE_PADDING.left= 10;
 FUNCTION_ELLIPSE_PADDING.top = 0;
 
-CONSTANT_PADDING.bottom		 = 50;
+CONSTANT_PADDING.left		 = 10;
+CONSTANT_PADDING.bottom		 = 10;
 
 /* Misc */
 

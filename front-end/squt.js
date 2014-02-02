@@ -503,7 +503,7 @@ function processJson(jsondata, subqueryIndex) {
 
 var tableGroups,
 	functionGroups,
-	constantTexts,
+	constantGroups,
 	
 	paths,
 	pathsToFunctions,
@@ -721,11 +721,36 @@ function buildGraph() {
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
 		.attr("marker-end", "url(#arrow)")
 		.classed({link: true, tofunction: true});
-	
-	constantTexts = g.append("svg:g").selectAll("g")
+
+
+	constantGroups  = g.append("svg:g").selectAll("g.constantGroup")
 		.data(d3.values(constants))
-	  .enter().append("svg:text")
-		.text(function(d) { return d.name; });
+		.enter()
+		.append("svg:g")
+		.classed("constantGroup", true)
+		.each(function(currentConstant) {
+			var rectDimensions = {
+				width: CONSTANT_PADDING.left*2 + CHAR_WIDTH*currentConstant.name.length,
+				height: CONSTANT_PADDING.bottom*2 + CHAR_HEIGHT
+			};
+
+			d3.select(this)
+				.append("svg:rect")
+					.classed("constant", true)
+					.attr("name", currentConstant.name)
+					.attr("x", -rectDimensions.width/2)
+					.attr("y", -rectDimensions.height/2)
+					.attr("width", rectDimensions.width)
+					.attr("height",rectDimensions.height);
+
+			d3.select(this)
+				.append("svg:text")
+				.text(currentConstant.name)
+				.attr("x", -rectDimensions.width/2 +  CONSTANT_PADDING.left)
+				.attr("y", -rectDimensions.height/2 + CONSTANT_PADDING.bottom + CHAR_HEIGHT);
+
+		})
+		.call(node_drag);
 	
 	force
 		.nodes(n)
@@ -820,12 +845,9 @@ function getCorrectedPathPoint(pathObject, element, elementCoords, otherElement,
 	var elementData = element.data()[0];
 	switch (elementData.type) {
 		case "function":
+		case "constant":
 			var elementObject = domElementToMyObject(element[0][0]);
 			return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
-		break;
-		case "constant":
-			return {x: elementCoords.x+elementData.name.length/2*CHAR_WIDTH, 
-				 	y: elementCoords.y};
 		break;
 		case "field":
 //			if (elementData.tableAlias.indexOf(OUTPUT_PREFIX) !== -1) {
@@ -918,7 +940,7 @@ function getNode(pathInfo, args) {
 						return d3.select('[name="'+escapeQuote(pathInfo.sourceFunctionId)+'"]');
 					break;
 					case "constant":
-						return constantTexts.filter(function(c) {
+						return constantGroups.filter(function(c) {
 							return pathInfo.constantId == c.id; 
 						});
 					break;
@@ -929,7 +951,7 @@ function getNode(pathInfo, args) {
 			}
 		break;
 		case "constant":
-			return constantTexts.filter(function(c) {
+			return constantGroups.filter(function(c) {
 				return pathInfo.constantId == c.id; 
 			});
 		break;
@@ -948,6 +970,10 @@ function getNodeCharge(d) {
 		
 		case "function":
 			element = functionGroups.filter(function(d2) { return d2.functionAlias == d.functionAlias; });
+		break;
+
+		case "constant":
+			element = constantGroups.filter(function(d2) { return d2.name == d.name; });
 		break;
 		
 		case "subquery":
@@ -995,6 +1021,10 @@ function positionAll() {
 	functionGroups.each(function(d,i) {
 		positionFunction.call(this,d,i);
 	});
+
+	constantGroups.each(function(d,i) {
+		positionConstant.call(this,d,i);
+	});
 	
 	pathsToOutput.each(function(d) {
 		positionPathsToOutput(d.from,d);
@@ -1025,22 +1055,16 @@ function positionFunction(d) {
 
 	d3.select(this)
 	  .attr("transform", "translate("+x+" "+y+")");
-	
-	constantTexts.filter(function(t) { return t.functionAlias == d.functionAlias; })
-	  .attr("x", function(c,j) { 
-		  var offset=0;
-		  constantTexts.filter(function(t) { return t.functionAlias == d.functionAlias; })
-		  	.each(function(c2,j2) {
-		  		if (j2<j) {
-		  			offset+=c2.name.length*CHAR_WIDTH;
-		  		}
-		  	});	
-		  return x+offset; 
-	  })
-	  .attr("y", y-CONSTANT_PADDING.bottom);
-	
+
 	positionPathsToFunctions("function",d3.select(this).data()[0]);
-	
+}
+
+function positionConstant(d) {
+	var x=d.x || 0;
+	var y=d.y || 0;
+
+	d3.select(this)
+		.attr("transform", "translate("+x+" "+y+")");
 }
 
 function isFieldInTable(field,table) {
