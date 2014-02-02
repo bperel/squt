@@ -730,8 +730,8 @@ function buildGraph() {
 		.classed("constantGroup", true)
 		.each(function(currentConstant) {
 			var rectDimensions = {
-				width: CONSTANT_PADDING.left*2 + CHAR_WIDTH*currentConstant.name.length,
-				height: CONSTANT_PADDING.bottom*2 + CHAR_HEIGHT
+				width:  CONSTANT_PADDING.leftright*2 + CHAR_WIDTH * currentConstant.name.length,
+				height: CONSTANT_PADDING.topbottom*2 + CHAR_HEIGHT
 			};
 
 			d3.select(this)
@@ -746,8 +746,8 @@ function buildGraph() {
 			d3.select(this)
 				.append("svg:text")
 				.text(currentConstant.name)
-				.attr("x", -rectDimensions.width/2 +  CONSTANT_PADDING.left)
-				.attr("y", -rectDimensions.height/2 + CONSTANT_PADDING.bottom + CHAR_HEIGHT);
+				.attr("x", -rectDimensions.width/2  + CONSTANT_PADDING.leftright)
+				.attr("y", -rectDimensions.height/2 + CONSTANT_PADDING.topbottom + CHAR_HEIGHT);
 
 		})
 		.call(node_drag);
