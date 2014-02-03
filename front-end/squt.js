@@ -93,11 +93,9 @@ d3.text("list_samples.php?test=false",function(text) {
 var params = extractUrlParams();
 
 var is_debug=params.debug !== undefined;
-if (!is_debug) {
-	d3.select("#debug_info").classed("invisible", true);
-}
 var no_graph=params.no_graph !== undefined;
 var query_param=params.query;
+
 if (query_param !== undefined) {
 	editor.setValue(decodeURIComponent(query_param));
 	query=editor.getValue().replace(/\n/g,' ');
@@ -507,7 +505,9 @@ var tableGroups,
 	
 	paths,
 	pathsToFunctions,
-	pathsToOutput;
+	pathsToOutput,
+
+	chargeForces;
 
 function buildGraph() {	
 	
@@ -751,7 +751,15 @@ function buildGraph() {
 
 		})
 		.call(node_drag);
-	
+
+	if (is_debug) {
+		chargeForces = g.append("svg:g").selectAll("g.chargeForce")
+			.data(n)
+			.enter()
+			.append("svg:circle")
+				.classed("chargeForce", true);
+	}
+
 	force
 		.nodes(n)
 		.links(l)
@@ -986,12 +994,31 @@ function getNodeCharge(d) {
 	if (element) {
 		var boundingRect = element.node().getBoundingClientRect();
 		charge = d3.max([boundingRect.width, boundingRect.height]);
+
+		if (is_debug) {
+			chargeForces
+				.filter(function(d2) {
+					return d.name === d2.name;
+				})
+				.attr("r", charge);
+		}
 	}
 	
 	if (isNaN(charge)) {
 		console.log("Charge for node "+JSON.stringify(d)+" is NaN");
 	}
 	return -1*charge*charge;
+}
+
+function getGroupCenter(d, axis) {
+	var element = d3.select('[name="'+ d.name+'"]');
+	if (element.node()) {
+		var bbox = element.node().getBBox();
+		var pos = getAbsoluteCoords(element);
+		return axis === 'x' ? pos.x + bbox.width  /2
+							: pos.y + bbox.height /2;
+	}
+	return null;
 }
 
 function positionAll() {
@@ -1029,6 +1056,16 @@ function positionAll() {
 	pathsToOutput.each(function(d) {
 		positionPathsToOutput(d.from,d);
 	});
+
+	if (is_debug) {
+		chargeForces
+			.attr("cx", function(d) {
+				return getGroupCenter(d, 'x');
+			})
+			.attr("cy", function(d) {
+				return getGroupCenter(d, 'y');
+			});
+	}
 }
 
 function positionTable(d) {
