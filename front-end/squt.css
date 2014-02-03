@@ -183,6 +183,11 @@ ellipse.function.conditional {
 	stroke: green;
 }
 
+rect.constant {
+    fill: #fff;
+    stroke: #333;
+}
+
 text {
   font: 12px Courier;
   pointer-events: none;
@@ -197,6 +202,11 @@ text.shadow {
   stroke: #fff;
   stroke-width: 3px;
   stroke-opacity: .8;
+}
+
+circle.chargeForce {
+    stroke: red;
+    fill: none;
 }
 
 #error_texts {
