@@ -695,7 +695,7 @@ function buildGraph() {
 	  		d3.select(this)
 	  			.append("svg:ellipse")
 		  			.classed("function", true)
-		  			.classed("conditionnal", function(d) { return !!d.isCondition; })
+		  			.classed("conditional", function(d) { return !!d.isCondition; })
 		  			.attr("name", function(d) { return d.functionAlias;})
 		  			.attr("rx",function(d) { return d.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
 		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
