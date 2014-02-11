@@ -1,6 +1,6 @@
 ## squt (it's like SQL, but cUTe)
 
-squt is a Perl and PHP/JS library aiming at graphically representing (My)SQL queries in a graph form.
+squt is a Perl and PHP/JS Web application aiming at graphically representing MySQL queries in a graph form.
 
 ![squt example](https://raw.github.com/wiki/ducksmanager/squt/images/squt_example.png)
 
