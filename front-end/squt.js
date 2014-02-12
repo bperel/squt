@@ -994,21 +994,22 @@ function getNodeCharge(d) {
 	
 	if (element) {
 		var boundingRect = element.node().getBoundingClientRect();
-		charge = d3.max([boundingRect.width, boundingRect.height]);
+		var nodeSide = d3.max([boundingRect.width, boundingRect.height]);
+		charge = 1.5*Math.PI*(nodeSide/2)*(nodeSide/2);
 
 		if (is_debug) {
 			chargeForces
 				.filter(function(d2) {
 					return d.name === d2.name;
 				})
-				.attr("r", charge);
+				.attr("r", nodeSide/2);
 		}
 	}
 	
 	if (isNaN(charge)) {
-		console.log("Charge for node "+JSON.stringify(d)+" is NaN");
+		console.log("Charge of node "+JSON.stringify(d)+" is NaN");
 	}
-	return -1*charge*charge;
+	return -1*charge;
 }
 
 function getGroupCenter(d, axis) {
