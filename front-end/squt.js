@@ -458,11 +458,13 @@ function processJson(jsondata, subqueryIndex) {
 		});
 	});
 	
+	var functionCpt=0;
 	d3.forEach(jsondata.Functions, function(functionAliasInfo, functionAlias) {
 		var functionDestination=functionAliasInfo.to;
 		functions[functionAlias]={type: "function",
 								  functionAlias: functionAlias, 
-							      name: functionAliasInfo.name,
+								  name: subqueryGroup+".function_"+functionCpt,
+							      value: functionAliasInfo.name,
 							      isCondition: functionDestination === "NOWHERE"
 								 };
 		if (functionDestination === "OUTPUT") {
@@ -480,6 +482,7 @@ function processJson(jsondata, subqueryIndex) {
 				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
 			});
 		}
+		functionCpt++;
 	});
 	if (jsondata.Constants) {
 		d3.forEach(jsondata.Constants, function(constant, constantAlias) {
@@ -511,7 +514,7 @@ function buildGraph() {
 	//cleanup
 	svg.selectAll('image,svg>g').remove();
 	
-	var g = svg.append("svg:g");
+	var g = svg.append("svg:g").classed("main", true);
 	
 	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
@@ -690,20 +693,21 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter()
 	  	.append("svg:g")
+		.attr("name",  function(currentFunction) { return currentFunction.name; })
 		.classed("functionGroup", true)
 	  	.each(function() {
 	  		d3.select(this)
 	  			.append("svg:ellipse")
 		  			.classed("function", true)
-		  			.classed("conditionnal", function(d) { return !!d.isCondition; })
+		  			.classed("conditional", function(d) { return !!d.isCondition; })
 		  			.attr("name", function(d) { return d.functionAlias;})
-		  			.attr("rx",function(d) { return d.name.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
+		  			.attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
 		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
 	  		
 	  		d3.select(this)
 		  		.append("svg:text")
-				.text(function(d) { return d.name; })
-				.attr("x", function(d) { return -1*d.name.length*CHAR_WIDTH/2;});
+				.text(function(d) { return d.value; })
+				.attr("x", function(d) { return -1*d.value.length*CHAR_WIDTH/2;});
 	  			
 	  	})
 		.call(node_drag);
@@ -720,6 +724,7 @@ function buildGraph() {
 		.data(d3.values(constants))
 		.enter()
 		.append("svg:g")
+		.attr("name",  function(currentConstant) { return currentConstant.name; })
 		.classed("constantGroup", true)
 		.each(function(currentConstant) {
 			var rectDimensions = {
@@ -750,7 +755,8 @@ function buildGraph() {
 			.data(n)
 			.enter()
 			.append("svg:circle")
-				.classed("chargeForce", true);
+				.classed("chargeForce", true)
+				.attr("name", function(currentNode) { return "force_"+currentNode.name; });
 	}
 
 	force
@@ -908,15 +914,17 @@ function getAbsoluteCoords(element) {
 				  y: parseFloat(element.attr("cy"))};
 	}
 	else if (element.attr("transform") !== null) {
-		coords = element.attr("transform").replace(/translate\(([-0-9.]+ [-0-9.]+)\)/g,'$1');
-		coords = {x: parseFloat(coords.split(/ /g)[0]),
-				  y: parseFloat(coords.split(/ /g)[1])};
+		coords = d3.transform(element.attr("transform")).translate;
+		coords = {x: coords[0],
+				  y: coords[1]};
 	}
 	
 	if (!coords.x || !coords.y) {
 		coords = {x:0, y:0};
 	}
-	if (element.node().parentNode.tagName !== "svg") {
+
+	var parentNode = element.node().parentNode;
+	if (parentNode.tagName !== "svg" && !d3.select(parentNode).classed("main")) {
 		var parentCoords = getAbsoluteCoords(d3.select(element.node().parentNode));
 		coords.x+=parentCoords.x;
 		coords.y+=parentCoords.y;
@@ -1004,12 +1012,12 @@ function getNodeCharge(d) {
 }
 
 function getGroupCenter(d, axis) {
-	var element = d3.select('[name="'+ d.name+'"]');
+	var element = d3.select('g[name="'+ d.name+'"]');
 	if (element.node()) {
 		var bbox = element.node().getBBox();
 		var pos = getAbsoluteCoords(element);
-		return axis === 'x' ? pos.x + bbox.width  /2
-							: pos.y + bbox.height /2;
+		return axis === 'x' ? pos.x + bbox.x + bbox.width  /2
+							: pos.y + bbox.y + bbox.height /2;
 	}
 	return null;
 }
