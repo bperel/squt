@@ -315,16 +315,17 @@ function build(jsondata) {
 
 	d3.forEach(linksToFunctions, function(link) {
 		var sourceId;
-		if (link.constantId === undefined) {
-			if (link.sourceFunctionId) {
-				sourceId = parseInt(getFunctionId(link.sourceFunctionId));
-			}
-			else {
-				sourceId = parseInt(fieldNameToTableId(link.fieldName));
-			}
-			var targetId = parseInt(getFunctionId(link.functionAlias));
-			addOrStrengthenLink(sourceId, targetId);
+		if (link.constantId !== undefined) {
+			sourceId = parseInt(getConstantId(link.constantId));
 		}
+		else if (link.sourceFunctionId !== undefined) {
+			sourceId = parseInt(getFunctionId(link.sourceFunctionId));
+		}
+		else {
+			sourceId = parseInt(fieldNameToTableId(link.fieldName));
+		}
+		var targetId = parseInt(getFunctionId(link.functionAlias));
+		addOrStrengthenLink(sourceId, targetId);
 	});
 
 	l = d3.values(l);
@@ -836,7 +837,7 @@ function positionPathsToFunctions(origin,d) {
 function getPath(pathElement, source, target) {
 	var sourceCoords = getAbsoluteCoords(source);
 	var targetCoords = getAbsoluteCoords(target);
-	var isArc = !(source.data()[0].type === "constant" && target.data()[0].type === "function");
+	var isArc = true;//!(source.data()[0].type === "constant" && target.data()[0].type === "function");
 	
 	var pathCoords=getPathFromCoords(sourceCoords, targetCoords, isArc);
 	d3.select(pathElement).attr("d",pathCoords);
