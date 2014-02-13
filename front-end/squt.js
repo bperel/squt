@@ -293,37 +293,13 @@ function build(jsondata) {
 
 
 	d3.forEach(linksToOutput, function(link) {
-		var sourceId;
-		switch(link.from) {
-			case "field":
-				sourceId = parseInt(fieldNameToTableId(link.fieldName));
-			break;
-			case "function":
-				sourceId = parseInt(getFunctionId(link.sourceFunctionId));
-			break;
-			case "constant":
-				sourceId = parseInt(getConstantId(link.constantId));
-			break;
-			default:
-				break;
-		}
-		if (sourceId) {
-			var targetId = parseInt(getOutputId(link.outputTableAlias.replace(OUTPUT_PREFIX,'')));
-			l[sourceId+","+targetId] = {source: sourceId, target: targetId, value: 1};
-		}
+		var sourceId = getLinkSourceId(link);
+		var targetId = parseInt(getOutputId(link.outputTableAlias.replace(OUTPUT_PREFIX,'')));
+		addOrStrengthenLink(sourceId, targetId);
 	});
 
 	d3.forEach(linksToFunctions, function(link) {
-		var sourceId;
-		if (link.constantId !== undefined) {
-			sourceId = parseInt(getConstantId(link.constantId));
-		}
-		else if (link.sourceFunctionId !== undefined) {
-			sourceId = parseInt(getFunctionId(link.sourceFunctionId));
-		}
-		else {
-			sourceId = parseInt(fieldNameToTableId(link.fieldName));
-		}
+		var sourceId = getLinkSourceId(link);
 		var targetId = parseInt(getFunctionId(link.functionAlias));
 		addOrStrengthenLink(sourceId, targetId);
 	});
@@ -931,6 +907,24 @@ function getAbsoluteCoords(element) {
 		coords.y+=parentCoords.y;
 	}
 	return coords;
+}
+
+function getLinkSourceId(link) {
+	var sourceId;
+	switch(link.from) {
+		case "field":
+			sourceId = parseInt(fieldNameToTableId(link.fieldName));
+			break;
+		case "function":
+			sourceId = parseInt(getFunctionId(link.sourceFunctionId));
+			break;
+		case "constant":
+			sourceId = parseInt(getConstantId(link.constantId));
+			break;
+		default:
+			break;
+	}
+	return sourceId;
 }
 
 function getNode(pathInfo, args) {
