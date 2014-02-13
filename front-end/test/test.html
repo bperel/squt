@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" href="qunit/qunit/qunit.css">
-    <title>Squt parse tests</title>
-    <script type="text/javascript" src="../lib/d3.v3/d3.js"></script>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" href="qunit/qunit/qunit.css">
+	<title>Squt parse tests</title>
+	<script type="text/javascript" src="../lib/d3.v3/d3.js"></script>
 	
 	<script type="text/javascript" src="../lib/Object.identical.js/Object.identical.js"></script>
 	
-    <style type="text/css">
+	<style type="text/css">
 		.hidden {
 			display: none;
 		}
@@ -18,16 +18,16 @@
 			font-family: Courier;
 		}
 		
-    	.success {
+		.success {
 			color: green;
-    	}
+		}
 		.warn {
 			color: orange;
-    	}    	
+		}		
 		.error {
 			color: red;
-    	}
-    </style>
+		}
+	</style>
   </head>
   <body>
   	<iframe id="squt" src="../squt.html" onload="start()" class="hidden"></iframe><br />
@@ -37,9 +37,9 @@
   		<li>checks if the query parsing didn't throw any warning or error.</li>
   		<li>ensures that building the graph didn't throw any error.</li>
   	</ul>
-    <div id="qunit"></div>
-    <div id="qunit-fixture"></div>
-    <script src="qunit/qunit/qunit.js"></script>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<script src="qunit/qunit/qunit.js"></script>
 	<script src="qunit-reporter-junit/qunit-reporter-junit.js"></script>
 	
 	<div id="report" class="hidden"></div>
@@ -99,7 +99,7 @@
 									
 									if (Object.identical(processed_jsonLC, expected_jsonLC)) {
 										
-										jsErrors = [];
+										var jsErrors = [];
 										try {
 											ifr.build(processed_json);
 										}
@@ -107,6 +107,15 @@
 											jsErrors.push(e);
 										}
 										deepEqual(jsErrors.length,0,"The graph has been generated with one or several error(s) : "+jsErrors.join(" ; "));
+
+										// Check graph consistency
+										var graphLinks = ifr.l;
+										var graphLinksTotalForce = 0;
+										ifr.d3.forEach(graphLinks, function(link) {
+											graphLinksTotalForce+=link.value;
+										});
+										var queryLinksNumber = ifr.links.length + ifr.linksToFunctions.length + ifr.linksToOutput.length;
+										equal(graphLinksTotalForce, queryLinksNumber, "Inconsistent link force : "+graphLinksTotalForce+" vs "+queryLinksNumber+" expected");
 									}
 								});
 								test_next_query();
@@ -136,15 +145,15 @@
 		  				o2[x.toLowerCase()] = o[x].toLowerCase();
 		  			}
 	  			}
-	        }
+			}
 	  		return o2;
 	  	}
 
 		function fileExists(url) {
 			var http = new XMLHttpRequest();
-    			http.open('HEAD', url, false);
-    			http.send();
-    			return http.status!=404;
+				http.open('HEAD', url, false);
+				http.send();
+				return http.status!=404;
 		}
   	</script>
   </body>
