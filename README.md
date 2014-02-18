@@ -20,4 +20,4 @@ Want some intel about how that system works ? Head over to the [How it works](..
 
 ... Or play with the online [demo](http://62.210.239.25//squt/master/front-end/squt.html) :-)
 
-<img alt="Licence Creative Commons" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/fr/88x31.png" />
+[<img alt="Licence Creative Commons" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/fr/88x31.png" />](http://creativecommons.org/licenses/by-sa/3.0/legalcode)
