@@ -114,55 +114,11 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("height", H)
 	.call(d3.behavior.zoom()
 		.on("zoom",function(a,b) {
-			svg.select("svg>g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+			svg.select("svg>g.main").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 		})
 	);
 
-svg.append("defs");
-	
-d3.select("defs").append("svg:g").selectAll("marker")
-    .data(["arrow"])
-  .enter().append("marker")
-    .attr("id", String)
-    .attr("viewBox", "0 0 10 10")
-    .attr("refX", 10)
-    .attr("refY", 5)
-    .attr("markerUnits", "strokeWidth")
-    .attr("markerWidth", 8)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-  .append("polyline")
-    .attr("points", "0,0 10,5 0,10 1,5 0,0");
-
-d3.select("defs").append("svg:g").selectAll("marker")
-	.data(["subquery"])
-  .enter().append("marker")
-	.attr("id", String)
-	.attr("viewBox", "0 0 16 22")
-	.attr("refX", 16)
-	.attr("refY", 11)
-	.attr("markerUnits", "strokeWidth")
-	.attr("markerWidth", 16)
-	.attr("markerHeight", 12)
-	.attr("orient", "auto")
-  .append("polyline")
-	.attr("points", "0,8 16,0 16,2 2,10 20,10 20,12 2,12 16,20 16,22 0,14 0,8");
-
-d3.select("defs").append("svg:g").selectAll("marker")
-      .data(["solidlink1","solidlink2"])
-    .enter().append("marker")
-      .attr("id", String)
-      .attr("refX", function(d) {
-    	  return d === "solidlink1" ? -4 : 14;
-      })
-      .attr("refY", 2.5)
-      .attr("markerWidth", 100)
-      .attr("markerHeight", 100)
-      .attr("orient", "auto")
-      .classed("solidlink", true)
-      .append("rect")
-        .attr("width",10)
-        .attr("height",5);
+addDefs();
 
 var no_parser=false;
 var query;
@@ -208,17 +164,21 @@ function analyzeAndBuild() {
 	  .send("POST",parameters);
 }
 
+function cleanupGraph() {
+	svg.selectAll('image,svg>g.main').remove();
+}
+
 function build(jsondata) {
 	console.log(jsondata);
 
 	if (jsondata == null) {
 		d3.select('#log').text("Error ! Make sure your paths are properly configured");
-		svg.selectAll('image,svg>g').remove();
+		cleanupGraph();
 		return;
 	}
 	if (jsondata.Error !== undefined) {
 		d3.select('#log').text("ERROR - " + jsondata.Error);
-		svg.selectAll('image,svg>g').remove();
+		cleanupGraph();
 		force.stop();
 		return;
 	}
@@ -488,8 +448,7 @@ function buildGraph() {
 	tableAliases = d3.values(tableAliases);
 	fields = d3.values(fields);
 
-	//cleanup
-	svg.selectAll('image,svg>g').remove();
+	cleanupGraph();
 	
 	var g = svg.append("svg:g").classed("main", true);
 	
