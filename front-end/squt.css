@@ -131,6 +131,16 @@ svg#graph {
 	position: fixed;
 }
 
+#legend .title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#legend .whiteBackground {
+    stroke: black;
+    fill: white;
+}
+
 .subquery {
     stroke: black;
     fill: white;

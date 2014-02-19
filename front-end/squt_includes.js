@@ -59,11 +59,10 @@ var CIRCLE_RADIUS 	   		 =  6
    ,SUBQUERY_TYPE_PADDING	 =- 3;
 
 /* Legend-specific measures */
-var LEGEND_LINEHEIGHT        = 30,
-	LEGEND_CONTENT_PADDING   = {
-								 left: 10,
-								 top:  10
-							   };
+var LEGEND_LINEHEIGHT        = 35,
+	LEGEND_WIDTH             = 50,
+	LEGEND_PADDING           = 25,
+	LEGEND_CONTENT_PADDING   = 10;
 
 /* Misc */
 
@@ -116,4 +115,64 @@ function addDefs() {
 		.append("rect")
 		.attr("width",10)
 		.attr("height",5);
+}
+
+function addLegend() {
+	var legendLabels = ["field", "data flow", "condition", "data transformation", "constant"];
+
+	var legendRow = 0;
+
+	var legend = svg.append("svg:g")
+		.attr("id","legend")
+		.attr("width", 100)
+		.attr("height", 200)
+		.attr("transform", "translate("+LEGEND_PADDING+" 50)");
+
+	legend.append("svg:rect")
+		.classed("whiteBackground", true)
+		.attr("x", -LEGEND_PADDING)
+		.attr("width", LEGEND_PADDING + LEGEND_WIDTH + CHAR_WIDTH * d3.max(legendLabels, function(label) { return label.length; }))
+		.attr("height", LEGEND_LINEHEIGHT * legendLabels.length);
+
+	legend.selectAll("circle")
+		.data([{cx: LEGEND_CONTENT_PADDING, cy: LEGEND_CONTENT_PADDING},
+			   {cx: LEGEND_CONTENT_PADDING, cy: LEGEND_CONTENT_PADDING + ++legendRow*LEGEND_LINEHEIGHT}])
+		.enter().append("svg:circle")
+		.attr("r", CIRCLE_RADIUS)
+		.attr("cx", function(d) { return d.cx;})
+		.attr("cy", function(d) { return d.cy;});
+
+	legend.append("svg:path")
+		.attr("marker-end", "url(#arrow)")
+		.classed("output link", true)
+		.attr("d", getPathFromCoords({x: LEGEND_CONTENT_PADDING,                y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT},
+									 {x: LEGEND_WIDTH - LEGEND_CONTENT_PADDING, y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT}, true));
+
+	legend.selectAll("ellipse")
+		.data(["function conditional", "function"])
+		.enter().append("svg:ellipse")
+		.attr("class", function(d) { return d;})
+		.attr("cx", LEGEND_WIDTH /2)
+		.attr("cy", function() { return LEGEND_CONTENT_PADDING + ++legendRow*LEGEND_LINEHEIGHT; })
+		.attr("rx", (LEGEND_WIDTH - LEGEND_CONTENT_PADDING) / 2)
+		.attr("ry", LEGEND_LINEHEIGHT/3);
+
+	legend.append("svg:rect")
+		.classed("constant", true)
+		.attr("x", LEGEND_CONTENT_PADDING + LEGEND_WIDTH/6)
+		.attr("y", LEGEND_CONTENT_PADDING + (legendRow+2/3)*LEGEND_LINEHEIGHT)
+		.attr("width",  LEGEND_WIDTH/3)
+		.attr("height", 2*LEGEND_LINEHEIGHT/3);
+
+	legend.selectAll("text")
+		.data(legendLabels)
+		.enter().append("svg:text")
+		.attr("x", LEGEND_WIDTH)
+		.attr("y", function(d, i) { return LEGEND_CONTENT_PADDING + CIRCLE_RADIUS/2 + i*LEGEND_LINEHEIGHT; })
+		.text(String);
+
+	legend.append("svg:text")
+		.classed("title", true)
+		.attr("transform", "translate(-15, "+((LEGEND_LINEHEIGHT * legendLabels.length - 18*"Legend".length)/2)+") rotate(90)")
+		.text("Legend");
 }

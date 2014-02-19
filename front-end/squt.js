@@ -695,6 +695,8 @@ function buildGraph() {
 				.attr("name", function(currentNode) { return "force_"+currentNode.name; });
 	}
 
+	addLegend();
+
 	force
 		.nodes(n)
 		.links(l)
