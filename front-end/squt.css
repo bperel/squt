@@ -134,6 +134,7 @@ svg#graph {
 #legend .title {
     font-size: 18px;
     font-weight: bold;
+    fill: white;
 }
 
 #legend .whiteBackground {

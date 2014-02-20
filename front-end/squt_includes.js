@@ -119,6 +119,7 @@ function addDefs() {
 
 function addLegend() {
 	var legendLabels = ["field", "data flow", "condition", "data transformation", "constant"];
+	var legendFullWidth = LEGEND_PADDING + LEGEND_WIDTH + CHAR_WIDTH * d3.max(legendLabels, function(label) { return label.length; });
 
 	var legendRow = 0;
 
@@ -126,12 +127,18 @@ function addLegend() {
 		.attr("id","legend")
 		.attr("width", 100)
 		.attr("height", 200)
-		.attr("transform", "translate("+LEGEND_PADDING+" 50)");
+		.attr("transform", "translate("+(-legendFullWidth+LEGEND_PADDING)+" 0)")
+		.on("mouseover", function() {
+			d3.select("#legend").attr("transform", "translate("+(LEGEND_PADDING)+" 0)");
+		})
+		.on("mouseout", function() {
+			d3.select("#legend").attr("transform", "translate("+(-legendFullWidth+LEGEND_PADDING)+" 0)");
+		});
 
 	legend.append("svg:rect")
 		.classed("whiteBackground", true)
 		.attr("x", -LEGEND_PADDING)
-		.attr("width", LEGEND_PADDING + LEGEND_WIDTH + CHAR_WIDTH * d3.max(legendLabels, function(label) { return label.length; }))
+		.attr("width", legendFullWidth)
 		.attr("height", LEGEND_LINEHEIGHT * legendLabels.length);
 
 	legend.selectAll("circle")
@@ -171,8 +178,14 @@ function addLegend() {
 		.attr("y", function(d, i) { return LEGEND_CONTENT_PADDING + CIRCLE_RADIUS/2 + i*LEGEND_LINEHEIGHT; })
 		.text(String);
 
+	legend.append("svg:rect")
+		.attr("x", (legendFullWidth-LEGEND_PADDING))
+		.attr("width",  LEGEND_PADDING)
+		.attr("height", LEGEND_LINEHEIGHT * legendLabels.length);
+
 	legend.append("svg:text")
 		.classed("title", true)
-		.attr("transform", "translate(-15, "+((LEGEND_LINEHEIGHT * legendLabels.length - 18*"Legend".length)/2)+") rotate(90)")
+		.attr("transform", "translate("+(legendFullWidth-LEGEND_PADDING+5)
+								   +" "+((LEGEND_LINEHEIGHT * legendLabels.length - 18*"Legend".length)/2)+") rotate(90)")
 		.text("Legend");
 }
