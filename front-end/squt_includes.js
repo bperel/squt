@@ -121,8 +121,6 @@ function addLegend() {
 	var legendLabels = ["field", "data flow", "condition", "data transformation", "constant"];
 	var legendFullWidth = LEGEND_PADDING + LEGEND_WIDTH + CHAR_WIDTH * d3.max(legendLabels, function(label) { return label.length; });
 
-	var legendRow = 0;
-
 	var legend = svg.append("svg:g")
 		.attr("id","legend")
 		.attr("width", 100)
@@ -142,8 +140,7 @@ function addLegend() {
 		.attr("height", LEGEND_LINEHEIGHT * legendLabels.length);
 
 	legend.selectAll("circle")
-		.data([{cx: LEGEND_CONTENT_PADDING, cy: LEGEND_CONTENT_PADDING},
-			   {cx: LEGEND_CONTENT_PADDING, cy: LEGEND_CONTENT_PADDING + ++legendRow*LEGEND_LINEHEIGHT}])
+		.data([{cx: LEGEND_WIDTH/2, cy: LEGEND_CONTENT_PADDING}])
 		.enter().append("svg:circle")
 		.attr("r", CIRCLE_RADIUS)
 		.attr("cx", function(d) { return d.cx;})
@@ -154,6 +151,8 @@ function addLegend() {
 		.classed("output link", true)
 		.attr("d", getPathFromCoords({x: LEGEND_CONTENT_PADDING,                y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT},
 									 {x: LEGEND_WIDTH - LEGEND_CONTENT_PADDING, y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT}, true));
+
+	var legendRow = 1;
 
 	legend.selectAll("ellipse")
 		.data(["function conditional", "function"])
