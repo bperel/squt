@@ -30,7 +30,7 @@ sub handleQuery($) {
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
 		$sqlv_tables_final{"Error"}=$curQuery->getErrstr();
 	}
-	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT") {
+	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT" || $curQuery->getOrigCommand() ne "SQLCOM_END") {
 		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
 	}
 	else {
