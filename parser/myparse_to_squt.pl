@@ -168,6 +168,9 @@ sub handleSelectItem($$$) {
 		}
 		if ($functionId == -1) { # direct output
 			my $constantAlias=$item->getAlias();
+			if (!defined $value) {
+				$value="NULL";
+			}
 			if (!defined $constantAlias) {
 				$constantAlias=$value;
 			}
