@@ -319,29 +319,6 @@ function processJson(jsondata, subqueryIndex) {
 									var fullName = [outputTableAlias, outputAlias].join('.');
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAliasField, outputName: outputAlias, outputTableAlias: outputTableAlias});
 									fields[fullName]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
-									
-									// We are in a subquery, the output must be transmitted to the superquery if included in the main query's SELECT
-									if (subqueryGroup !== MAIN_QUERY_ALIAS) {
-										var mainSubqueryOutputAlias = OUTPUT_PREFIX+MAIN_QUERY_ALIAS;
-										var fullNameInMainSubquery;
-										var outputName;
-										var fieldId;
-										if (subqueryType === "SINGLEROW_SUBS") {
-											outputName = subqueryGroup;
-											fullNameInMainSubquery = [mainSubqueryOutputAlias, outputName].join('.');
-											fieldId = subqueryGroup;
-										}
-										else if (subqueryType === null) { // Derived table
-											outputName = outputAlias;
-											fullNameInMainSubquery = [mainSubqueryOutputAlias, outputName].join('.');
-											fieldId = fullNameInMainSubquery;
-										}
-
-										if (!!outputName) {
-											fields[fieldId]={type: "field", tableAlias: mainSubqueryOutputAlias, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
-											linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: mainSubqueryOutputAlias});
-										}
-									}
 								}
 								else { // To a function
 									linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: functionAlias});
@@ -425,9 +402,37 @@ function processJson(jsondata, subqueryIndex) {
 		d3.forEach(jsondata.Constants, function(constant, constantAlias) {
 			var constantId=constants.length;
 			var constantValue = constant.value;
+			var fullName = [outputTableAlias, constantValue].join('.');
 			constants.push({id: constantId, name: constantValue, value: constantValue, type: "constant" });
 			linksToOutput.push({type: "link", from: "constant", outputTableAlias: outputTableAlias, outputName: constantAlias, constantId: constantId});
-			fields[constantAlias]={type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:constantAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+			fields[constantAlias]={type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+		});
+	}
+
+	// If we are in a subquery, the outputs must be transmitted to the superquery if included in the main query's SELECT
+	if (subqueryGroup !== MAIN_QUERY_ALIAS) {
+		d3.forEach(fields, function(field) {
+			if (field.tableAlias === OUTPUT_PREFIX + subqueryGroup) {
+				var fullName = [field.tableAlias, field.name].join('.');
+				var fullNameInMainSubquery;
+				var outputName;
+				var fieldId;
+				if (subqueryType === "SINGLEROW_SUBS") {
+					outputName = subqueryGroup;
+					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
+					fieldId = subqueryGroup;
+				}
+				else if (subqueryType === null) { // Derived table
+					outputName = field.name;
+					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
+					fieldId = fullNameInMainSubquery;
+				}
+
+				if (!!outputName) {
+					fields[fieldId]={type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
+				}
+			}
 		});
 	}
 }
@@ -695,7 +700,9 @@ function buildGraph() {
 				.attr("name", function(currentNode) { return "force_"+currentNode.name; });
 	}
 
-	addLegend();
+	if (! d3.select("g#legend").node()) {
+		addLegend();
+	}
 
 	force
 		.nodes(n)

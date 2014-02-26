@@ -68,6 +68,7 @@ var LEGEND_LINEHEIGHT        = 35,
 
 var OUTPUT_PREFIX="_OUTPUT_";
 var MAIN_QUERY_ALIAS="main";
+var MAIN_SUBQUERY_OUTPUT_ALIAS = OUTPUT_PREFIX+MAIN_QUERY_ALIAS;
 
 function addDefs() {
 	svg.append("defs");
