@@ -2,7 +2,7 @@
 
 squt is a Perl and PHP/JS Web application aiming at graphically representing MySQL queries in a graph form.
 
-![squt example](https://raw.github.com/wiki/ducksmanager/squt/images/squt_example.png)
+![squt example](https://raw.github.com/wiki/bperel/squt/images/squt_example.png)
 
 squt uses :
 * Philip Stoev's [MyParse](http://search.cpan.org/~philips/DBIx-MyParse/) to parse MySQL queries
