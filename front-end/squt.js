@@ -440,6 +440,7 @@ function processJson(jsondata, subqueryIndex) {
 var tableGroups,
 	functionGroups,
 	constantGroups,
+	subqueryRects,
 	
 	paths,
 	pathsToFunctions,
@@ -456,6 +457,13 @@ function buildGraph() {
 	cleanupGraph();
 	
 	var g = svg.append("svg:g").classed("main", true);
+
+	subqueryRects = g.selectAll("rect.subquery")
+		.data(tables.filter(function(table) {
+			return table.subqueryGroup !== MAIN_QUERY_ALIAS;
+		}))
+		.enter().insert("svg:rect", ":first-child")
+		.attr("classed", "subquery");
 	
 	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
@@ -485,13 +493,6 @@ function buildGraph() {
 	  		   			                     ]);
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
-			
-			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
-			 && d3.select(".subquery[name=\""+escapeQuote(currentTable.subqueryGroup)+"\"]").node() === null) {
-				g.insert("svg:rect", ":first-child")
-				  .classed("subquery", true)
-				  .attr("name",currentTable.subqueryGroup);
-			}
 			
 			d3.select(this)
 			  .append("svg:rect")
@@ -895,36 +896,36 @@ function getLinkSourceId(link) {
 	return sourceId;
 }
 
-function getNode(pathInfo, args) {
+function getNode(d, args) {
 	args = args || {};
-	switch (pathInfo.type) {
+	switch (d.type) {
 		case "field":
-			return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
+			return d3.select('[name="'+escapeQuote(d.fieldName)+'"] circle');
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
-				switch (pathInfo.from) {
+				switch (d.from) {
 					case "field":
-						return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
+						return d3.select('[name="'+escapeQuote(d.fieldName)+'"] circle');
 					break;
 					case "function":
-						return d3.select('[name="'+escapeQuote(pathInfo.sourceFunctionId)+'"]');
+						return d3.select('[name="'+escapeQuote(d.sourceFunctionId)+'"]');
 					break;
 					case "constant":
 						return constantGroups.filter(function(c) {
-							return pathInfo.constantId == c.id; 
+							return d.constantId == c.id;
 						});
 					break;
 				}
 			}
 			else {
-				return d3.select('[name="'+escapeQuote(pathInfo.functionAlias)+'"]');
+				return d3.select('[name="'+escapeQuote(d.functionAlias)+'"]');
 			}
 		break;
 		case "constant":
 			return constantGroups.filter(function(c) {
-				return pathInfo.constantId == c.id; 
+				return d.constantId == c.id;
 			});
 		break;
 	}
@@ -950,7 +951,7 @@ function getNodeCharge(d) {
 		
 		case "subquery":
 			if (d.name !== MAIN_QUERY_ALIAS) {
-				element = d3.select('.subquery[name="'+escapeQuote(d.name)+'"]');
+				element = subqueryRects.filter(function(d2) { return d2.subqueryGroup == d.name; });
 			}
 		break;
 	}
@@ -1003,7 +1004,7 @@ function positionAll() {
 		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
 		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
 		
-		d3.select(".subquery[name=\""+escapeQuote(subqueryGroup)+"\"]")
+		subqueryRects.filter(function(subquery) { return subquery.name === subqueryGroup; })
 			.attr("x",leftBoundary)
 			.attr("y",topBoundary)
 			.attr("width",rightBoundary-leftBoundary)
@@ -1042,8 +1043,8 @@ function positionTable(d) {
 		
 	// Paths between fields
 	paths.attr("d", function(d) {
-	  var source=d3.select('[name="'+escapeQuote(d.source)+'"] circle');
-	  var target=d3.select('[name="'+escapeQuote(d.target)+'"] circle');
+	  var source=tableGroups.filter(function(table) { return table.name === d.source; }).select('circle');
+	  var target=tableGroups.filter(function(table) { return table.name === d.target; }).select('circle');
 	  
 	  return getPath(this, source, target);
 	});
