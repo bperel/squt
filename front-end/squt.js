@@ -441,6 +441,7 @@ var tableGroups,
 	functionGroups,
 	constantGroups,
 	subqueryRects,
+	fieldNodes = [],
 	
 	paths,
 	pathsToFunctions,
@@ -476,7 +477,7 @@ function buildGraph() {
 			var relatedFields = fields.filter(function(currentField) { 
 				return isFieldInTable(currentField, currentTable); 
 			});
-			var relatedUniqueFields = relatedFields.filter(function(currentField, i) { 
+			var relatedUniqueFields = relatedFields.filter(function(currentField, i) {
 				for (var j=0; j<i; j++) {
 					  if (relatedFields[j].name === currentField.name) {
 						  return false;
@@ -555,14 +556,16 @@ function buildGraph() {
 					
 					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
 										  y: preexistingField.empty() ? (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2) : parseInt(preexistingField.attr("cy")) };
-					
-					d3.select(this)
-					  .append("svg:circle")
-						.attr("r",CIRCLE_RADIUS)
-						.attr("cx", circlePosition.x)
-						.attr("cy", circlePosition.y)
-						.classed("filtered", isFiltered)
-						.classed("sort_"+sort, !!sort);
+
+					fieldNodes.push(
+						d3.select(this)
+							.append("svg:circle")
+							.attr("r",CIRCLE_RADIUS)
+							.attr("cx", circlePosition.x)
+							.attr("cy", circlePosition.y)
+							.classed("filtered", isFiltered)
+							.classed("sort_"+sort, !!sort)
+					);
 					
 					if (sort) {
 						d3.select(this)
@@ -762,7 +765,10 @@ function positionPathsToOutput(origin,d) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
-	  var target = d3.select('.tableGroup.output [name="'+escapeQuote(link.outputTableAlias+'.'+link.outputName)+'"] circle');
+	  var target = fieldNodes.filter(function(fieldNode) {
+		  var field = fieldNode.datum();
+		  return field.tableAlias === link.outputTableAlias && field.name === link.outputName;
+	  })[0];
 	  
 	  return getPath(this, source, target);
   });
@@ -900,14 +906,20 @@ function getNode(d, args) {
 	args = args || {};
 	switch (d.type) {
 		case "field":
-			return d3.select('[name="'+escapeQuote(d.fieldName)+'"] circle');
+			return fieldNodes.filter(function(fieldNode) {
+				var field = fieldNode.datum();
+				return field.fullName === d.fieldName;
+			})[0];
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
 				switch (d.from) {
 					case "field":
-						return d3.select('[name="'+escapeQuote(d.fieldName)+'"] circle');
+						return fieldNodes.filter(function(fieldNode) {
+							var field = fieldNode.datum();
+							return field.fullName === d.fieldName;
+						})[0];
 					break;
 					case "function":
 						return d3.select('[name="'+escapeQuote(d.sourceFunctionId)+'"]');
