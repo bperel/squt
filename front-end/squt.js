@@ -469,7 +469,6 @@ function buildGraph() {
 	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
 	  .enter().append("svg:g")
-		.attr("name",  function(currentTable) { return currentTable.name; })
 		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
 		.call(node_drag)
 		.each(function(currentTable) {
@@ -520,7 +519,6 @@ function buildGraph() {
 			  .selectAll("g.aliasGroup")
 			    .data(relatedAliases)
 			  .enter().append("svg:g")
-				.attr("name", function(currentAlias) { return currentAlias.name; })
 				.classed("aliasGroup", true)
 				.each(function(currentAlias) {
 					d3.select(this)
@@ -546,7 +544,6 @@ function buildGraph() {
 			  .selectAll("g.fieldGroup")
 			    .data(relatedFields)
 			  .enter().append("svg:g")
-				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
 				.classed("fieldGroup", true)
 				.each(function(currentField,i) {
 					var sort = currentField.sort;
@@ -641,7 +638,6 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter()
 	  	.append("svg:g")
-		.attr("name",  function(currentFunction) { return currentFunction.name; })
 		.classed("functionGroup", true)
 	  	.each(function() {
 			d3.select(this).data()[0].center =
@@ -649,7 +645,6 @@ function buildGraph() {
 		            .append("svg:ellipse")
 			            .classed("function", true)
 			            .classed("conditional", function(d) { return !!d.isCondition; })
-			            .attr("name", function(d) { return d.functionAlias;})
 			            .attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
 			            .attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
 	  		
@@ -673,7 +668,6 @@ function buildGraph() {
 		.data(d3.values(constants))
 		.enter()
 		.append("svg:g")
-		.attr("name",  function(currentConstant) { return currentConstant.name; })
 		.classed("constantGroup", true)
 		.each(function(currentConstant) {
 			var rectDimensions = {
@@ -684,7 +678,6 @@ function buildGraph() {
 			d3.select(this)
 				.append("svg:rect")
 					.classed("constant", true)
-					.attr("name", currentConstant.name)
 					.attr("x", -rectDimensions.width/2)
 					.attr("y", -rectDimensions.height/2)
 					.attr("width", rectDimensions.width)
@@ -704,8 +697,7 @@ function buildGraph() {
 			.data(n)
 			.enter()
 			.append("svg:circle")
-				.classed("chargeForce", true)
-				.attr("name", function(currentNode) { return "force_"+currentNode.name; });
+				.classed("chargeForce", true);
 	}
 
 	if (! d3.select("g#legend").node()) {
@@ -955,7 +947,7 @@ function getNode(d, args) {
 		break;
 		case "constant":
 			return constantGroups.filter(function(c) {
-				return d.constantId == c.id;
+				return d.name === c.name;
 			});
 		break;
 		case "subquery":
@@ -1012,6 +1004,9 @@ function getNodeCharge(d) {
 }
 
 function getGroupCenter(d, axis) {
+	if (d.type === "subquery" && d.name === MAIN_QUERY_ALIAS) {
+		return null;
+	}
 	var element = getNode(d);
 	if (element.node()) {
 		var bbox = element.node().getBBox();
@@ -1078,8 +1073,12 @@ function positionTable(d) {
 		
 	// Paths between fields
 	paths.attr("d", function(d) {
-	  var source=tableGroups.filter(function(table) { return table.name === d.source; }).select('circle');
-	  var target=tableGroups.filter(function(table) { return table.name === d.target; }).select('circle');
+	  var source = fieldNodes.filter(function(fieldNode) {
+			return fieldNode.datum().fullName === d.source;
+	  })[0];
+	  var target = fieldNodes.filter(function(fieldNode) {
+			return fieldNode.datum().fullName === d.target;
+	  })[0];
 	  
 	  return getPath(this, source, target);
 	});
@@ -1200,10 +1199,6 @@ function domElementToMyObject(element) {
 function clone(selector) {
     var node = d3.select(selector).node();
     return node.cloneNode(true);
-  }
-
-function escapeQuote(str) {
-	return str.replace(/"/,'\\"');
 }
 
 d3.forEach = function (obj, callback) {
