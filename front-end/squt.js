@@ -441,7 +441,7 @@ var tableGroups,
 	functionGroups,
 	constantGroups,
 	subqueryRects,
-	fieldNodes = [],
+	fieldNodes,
 	
 	paths,
 	pathsToFunctions,
@@ -454,6 +454,7 @@ function buildGraph() {
 	tables = d3.values(tables);
 	tableAliases = d3.values(tableAliases);
 	fields = d3.values(fields);
+	fieldNodes = [];
 
 	cleanupGraph();
 	
