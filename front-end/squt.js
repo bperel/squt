@@ -440,6 +440,8 @@ function processJson(jsondata, subqueryIndex) {
 var tableGroups,
 	functionGroups,
 	constantGroups,
+	subqueryRects,
+	fieldNodes = [],
 	
 	paths,
 	pathsToFunctions,
@@ -456,11 +458,17 @@ function buildGraph() {
 	cleanupGraph();
 	
 	var g = svg.append("svg:g").classed("main", true);
+
+	subqueryRects = g.selectAll("rect.subquery")
+		.data(tables.filter(function(table) {
+			return table.subqueryGroup !== MAIN_QUERY_ALIAS;
+		}))
+		.enter().insert("svg:rect", ":first-child")
+		.attr("classed", "subquery");
 	
 	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
 	  .enter().append("svg:g")
-		.attr("name",  function(currentTable) { return currentTable.name; })
 		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
 		.call(node_drag)
 		.each(function(currentTable) {
@@ -468,7 +476,7 @@ function buildGraph() {
 			var relatedFields = fields.filter(function(currentField) { 
 				return isFieldInTable(currentField, currentTable); 
 			});
-			var relatedUniqueFields = relatedFields.filter(function(currentField, i) { 
+			var relatedUniqueFields = relatedFields.filter(function(currentField, i) {
 				for (var j=0; j<i; j++) {
 					  if (relatedFields[j].name === currentField.name) {
 						  return false;
@@ -485,13 +493,6 @@ function buildGraph() {
 	  		   			                     ]);
 			var tableHeight=MIN_TABLE_HEIGHT
 						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
-			
-			if (currentTable.subqueryGroup !== MAIN_QUERY_ALIAS 
-			 && d3.select(".subquery[name=\""+escapeQuote(currentTable.subqueryGroup)+"\"]").node() === null) {
-				g.insert("svg:rect", ":first-child")
-				  .classed("subquery", true)
-				  .attr("name",currentTable.subqueryGroup);
-			}
 			
 			d3.select(this)
 			  .append("svg:rect")
@@ -518,7 +519,6 @@ function buildGraph() {
 			  .selectAll("g.aliasGroup")
 			    .data(relatedAliases)
 			  .enter().append("svg:g")
-				.attr("name", function(currentAlias) { return currentAlias.name; })
 				.classed("aliasGroup", true)
 				.each(function(currentAlias) {
 					d3.select(this)
@@ -544,24 +544,28 @@ function buildGraph() {
 			  .selectAll("g.fieldGroup")
 			    .data(relatedFields)
 			  .enter().append("svg:g")
-				.attr("name", function(currentField) { return currentField.tableAlias+"."+currentField.name; })
 				.classed("fieldGroup", true)
 				.each(function(currentField,i) {
 					var sort = currentField.sort;
 					var isFiltered = currentField.filtered;
-					var preexistingField = d3.select("g.tableGroup[name=\""+ escapeQuote(currentTable.name)+"\"]"
-												   +" g.fieldGroup[name$=\""+escapeQuote(currentField.name)+"\"] circle");
+					var preexistingField = fieldNodes.filter(function(fieldNode) {
+						return fieldNode.tableAlias === currentTable.name && fieldNode.name === currentField.name;
+					});
 					
 					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
-										  y: preexistingField.empty() ? (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2) : parseInt(preexistingField.attr("cy")) };
-					
-					d3.select(this)
-					  .append("svg:circle")
-						.attr("r",CIRCLE_RADIUS)
-						.attr("cx", circlePosition.x)
-						.attr("cy", circlePosition.y)
-						.classed("filtered", isFiltered)
-						.classed("sort_"+sort, !!sort);
+										  y: preexistingField.length
+											  ? parseInt(preexistingField[0].attr("cy"))
+											  : (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2)};
+
+					fieldNodes.push(
+						d3.select(this)
+							.append("svg:circle")
+							.attr("r",CIRCLE_RADIUS)
+							.attr("cx", circlePosition.x)
+							.attr("cy", circlePosition.y)
+							.classed("filtered", isFiltered)
+							.classed("sort_"+sort, !!sort)
+					);
 					
 					if (sort) {
 						d3.select(this)
@@ -574,7 +578,7 @@ function buildGraph() {
 						    .classed("order", true);
 					}
 
-					if (preexistingField.empty()) {
+					if (!preexistingField.length) {
 						d3.select(this)
 						  .append("svg:text")
 						    .text(currentField.name)
@@ -634,16 +638,15 @@ function buildGraph() {
 		.data(d3.values(functions))
 	  .enter()
 	  	.append("svg:g")
-		.attr("name",  function(currentFunction) { return currentFunction.name; })
 		.classed("functionGroup", true)
 	  	.each(function() {
-	  		d3.select(this)
-	  			.append("svg:ellipse")
-		  			.classed("function", true)
-		  			.classed("conditional", function(d) { return !!d.isCondition; })
-		  			.attr("name", function(d) { return d.functionAlias;})
-		  			.attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
-		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
+			d3.select(this).data()[0].center =
+				d3.select(this)
+		            .append("svg:ellipse")
+			            .classed("function", true)
+			            .classed("conditional", function(d) { return !!d.isCondition; })
+			            .attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
+			            .attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
 	  		
 	  		d3.select(this)
 		  		.append("svg:text")
@@ -665,7 +668,6 @@ function buildGraph() {
 		.data(d3.values(constants))
 		.enter()
 		.append("svg:g")
-		.attr("name",  function(currentConstant) { return currentConstant.name; })
 		.classed("constantGroup", true)
 		.each(function(currentConstant) {
 			var rectDimensions = {
@@ -676,7 +678,6 @@ function buildGraph() {
 			d3.select(this)
 				.append("svg:rect")
 					.classed("constant", true)
-					.attr("name", currentConstant.name)
 					.attr("x", -rectDimensions.width/2)
 					.attr("y", -rectDimensions.height/2)
 					.attr("width", rectDimensions.width)
@@ -696,8 +697,7 @@ function buildGraph() {
 			.data(n)
 			.enter()
 			.append("svg:circle")
-				.classed("chargeForce", true)
-				.attr("name", function(currentNode) { return "force_"+currentNode.name; });
+				.classed("chargeForce", true);
 	}
 
 	if (! d3.select("g#legend").node()) {
@@ -761,7 +761,10 @@ function positionPathsToOutput(origin,d) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
-	  var target = d3.select('.tableGroup.output [name="'+escapeQuote(link.outputTableAlias+'.'+link.outputName)+'"] circle');
+	  var target = fieldNodes.filter(function(fieldNode) {
+		  var field = fieldNode.datum();
+		  return field.tableAlias === link.outputTableAlias && field.name === link.outputName;
+	  })[0];
 	  
 	  return getPath(this, source, target);
   });
@@ -895,38 +898,63 @@ function getLinkSourceId(link) {
 	return sourceId;
 }
 
-function getNode(pathInfo, args) {
+function getNode(d, args) {
 	args = args || {};
-	switch (pathInfo.type) {
+	switch (d.type) {
+		case "table":
+			return tableGroups.filter(function(table) {
+				return d.name == table.name;
+			});
+			break;
+		case "function":
+			return functionGroups.filter(function(func) {
+				return func.functionAlias === d.functionAlias;
+			}).datum().center;
+		break;
 		case "field":
-			return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
+			return fieldNodes.filter(function(fieldNode) {
+				var field = fieldNode.datum();
+				return field.fullName === d.fieldName;
+			})[0];
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
-				switch (pathInfo.from) {
+				switch (d.from) {
 					case "field":
-						return d3.select('[name="'+escapeQuote(pathInfo.fieldName)+'"] circle');
+						return fieldNodes.filter(function(fieldNode) {
+							var field = fieldNode.datum();
+							return field.fullName === d.fieldName;
+						})[0];
 					break;
 					case "function":
-						return d3.select('[name="'+escapeQuote(pathInfo.sourceFunctionId)+'"]');
+						return functionGroups.filter(function(func) {
+							return func.functionAlias === d.sourceFunctionId;
+						}).datum().center;
 					break;
 					case "constant":
 						return constantGroups.filter(function(c) {
-							return pathInfo.constantId == c.id; 
+							return d.constantId == c.id;
 						});
 					break;
 				}
 			}
 			else {
-				return d3.select('[name="'+escapeQuote(pathInfo.functionAlias)+'"]');
+				return functionGroups.filter(function(func) {
+					return func.functionAlias === d.functionAlias;
+				}).datum().center;
 			}
 		break;
 		case "constant":
 			return constantGroups.filter(function(c) {
-				return pathInfo.constantId == c.id; 
+				return d.name === c.name;
 			});
 		break;
+		case "subquery":
+			return subqueryRects.filter(function(subquery) {
+				return d.name == subquery.name;
+			});
+			break;
 	}
 
 	return null;
@@ -950,7 +978,7 @@ function getNodeCharge(d) {
 		
 		case "subquery":
 			if (d.name !== MAIN_QUERY_ALIAS) {
-				element = d3.select('.subquery[name="'+escapeQuote(d.name)+'"]');
+				element = subqueryRects.filter(function(d2) { return d2.subqueryGroup == d.name; });
 			}
 		break;
 	}
@@ -976,7 +1004,10 @@ function getNodeCharge(d) {
 }
 
 function getGroupCenter(d, axis) {
-	var element = d3.select('g[name="'+ d.name+'"]');
+	if (d.type === "subquery" && d.name === MAIN_QUERY_ALIAS) {
+		return null;
+	}
+	var element = getNode(d);
 	if (element.node()) {
 		var bbox = element.node().getBBox();
 		var pos = getAbsoluteCoords(element);
@@ -1003,7 +1034,7 @@ function positionAll() {
 		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
 		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
 		
-		d3.select(".subquery[name=\""+escapeQuote(subqueryGroup)+"\"]")
+		subqueryRects.filter(function(subquery) { return subquery.name === subqueryGroup; })
 			.attr("x",leftBoundary)
 			.attr("y",topBoundary)
 			.attr("width",rightBoundary-leftBoundary)
@@ -1042,8 +1073,12 @@ function positionTable(d) {
 		
 	// Paths between fields
 	paths.attr("d", function(d) {
-	  var source=d3.select('[name="'+escapeQuote(d.source)+'"] circle');
-	  var target=d3.select('[name="'+escapeQuote(d.target)+'"] circle');
+	  var source = fieldNodes.filter(function(fieldNode) {
+			return fieldNode.datum().fullName === d.source;
+	  })[0];
+	  var target = fieldNodes.filter(function(fieldNode) {
+			return fieldNode.datum().fullName === d.target;
+	  })[0];
 	  
 	  return getPath(this, source, target);
 	});
@@ -1164,10 +1199,6 @@ function domElementToMyObject(element) {
 function clone(selector) {
     var node = d3.select(selector).node();
     return node.cloneNode(true);
-  }
-
-function escapeQuote(str) {
-	return str.replace(/"/,'\\"');
 }
 
 d3.forEach = function (obj, callback) {
