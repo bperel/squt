@@ -551,11 +551,14 @@ function buildGraph() {
 				.each(function(currentField,i) {
 					var sort = currentField.sort;
 					var isFiltered = currentField.filtered;
-					var preexistingField = d3.select("g.tableGroup[name=\""+ escapeQuote(currentTable.name)+"\"]"
-												   +" g.fieldGroup[name$=\""+escapeQuote(currentField.name)+"\"] circle");
+					var preexistingField = fieldNodes.filter(function(fieldNode) {
+						return fieldNode.tableAlias === currentTable.name && fieldNode.name === currentField.name;
+					});
 					
 					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
-										  y: preexistingField.empty() ? (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2) : parseInt(preexistingField.attr("cy")) };
+										  y: preexistingField.length
+											  ? parseInt(preexistingField[0].attr("cy"))
+											  : (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2)};
 
 					fieldNodes.push(
 						d3.select(this)
@@ -578,7 +581,7 @@ function buildGraph() {
 						    .classed("order", true);
 					}
 
-					if (preexistingField.empty()) {
+					if (!preexistingField.length) {
 						d3.select(this)
 						  .append("svg:text")
 						    .text(currentField.name)
@@ -641,13 +644,14 @@ function buildGraph() {
 		.attr("name",  function(currentFunction) { return currentFunction.name; })
 		.classed("functionGroup", true)
 	  	.each(function() {
-	  		d3.select(this)
-	  			.append("svg:ellipse")
-		  			.classed("function", true)
-		  			.classed("conditional", function(d) { return !!d.isCondition; })
-		  			.attr("name", function(d) { return d.functionAlias;})
-		  			.attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
-		  			.attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
+			d3.select(this).data()[0].center =
+				d3.select(this)
+		            .append("svg:ellipse")
+			            .classed("function", true)
+			            .classed("conditional", function(d) { return !!d.isCondition; })
+			            .attr("name", function(d) { return d.functionAlias;})
+			            .attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
+			            .attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
 	  		
 	  		d3.select(this)
 		  		.append("svg:text")
@@ -905,6 +909,16 @@ function getLinkSourceId(link) {
 function getNode(d, args) {
 	args = args || {};
 	switch (d.type) {
+		case "table":
+			return tableGroups.filter(function(table) {
+				return d.name == table.name;
+			});
+			break;
+		case "function":
+			return functionGroups.filter(function(func) {
+				return func.functionAlias === d.functionAlias;
+			}).datum().center;
+		break;
 		case "field":
 			return fieldNodes.filter(function(fieldNode) {
 				var field = fieldNode.datum();
@@ -922,7 +936,9 @@ function getNode(d, args) {
 						})[0];
 					break;
 					case "function":
-						return d3.select('[name="'+escapeQuote(d.sourceFunctionId)+'"]');
+						return functionGroups.filter(function(func) {
+							return func.functionAlias === d.sourceFunctionId;
+						}).datum().center;
 					break;
 					case "constant":
 						return constantGroups.filter(function(c) {
@@ -932,7 +948,9 @@ function getNode(d, args) {
 				}
 			}
 			else {
-				return d3.select('[name="'+escapeQuote(d.functionAlias)+'"]');
+				return functionGroups.filter(function(func) {
+					return func.functionAlias === d.functionAlias;
+				}).datum().center;
 			}
 		break;
 		case "constant":
@@ -940,6 +958,11 @@ function getNode(d, args) {
 				return d.constantId == c.id;
 			});
 		break;
+		case "subquery":
+			return subqueryRects.filter(function(subquery) {
+				return d.name == subquery.name;
+			});
+			break;
 	}
 
 	return null;
@@ -989,7 +1012,7 @@ function getNodeCharge(d) {
 }
 
 function getGroupCenter(d, axis) {
-	var element = d3.select('g[name="'+ d.name+'"]');
+	var element = getNode(d);
 	if (element.node()) {
 		var bbox = element.node().getBBox();
 		var pos = getAbsoluteCoords(element);
