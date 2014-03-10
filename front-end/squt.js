@@ -169,7 +169,6 @@ function cleanupGraph() {
 }
 
 function build(jsondata) {
-	console.log(jsondata);
 
 	if (jsondata == null) {
 		d3.select('#log').text("Error ! Make sure your paths are properly configured");
@@ -265,9 +264,7 @@ function build(jsondata) {
 	});
 
 	l = d3.values(l);
-	console.log(n);
-	console.log(l);
-	
+
 	buildGraph();
 }
 
