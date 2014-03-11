@@ -462,7 +462,7 @@ function buildGraph() {
 			return table.subqueryGroup !== MAIN_QUERY_ALIAS;
 		}))
 		.enter().insert("svg:rect", ":first-child")
-		.attr("classed", "subquery");
+		.classed("subquery", true);
 	
 	tableGroups = g.append("svg:g").selectAll("g")
 		.data(tables)
@@ -1032,7 +1032,7 @@ function positionAll() {
 		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
 		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
 		
-		subqueryRects.filter(function(subquery) { return subquery.name === subqueryGroup; })
+		subqueryRects.filter(function(subquery) { return subquery.subqueryGroup === subqueryGroup; })
 			.attr("x",leftBoundary)
 			.attr("y",topBoundary)
 			.attr("width",rightBoundary-leftBoundary)
