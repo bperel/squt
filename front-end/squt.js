@@ -483,14 +483,6 @@ function buildGraph() {
 			var relatedFields = fields.filter(function(currentField) { 
 				return isFieldInTable(currentField, currentTable); 
 			});
-			var relatedUniqueFields = relatedFields.filter(function(currentField, i) {
-				for (var j=0; j<i; j++) {
-					  if (relatedFields[j].name === currentField.name) {
-						  return false;
-					  }
-				}
-				return true;
-			});
 
 			var tableWidth=TABLE_NAME_PADDING.left
 	  		   			 + CHAR_WIDTH*d3.max([currentTable.name.length,
@@ -498,8 +490,7 @@ function buildGraph() {
 	  		   			                    	  return field.name.length; 
 	  		   			                      })
 	  		   			                     ]);
-			var tableHeight=MIN_TABLE_HEIGHT
-						  + relatedUniqueFields.length * FIELD_LINEHEIGHT;
+			var tableHeight=MIN_TABLE_HEIGHT + relatedFields.length * FIELD_LINEHEIGHT;
 			
 			d3.select(this)
 			  .append("svg:rect")
