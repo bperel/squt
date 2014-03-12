@@ -175,9 +175,10 @@ sub handleSelectItem($$$) {
 				$constantAlias=$value;
 			}
 			
-			$sqlv_tables{"Constants"}{$constantAlias}{"value"}=$value;
-			$sqlv_tables{"Constants"}{$constantAlias}{"alias"}=$constantAlias;
-			$sqlv_tables{"Constants"}{$constantAlias}{"to"}="OUTPUT";
+			my $constantKey = scalar keys %{$sqlv_tables{"Constants"}};
+			$sqlv_tables{"Constants"}{$constantKey}{"value"}=$value;
+			$sqlv_tables{"Constants"}{$constantKey}{"alias"}=$constantAlias;
+			$sqlv_tables{"Constants"}{$constantKey}{"to"}="OUTPUT";
 		}
 		else {
 			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;

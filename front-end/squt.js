@@ -306,8 +306,10 @@ function processJson(jsondata, subqueryIndex) {
 
 				d3.forEach(actionFields, function(data, field) {
 					var tableAliasField = [tableAlias, field].join('.');
-					if (fields[tableAliasField] == undefined) {
-						fields[tableAliasField]={type: "field", tableAlias:tableAlias, name:field, fullName:tableAliasField, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+					if (fields.filter(function(field) {
+						return field.fullName === tableAliasField;
+					}).length) {
+						fields.push({type: "field", tableAlias:tableAlias, name:field, fullName:tableAliasField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 					}
 					switch(type) {
 						case 'OUTPUT':
@@ -315,7 +317,7 @@ function processJson(jsondata, subqueryIndex) {
 								if (functionAlias == -1) { // Directly to output
 									var fullName = [outputTableAlias, outputAlias].join('.');
 									linksToOutput.push({type: "link", from: "field", fieldName: tableAliasField, outputName: outputAlias, outputTableAlias: outputTableAlias});
-									fields[fullName]={type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+									fields.push({type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 								}
 								else { // To a function
 									linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: functionAlias});
@@ -334,9 +336,11 @@ function processJson(jsondata, subqueryIndex) {
 									case 'JOIN': case 'VALUE': case 'EXISTS':
 										d3.forEach(conditionData, function(join, otherField) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-												if (fields[otherField] == undefined) { // In case the joined table isn't referenced elsewhere
+												if (fields.filter(function(field) {
+													return field.fullName === otherField;
+												}).length) { // In case the joined table isn't referenced elsewhere
 													var tableAliasAndField=otherField.split('.');
-													fields[otherField]={type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+													fields.push({type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 												}
 												var joinType;
 												switch(join) {
@@ -347,9 +351,9 @@ function processJson(jsondata, subqueryIndex) {
 												}
 												links.push({source: tableAliasField, target: otherField, type: joinType});
 											}
-											else { // It's a value
-												fields[tableAliasField].filtered=true;
-											}
+//											else { // It's a value
+//												fields[tableAliasField].filtered=true;
+//											}
 										});
 									break;
 									default:
@@ -361,7 +365,11 @@ function processJson(jsondata, subqueryIndex) {
 							});
 						break;
 						case 'SORT':
-							fields[tableAliasField].sort=data;
+							d3.forEach(fields, function(field) {
+								if (field.fullName === tableAliasField) {
+									field.sort = data;
+								}
+							});
 						break;
 					}
 				});
@@ -380,7 +388,7 @@ function processJson(jsondata, subqueryIndex) {
 								 };
 		if (functionDestination === "OUTPUT") {
 			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias].functionAlias, outputTableAlias: outputTableAlias});
-			fields[functionAlias]={type: "field", tableAlias:outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+			fields.push({type: "field", tableAlias:outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 		}
 		else if (functionDestination !== "NOWHERE") {
 			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
@@ -396,13 +404,14 @@ function processJson(jsondata, subqueryIndex) {
 		functionCpt++;
 	});
 	if (jsondata.Constants) {
-		d3.forEach(jsondata.Constants, function(constant, constantAlias) {
+		d3.forEach(jsondata.Constants, function(constant) {
 			var constantId=constants.length;
+			var constantAlias = constant.alias;
 			var constantValue = constant.value;
 			var fullName = [outputTableAlias, constantValue].join('.');
 			constants.push({id: constantId, name: constantValue, value: constantValue, type: "constant" });
 			linksToOutput.push({type: "link", from: "constant", outputTableAlias: outputTableAlias, outputName: constantAlias, constantId: constantId});
-			fields[constantAlias]={type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup};
+			fields.push({type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 		});
 	}
 
@@ -426,7 +435,7 @@ function processJson(jsondata, subqueryIndex) {
 				}
 
 				if (!!outputName) {
-					fields[fieldId]={type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS};
+					fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
 					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
 				}
 			}
