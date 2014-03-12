@@ -306,7 +306,7 @@ function processJson(jsondata, subqueryIndex) {
 
 				d3.forEach(actionFields, function(data, field) {
 					var tableAliasField = [tableAlias, field].join('.');
-					if (fields.filter(function(field) {
+					if (!fields.filter(function(field) {
 						return field.fullName === tableAliasField;
 					}).length) {
 						fields.push({type: "field", tableAlias:tableAlias, name:field, fullName:tableAliasField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
@@ -336,7 +336,7 @@ function processJson(jsondata, subqueryIndex) {
 									case 'JOIN': case 'VALUE': case 'EXISTS':
 										d3.forEach(conditionData, function(join, otherField) {
 											if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-												if (fields.filter(function(field) {
+												if (!fields.filter(function(field) {
 													return field.fullName === otherField;
 												}).length) { // In case the joined table isn't referenced elsewhere
 													var tableAliasAndField=otherField.split('.');
