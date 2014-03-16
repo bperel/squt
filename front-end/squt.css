@@ -184,6 +184,16 @@ rect.alias {
   stroke-width: 1.5px;
 }
 
+.tableSeparator {
+    stroke: black;
+}
+
+.tableGroup.output .table,
+.tableGroup.output .alias,
+.tableGroup.output .tableSeparator {
+    stroke-width: 3px;
+}
+
 ellipse.function {
   fill: #fff;
   stroke: #333;

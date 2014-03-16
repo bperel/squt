@@ -507,7 +507,7 @@ function buildGraph() {
 			
 			d3.select(this)
 			  .append("svg:line")
-				.attr("stroke", "black")
+				.classed("tableSeparator", true)
 				.attr("x1", 0)
 				.attr("x2", tableWidth)
 				.attr("y1", LINE_SEPARATOR_TOP)
