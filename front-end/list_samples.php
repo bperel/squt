@@ -6,7 +6,7 @@ if (is_dir($sample_directory)) {
         while (($file = readdir($dh)) !== false) {
         	$isSql = substr($file, -strlen(".sql")) === ".sql";
         	$isAllTests = $_GET["test"]!=="false";
-        	$isSqutTest = strpos($file,"DBI") !== 0;
+        	$isSqutTest = strpos($file,"DBI") !== 0 && strpos($file,"_") !== 0;
             if ($isSql && ($isAllTests || $isSqutTest)) {
             	$samples[]=$file;
             }

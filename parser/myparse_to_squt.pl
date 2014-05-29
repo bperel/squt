@@ -1,4 +1,4 @@
-# Use example : 
+# Usage example :
 # perl myparse_to_squt.pl "SELECT b.a FROM b"
 
 use strict;
@@ -310,12 +310,17 @@ sub getInfosFromFieldInWhere($$) {
 
 sub handleOrderBy($) {
 	my ($orderByItem) = @_;
-	if (!defined $orderByItem->getTableName()) {
-		setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
+	if ($orderByItem->getItemType() eq 'FIELD_ITEM') {
+		if (!defined $orderByItem->getTableName()) {
+			setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
+		}
+		else {
+			$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
+						{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
+		}
 	}
 	else {
-		$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
-					{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
+		setWarning("Not supported","Non-field items in ORDER BY CLAUSE", $orderByItem->getValue());
 	}
 }
 

@@ -1,0 +1,18 @@
+{
+	"Warning" : {
+		"Not supported" : {
+			"Non-field items in ORDER BY CLAUSE" : "1"
+		}
+	},
+	"Tables" : {
+		"table1" : {
+			"table1" : {
+				"OUTPUT" : {
+					"field1" : {
+						"-1" : "field1"
+					}
+				}
+			}
+		}
+	}
+}
