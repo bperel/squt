@@ -14,7 +14,9 @@ var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
 
 /* Labels */
 
-var OUTPUT_LABEL="OUTPUT";
+var  OUTPUT_LABEL="OUTPUT"
+	,LIMITS_1_BOUNDARY = "($2 first row$3 only)"
+	,LIMITS_2_BOUNDARIES = "(rows $1 to $2 only)";
 
 
 /* Measures */
@@ -41,6 +43,7 @@ var CIRCLE_RADIUS 	   		 =  6
 								 right: 10,
 								 left:  10
 							   }
+   ,ALIAS_WIDTH_FOR_OUTPUT   = 20
    ,FIELD_PADDING	   		 = {
 								 left: 5,
 								 top: 35

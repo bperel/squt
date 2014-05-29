@@ -169,10 +169,11 @@ circle.filtered {
 }
 
 circle.sort {
-	background:url("images/sort.svg") no-repeat;		
+	background:url("images/sort.svg") no-repeat;
 }
 
-rect.table {
+rect.table,
+rect.limits {
   fill: #fff;
   stroke: #333;
   stroke-width: 1.5px;

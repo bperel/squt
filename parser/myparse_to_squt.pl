@@ -55,6 +55,9 @@ sub handleQuery($) {
 		if (defined $curQuery->getWhere()) {
 			handleWhere($curQuery->getWhere());
 		}
+		if (defined $curQuery->getLimit()) {
+			handleLimit($curQuery->getLimit());
+		}
 	}
 	if ($subquery_id == -1) {
 		%sqlv_tables_final = (%sqlv_tables_final, %{dclone(\%sqlv_tables)});
@@ -322,6 +325,17 @@ sub handleOrderBy($) {
 	else {
 		setWarning("Not supported","Non-field items in ORDER BY CLAUSE", $orderByItem->getValue());
 	}
+}
+
+sub handleLimit($) {
+	my ($limitItem) = @_;
+	my $value1 = 0;
+	my $value2 = @{$limitItem}[0]->getValue()+0;
+	if (defined(@{$limitItem}[1])) {
+		$value1 = @{$limitItem}[1]->getValue()+0;
+	}
+	$sqlv_tables{"Limits"}{"Begin"}=$value1;
+	$sqlv_tables{"Limits"}{"End"}=$value2;
 }
 
 sub handleSubquery($$) {

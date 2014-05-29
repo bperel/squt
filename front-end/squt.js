@@ -101,6 +101,8 @@ var subqueries,
 	fields,
 	functions,
 	constants,
+
+	limits,
 		 
 	links,
 	linksToFunctions,
@@ -214,9 +216,10 @@ function build(jsondata) {
 	tables= 	 	 [];
 	tableAliases=	 [];
 	fields= 	 	 [];
-	links= 			 [];
 	functions=		 [];
 	constants=		 [];
+	limits=          [];
+	links= 			 [];
 	linksToFunctions=[];
 	linksToOutput=	 [];
 
@@ -280,7 +283,7 @@ function addOrStrengthenLink(sourceId, targetId) {
 	l[linkId] = {source: sourceId, target: targetId, value: linkStrength};
 }
 
-function processJson(jsondata, subqueryIndex) {
+function processJson(jsondata) {
 	var subqueryGroup=jsondata.SubqueryAlias || MAIN_QUERY_ALIAS;
 	var subqueryType=jsondata.SubqueryType;
 	
@@ -441,6 +444,10 @@ function processJson(jsondata, subqueryIndex) {
 			}
 		});
 	}
+
+	if (subqueryGroup === MAIN_QUERY_ALIAS) {
+		limits = jsondata.Limits;
+	}
 }
 
 var tableGroups,
@@ -530,9 +537,7 @@ function buildGraph() {
 						.classed({alias: true, output: !!currentAlias.output})
 						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth))
 						.attr("y", ALIAS_BOX_MARGIN.top)
-						.attr("width", ALIAS_NAME_PADDING.left 
-							  		 + Math.max(currentAlias.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
-							  					CIRCLE_RADIUS/2 + SORT_SIDE))
+						.attr("width", getAliasWidth(currentAlias))
 						.attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
 				});
 			
@@ -586,6 +591,27 @@ function buildGraph() {
 						fieldIndex++;
 					}
 				});
+
+			if (!!currentTable.output && !!limits) {
+				d3.select(this)
+					.append("svg:rect")
+					.classed({limits: true })
+					.attr("height", FIELD_LINEHEIGHT)
+					.attr("width",  tableWidth + getAliasWidth({name: MAIN_SUBQUERY_OUTPUT_ALIAS}))
+					.attr("x", 0)
+					.attr("y", tableHeight);
+
+				var limits_text = (limits.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
+					.replace(/\$1/, limits.Begin)
+					.replace(/\$2/, limits.End)
+					.replace(/\$3/, (limits.End - limits.Begin > 1) ? 's' :'');
+
+				d3.select(this)
+					.append("svg:text")
+					.text(limits_text)
+					.attr("x", 0)
+					.attr("y", tableHeight + CHAR_HEIGHT)
+			}
 		});
 	
 	paths = g.append("svg:g").selectAll("path.join")
@@ -719,6 +745,14 @@ function toggleLinkDisplay(toggle) {
 	if (toggle) {
 		input.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
 	}
+}
+
+function getAliasWidth(currentAlias) {
+	return ALIAS_NAME_PADDING.left
+	  + Math.max(
+			currentAlias.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
+			CIRCLE_RADIUS/2 + SORT_SIDE
+		);
 }
 
 function getAliasPosX(relatedAliases, currentAlias, tableWidth) {
@@ -1141,7 +1175,10 @@ function getTableId(tablename) {
 
 function getOutputId(outputAlias) {
 	for (var i in n) {
-		if (outputAlias == n[i].name) {
+		if (outputAlias == n[i].name
+		 && !l.filter(function(link) {
+				return link.target.index === i;
+			}).length) {
 			return i;
 		}
 	}
