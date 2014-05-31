@@ -445,8 +445,8 @@ function processJson(jsondata) {
 		});
 	}
 
-	if (subqueryGroup === MAIN_QUERY_ALIAS) {
-		limits = jsondata.Limits;
+	if (!!jsondata.Limits) {
+		limits.push({subqueryGroup: subqueryGroup, limits: jsondata.Limits});
 	}
 }
 
@@ -592,19 +592,24 @@ function buildGraph() {
 					}
 				});
 
-			if (!!currentTable.output && !!limits) {
+			var limitsForSubqueryGroup = limits.filter(function(limit) {
+				return limit.subqueryGroup === currentTable.subqueryGroup;
+			});
+
+			if (limitsForSubqueryGroup.length && !!currentTable.output) {
+				var currentLimits = limitsForSubqueryGroup[0].limits;
 				d3.select(this)
 					.append("svg:rect")
 					.classed({limits: true })
 					.attr("height", FIELD_LINEHEIGHT)
-					.attr("width",  tableWidth + getAliasWidth({name: MAIN_SUBQUERY_OUTPUT_ALIAS}))
+					.attr("width",  tableWidth + getAliasWidth({name: OUTPUT_PREFIX + currentTable.subqueryGroup}))
 					.attr("x", 0)
 					.attr("y", tableHeight);
 
-				var limits_text = (limits.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
-					.replace(/\$1/, limits.Begin)
-					.replace(/\$2/, limits.End)
-					.replace(/\$3/, (limits.End - limits.Begin > 1) ? 's' :'');
+				var limits_text = (currentLimits.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
+					.replace(/\$1/, currentLimits.Begin)
+					.replace(/\$2/, currentLimits.End)
+					.replace(/\$3/, (currentLimits.End - currentLimits.Begin > 1) ? 's' :'');
 
 				d3.select(this)
 					.append("svg:text")

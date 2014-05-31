@@ -2,6 +2,10 @@
    "Subqueries" : {
       "0" : {
          "SubqueryAlias" : "e",
+         "Limits" : {
+            "Begin" : 2,
+            "End" : 4
+         },
          "Tables" : {
             "c" : {
                "c" : {
