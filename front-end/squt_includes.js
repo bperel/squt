@@ -43,7 +43,6 @@ var CIRCLE_RADIUS 	   		 =  6
 								 right: 10,
 								 left:  10
 							   }
-   ,ALIAS_WIDTH_FOR_OUTPUT   = 20
    ,FIELD_PADDING	   		 = {
 								 left: 5,
 								 top: 35
