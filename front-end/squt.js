@@ -534,10 +534,10 @@ function buildGraph() {
 
 					d3.select(this)
 					  .append("svg:rect")
-						.classed({alias: true, output: !!currentAlias.output})
+						.classed({alias: true, output: !!currentTable.output})
 						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth))
 						.attr("y", ALIAS_BOX_MARGIN.top)
-						.attr("width", getAliasWidth(currentAlias))
+						.attr("width", getAliasWidth(!!currentTable.output, currentAlias))
 						.attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
 				});
 			
@@ -598,13 +598,6 @@ function buildGraph() {
 
 			if (limitsForSubqueryGroup.length && !!currentTable.output) {
 				var currentLimits = limitsForSubqueryGroup[0].limits;
-				d3.select(this)
-					.append("svg:rect")
-					.classed({limits: true })
-					.attr("height", FIELD_LINEHEIGHT)
-					.attr("width",  tableWidth + getAliasWidth({name: OUTPUT_PREFIX + currentTable.subqueryGroup}))
-					.attr("x", 0)
-					.attr("y", tableHeight);
 
 				var limits_text = (currentLimits.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
 					.replace(/\$1/, currentLimits.Begin)
@@ -612,10 +605,18 @@ function buildGraph() {
 					.replace(/\$3/, (currentLimits.End - currentLimits.Begin > 1) ? 's' :'');
 
 				d3.select(this)
+					.append("svg:rect")
+					.classed({limits: true })
+					.attr("height", FIELD_LINEHEIGHT)
+					.attr("width",  Math.max(limits_text.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
+					.attr("x", 0)
+					.attr("y", tableHeight);
+
+				d3.select(this)
 					.append("svg:text")
 					.text(limits_text)
 					.attr("x", 0)
-					.attr("y", tableHeight + CHAR_HEIGHT)
+					.attr("y", tableHeight + CHAR_HEIGHT);
 			}
 		});
 	
@@ -752,10 +753,14 @@ function toggleLinkDisplay(toggle) {
 	}
 }
 
-function getAliasWidth(currentAlias) {
+function getAliasWidth(isOutputTable, currentAlias) {
+	var aliasNameLength = isOutputTable
+		? 0
+		: currentAlias.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right;
+
 	return ALIAS_NAME_PADDING.left
-	  + Math.max(
-			currentAlias.name.length*CHAR_WIDTH + ALIAS_NAME_PADDING.right,
+	     + Math.max(
+			aliasNameLength,
 			CIRCLE_RADIUS/2 + SORT_SIDE
 		);
 }
