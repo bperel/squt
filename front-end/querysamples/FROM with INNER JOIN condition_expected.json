@@ -1,4 +1,7 @@
 {
+   "Options" : {
+      "DISTINCT" : 1
+   },
    "Tables" : {
       "Contract" : {
          "co" : {

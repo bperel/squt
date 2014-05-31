@@ -173,6 +173,7 @@ circle.sort {
 }
 
 rect.table,
+rect.options,
 rect.limits {
   fill: #fff;
   stroke: #333;

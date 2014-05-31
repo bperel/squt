@@ -103,6 +103,7 @@ var subqueries,
 	constants,
 
 	limits,
+	options,
 		 
 	links,
 	linksToFunctions,
@@ -219,6 +220,7 @@ function build(jsondata) {
 	functions=		 [];
 	constants=		 [];
 	limits=          [];
+	options=         [];
 	links= 			 [];
 	linksToFunctions=[];
 	linksToOutput=	 [];
@@ -448,6 +450,9 @@ function processJson(jsondata) {
 	if (!!jsondata.Limits) {
 		limits.push({subqueryGroup: subqueryGroup, limits: jsondata.Limits});
 	}
+	if (!!jsondata.Options) {
+		options.push({subqueryGroup: subqueryGroup, options: jsondata.Options});
+	}
 }
 
 var tableGroups,
@@ -462,8 +467,8 @@ var tableGroups,
 
 	chargeForces;
 
-function buildGraph() {	
-	
+function buildGraph() {
+
 	tables = d3.values(tables);
 	tableAliases = d3.values(tableAliases);
 	fields = d3.values(fields);
@@ -498,21 +503,22 @@ function buildGraph() {
 	  		   			                      })
 	  		   			                     ]);
 			var tableHeight=MIN_TABLE_HEIGHT + relatedFields.length * FIELD_LINEHEIGHT;
-			
-			d3.select(this)
+
+			var currentTableElement = d3.select(this);
+			currentTableElement
 			  .append("svg:rect")
 				.classed({table: true, output: !!currentTable.output})
 				.attr("height", tableHeight)
 				.attr("width",  tableWidth );
 			
-			d3.select(this)
+			currentTableElement
 			  .append("svg:text")
 				.text(currentTable.output ? OUTPUT_LABEL : currentTable.name)
 				.classed({tablename: true, output: !!currentTable.output})
 				.attr("x", TABLE_NAME_PADDING.left)
 				.attr("y", currentTable.output ? TABLE_NAME_PADDING.output_top : TABLE_NAME_PADDING.top);
 			
-			d3.select(this)
+			currentTableElement
 			  .append("svg:line")
 				.classed("tableSeparator", true)
 				.attr("x1", 0)
@@ -520,7 +526,7 @@ function buildGraph() {
 				.attr("y1", LINE_SEPARATOR_TOP)
 				.attr("y2", LINE_SEPARATOR_TOP);
 			
-			d3.select(this)
+			currentTableElement
 			  .selectAll("g.aliasGroup")
 			    .data(relatedAliases)
 			  .enter().append("svg:g")
@@ -543,7 +549,7 @@ function buildGraph() {
 			
 			var fieldIndex = 0;
 			
-			d3.select(this)
+			currentTableElement
 			  .selectAll("g.fieldGroup")
 			    .data(relatedFields)
 			  .enter().append("svg:g")
@@ -592,31 +598,52 @@ function buildGraph() {
 					}
 				});
 
-			var limitsForSubqueryGroup = limits.filter(function(limit) {
-				return limit.subqueryGroup === currentTable.subqueryGroup;
-			});
+			if (!!currentTable.output) {
+				var infoboxSources = [
+					{ type: "options", data: options },
+					{ type: "limits" , data: limits  }
+				];
 
-			if (limitsForSubqueryGroup.length && !!currentTable.output) {
-				var currentLimits = limitsForSubqueryGroup[0].limits;
+				var currentYOffset = tableHeight;
 
-				var limits_text = (currentLimits.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
-					.replace(/\$1/, currentLimits.Begin)
-					.replace(/\$2/, currentLimits.End)
-					.replace(/\$3/, (currentLimits.End - currentLimits.Begin > 1) ? 's' :'');
+				d3.forEach(infoboxSources, function(infoboxSource) {
+					var dataForCurrentSubqueryGroup = infoboxSource.data.filter(function(currentData) {
+						return currentData.subqueryGroup === currentTable.subqueryGroup;
+					});
 
-				d3.select(this)
-					.append("svg:rect")
-					.classed({limits: true })
-					.attr("height", FIELD_LINEHEIGHT)
-					.attr("width",  Math.max(limits_text.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
-					.attr("x", 0)
-					.attr("y", tableHeight);
+					if (dataForCurrentSubqueryGroup.length) {
+						var currentData = dataForCurrentSubqueryGroup[0][infoboxSource.type];
+						var text;
 
-				d3.select(this)
-					.append("svg:text")
-					.text(limits_text)
-					.attr("x", 0)
-					.attr("y", tableHeight + CHAR_HEIGHT);
+						switch(infoboxSource.type) {
+							case 'limits':
+								text = (currentData.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
+									.replace(/\$1/, currentData.Begin)
+									.replace(/\$2/, currentData.End)
+									.replace(/\$3/, (currentData.End - currentData.Begin > 1) ? 's' :'');
+							break;
+							case 'options':
+								text = DISTINCT;
+							break;
+						}
+
+						currentTableElement
+							.append("svg:rect")
+								.attr("class", function() { return infoboxSource.type; })
+								.attr("height", FIELD_LINEHEIGHT)
+								.attr("width",  Math.max(text.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
+								.attr("x", 0)
+								.attr("y", currentYOffset);
+
+						currentTableElement
+							.append("svg:text")
+								.text(text)
+								.attr("x", 0)
+								.attr("y", currentYOffset + CHAR_HEIGHT);
+
+						currentYOffset += FIELD_LINEHEIGHT;
+					}
+				});
 			}
 		});
 	

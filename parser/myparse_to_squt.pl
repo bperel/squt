@@ -34,6 +34,9 @@ sub handleQuery($) {
 		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
 	}
 	else {
+		foreach my $optionName (@{$curQuery->getOptions()}) {
+			handleOption($optionName);
+		}
 		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
 			handleSelectItem($selectItem,-1,1);
 		}
@@ -70,6 +73,19 @@ sub handleQuery($) {
 handleQuery($query);
 
 print $json->pretty->encode( \%sqlv_tables_final );
+
+sub handleOption {
+	my $optionName = $_[0];
+	if ($optionName eq 'SELECT_DISTINCT') {
+		$sqlv_tables{"Options"}{"DISTINCT"}=1;
+	}
+	elsif (grep $_ eq $optionName, qw/TL_READ/) {
+		# Ignore : internal option
+	}
+	else {
+		setWarning("Not supported","Option",$optionName);
+	}
+}
 
 
 sub handleJoin {
