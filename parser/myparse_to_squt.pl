@@ -38,7 +38,7 @@ sub handleQuery($) {
 			handleOption($optionName);
 		}
 		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
-			handleSelectItem($selectItem,-1,1);
+			handleSelectItem($selectItem,"-1",1);
 		}
 		if (defined $curQuery->getTables()) {
 			foreach my $item (@{$curQuery->getTables()}) {
@@ -140,7 +140,7 @@ sub handleSelectItem($$$) {
 	my $itemType = $item->getType();
 	if ($itemType eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($item);
-		if (defined $tableName && $tableName == -1 && $item->getFieldName() ne "*") {
+		if (defined $tableName && $tableName eq "-1" && $item->getFieldName() ne "*") {
 			return;
 		}
 		my $fieldAlias = $item->getAlias() || $item->getFieldName();
@@ -171,6 +171,11 @@ sub handleSelectItem($$$) {
 	elsif ($itemType eq 'SUBSELECT_ITEM') {
 		handleSubquery($item,0);
 	}
+	elsif ($itemType eq 'ROW_ITEM') {
+		foreach my $argument (@{$item->getArguments()}) {
+			handleSelectItem($argument,$functionId,0);
+		}
+	}
 	elsif( grep $_ eq $itemType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM NULL_ITEM INTERVAL_ITEM USER_VAR_ITEM SYSTEM_VAR_ITEM/) {
 		my $value;
 		if ($itemType eq 'INTERVAL_ITEM') {
@@ -182,10 +187,11 @@ sub handleSelectItem($$$) {
 		elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
 			$value=$item->getVarComponent().".".$item->getVarName()
 		}
+		
 		else {
 			$value=$item->getValue();
 		}
-		if ($functionId == -1) { # direct output
+		if ($functionId eq "-1") { # direct output
 			my $constantAlias=$item->getAlias();
 			if (!defined $value) {
 				$value="NULL";
@@ -213,7 +219,7 @@ sub handleSelectItem($$$) {
 		}
 		$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$item->getFuncName();
 		$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
-		$sqlv_tables{"Functions"}{$functionAlias}{"to"}=($functionId == -1 ? "OUTPUT" : $functionId);
+		$sqlv_tables{"Functions"}{$functionAlias}{"to"}=($functionId eq "-1" ? "OUTPUT" : $functionId);
 		foreach my $argument (@{$item->getArguments()}) {
 			handleSelectItem($argument,$functionAlias,0);
 		}
@@ -413,7 +419,7 @@ sub getItemTableName($) {
 	 			return @{$curQuery->getTables()}[0]->getTableName();
 	 		}
 	 		elsif (@{$curQuery->getTables()}[0]->getType() eq "SUBSELECT_ITEM") {
-	 			return -1;
+	 			return "-1";
 	 		}
 	 	}
 	 }
