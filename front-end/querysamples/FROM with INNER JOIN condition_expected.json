@@ -1,6 +1,6 @@
 {
    "Options" : {
-      "DISTINCT" : 1
+     "SELECT_DISTINCT" : 1
    },
    "Tables" : {
       "Contract" : {
