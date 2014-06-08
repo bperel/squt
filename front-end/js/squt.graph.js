@@ -217,35 +217,45 @@ function buildGraph() {
 
 					if (dataForCurrentSubqueryGroup.length) {
 						var currentData = dataForCurrentSubqueryGroup[0][infoboxSource.type];
-						var text;
+						var textLines = [];
 
 						switch(infoboxSource.type) {
 							case 'limits':
-								text = (currentData.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
-									.replace(/\$1/, currentData.Begin)
-									.replace(/\$2/, currentData.End)
-									.replace(/\$3/, (currentData.End - currentData.Begin > 1) ? 's' :'');
+								textLines.push(
+									(currentData.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
+										.replace(/\$1/, currentData.Begin)
+										.replace(/\$2/, currentData.End)
+										.replace(/\$3/, (currentData.End - currentData.Begin > 1) ? 's' :'')
+								);
 							break;
 							case 'options':
-								text = DISTINCT;
+								d3.forEach(currentData, function(value, optionName) {
+									textLines.push(OPTIONS_LABELS[optionName]);
+								});
 							break;
 						}
 
+						var infoboxHeight = (1+textLines.length)*CHAR_HEIGHT;
+
 						currentTableElement
 							.append("svg:rect")
-								.attr("class", function() { return infoboxSource.type; })
-								.attr("height", FIELD_LINEHEIGHT)
-								.attr("width",  Math.max(text.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
+								.attr("class", "infobox "+infoboxSource.type)
+								.attr("height", infoboxHeight)
+								.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
 								.attr("x", 0)
 								.attr("y", currentYOffset);
 
 						currentTableElement
-							.append("svg:text")
-								.text(text)
-								.attr("x", 0)
-								.attr("y", currentYOffset + CHAR_HEIGHT);
+							.selectAll(".infoboxText."+infoboxSource.type)
+								.data(textLines)
+							.enter()
+								.append("svg:text")
+									.attr("class", "infoboxText "+infoboxSource.type)
+									.text(function(line) { return line;})
+									.attr("x", OPTION_PADDING.left)
+									.attr("y", function(line, lineNumber) { return currentYOffset + OPTION_PADDING.top + lineNumber*CHAR_HEIGHT; });
 
-						currentYOffset += FIELD_LINEHEIGHT;
+						currentYOffset += infoboxHeight;
 					}
 				});
 			}

@@ -1,0 +1,13 @@
+{
+	"Constants" : {
+		"0" : {
+			"alias" : "1",
+			"value" : "1",
+			"to" : "OUTPUT"
+		}
+	},
+	"Options" : {
+		"SELECT_DISTINCT" : 1,
+		"SELECT_STRAIGHT_JOIN" : 1
+	}
+}

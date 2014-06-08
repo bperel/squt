@@ -15,9 +15,12 @@ var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
 /* Labels */
 
 var  OUTPUT_LABEL        = "OUTPUT"
-	,DISTINCT            = "(distinct rows)"
-	,LIMITS_1_BOUNDARY   = "($2 first row$3 only)"
-	,LIMITS_2_BOUNDARIES = "(rows $1 to $2 only)";
+	,LIMITS_1_BOUNDARY   = "$2 first row$3 only"
+	,LIMITS_2_BOUNDARIES = "rows $1 to $2 only"
+	,DISTINCT            = "(distinct rows)";
+
+var OPTIONS_LABELS       = { SELECT_DISTINCT      : "distinct rows",
+							 SELECT_STRAIGHT_JOIN : "LTR table join"}
 
 
 /* Measures */
@@ -59,7 +62,11 @@ var CIRCLE_RADIUS 	   		 =  6
 								 topbottom: 10
 							   }
    ,SUBQUERY_PADDING		 =  5
-   ,SUBQUERY_TYPE_PADDING	 =- 3;
+   ,SUBQUERY_TYPE_PADDING	 =- 3
+   ,OPTION_PADDING	   		 = {
+								 left:  5,
+								 top:  12
+							   };
 
 /* Legend-specific measures */
 var LEGEND_LINEHEIGHT        = 35,

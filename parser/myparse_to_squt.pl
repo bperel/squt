@@ -76,8 +76,8 @@ print $json->pretty->encode( \%sqlv_tables_final );
 
 sub handleOption {
 	my $optionName = $_[0];
-	if ($optionName eq 'SELECT_DISTINCT') {
-		$sqlv_tables{"Options"}{"DISTINCT"}=1;
+	if (grep $_ eq $optionName, qw/SELECT_DISTINCT SELECT_STRAIGHT_JOIN/) {
+		$sqlv_tables{"Options"}{$optionName}=1;
 	}
 	elsif (grep $_ eq $optionName, qw/TL_READ/) {
 		# Ignore : internal option
