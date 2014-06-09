@@ -241,8 +241,6 @@ function buildGraph() {
 							.append("svg:rect")
 							.attr("class", "infobox "+infoboxSource.type)
 							.attr("height", infoboxHeight)
-							.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
-							.attr("x", 0)
 							.attr("y", currentYOffset);
 
 						var infoboxTextContainer = currentTableElement
@@ -252,8 +250,7 @@ function buildGraph() {
 						infoboxTextContainer
 							.append("svg:rect")
 								.attr("height", CHAR_HEIGHT)
-								.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
-								.attr("x", 0)
+								.attr("width",  function(line) { return (line.text || line).length * CHAR_WIDTH; })
 								.attr("y", function(line, i) { return currentYOffset + i*CHAR_HEIGHT; })
 								.attr("class", "infoboxText "+infoboxSource.type)
 								.on("click", function(line) {
@@ -271,6 +268,14 @@ function buildGraph() {
 						currentYOffset += infoboxHeight;
 					}
 				});
+
+				d3.selectAll(".infobox").attr("width",
+					d3.max([tableWidth + getAliasWidth(true),
+						d3.max(d3.selectAll(".infoboxText").data(), function(infobox) {
+							return (infobox.text || infobox).length * CHAR_WIDTH;
+						})
+					])
+				);
 			}
 		});
 	

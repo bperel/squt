@@ -18,8 +18,7 @@ var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
 
 var  OUTPUT_LABEL        = "OUTPUT"
 	,LIMITS_1_BOUNDARY   = "$2 first row$3 only"
-	,LIMITS_2_BOUNDARIES = "rows $1 to $2 only"
-	,DISTINCT            = "(distinct rows)";
+	,LIMITS_2_BOUNDARIES = "rows $1 to $2 only";
 
 var OPTIONS_LABELS       = { SELECT_BIG_RESULT    : {text: "uses sorting on groups", doc: "select.html#idm47310285080320"},
 							 SELECT_DISTINCT      : {text: "distinct rows", "doc": "select.html#idm47310285115104"},
