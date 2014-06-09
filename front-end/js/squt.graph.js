@@ -239,21 +239,34 @@ function buildGraph() {
 
 						currentTableElement
 							.append("svg:rect")
-								.attr("class", "infobox "+infoboxSource.type)
-								.attr("height", infoboxHeight)
-								.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
-								.attr("x", 0)
-								.attr("y", currentYOffset);
+							.attr("class", "infobox "+infoboxSource.type)
+							.attr("height", infoboxHeight)
+							.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
+							.attr("x", 0)
+							.attr("y", currentYOffset);
 
-						currentTableElement
+						var infoboxTextContainer = currentTableElement
 							.selectAll(".infoboxText."+infoboxSource.type)
 								.data(textLines)
-							.enter()
-								.append("svg:text")
-									.attr("class", "infoboxText "+infoboxSource.type)
-									.text(function(line) { return line;})
-									.attr("x", OPTION_PADDING.left)
-									.attr("y", function(line, lineNumber) { return currentYOffset + OPTION_PADDING.top + lineNumber*CHAR_HEIGHT; });
+							.enter();
+						infoboxTextContainer
+							.append("svg:rect")
+								.attr("height", CHAR_HEIGHT)
+								.attr("width",  Math.max(textLines.length * CHAR_WIDTH, tableWidth + getAliasWidth(true)))
+								.attr("x", 0)
+								.attr("y", function(line, i) { return currentYOffset + i*CHAR_HEIGHT; })
+								.attr("class", "infoboxText "+infoboxSource.type)
+								.on("click", function(line) {
+									if (line.doc) {
+										window.open(DOC_ROOT_URL+line.doc);
+									}
+								});
+
+						infoboxTextContainer
+							.append("svg:text")
+								.text(function(line) { return line.text || line;})
+								.attr("x", OPTION_PADDING.left)
+								.attr("y", function(line, lineNumber) { return currentYOffset + OPTION_PADDING.top + lineNumber*CHAR_HEIGHT; });
 
 						currentYOffset += infoboxHeight;
 					}

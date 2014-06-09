@@ -211,6 +211,14 @@ rect.constant {
     stroke: #333;
 }
 
+.infoboxText {
+    opacity: 0;
+}
+
+.infoboxText.options {
+    cursor: help;
+}
+
 text {
   font: 12px Courier;
   pointer-events: none;

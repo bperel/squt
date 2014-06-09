@@ -1,6 +1,8 @@
 /* Query config */
 
-var URL="analyze.php";
+var URL="analyze.php",
+	DOC_ROOT_URL="http://dev.mysql.com/doc/refman/5.0/en/";
+
 var QUERY_MAX_LENGTH = 2000;
 
 
@@ -19,8 +21,11 @@ var  OUTPUT_LABEL        = "OUTPUT"
 	,LIMITS_2_BOUNDARIES = "rows $1 to $2 only"
 	,DISTINCT            = "(distinct rows)";
 
-var OPTIONS_LABELS       = { SELECT_DISTINCT      : "distinct rows",
-							 SELECT_STRAIGHT_JOIN : "LTR table join"}
+var OPTIONS_LABELS       = { SELECT_BIG_RESULT    : {text: "uses sorting on groups", doc: "select.html#idm47310285080320"},
+							 SELECT_DISTINCT      : {text: "distinct rows", "doc": "select.html#idm47310285115104"},
+							 SELECT_SMALL_RESULT  : {text: "uses fast temp tables on groups", doc: "select.html#idm47310285080320"},
+							 SELECT_STRAIGHT_JOIN : {text: "LTR table join", "doc": "select.html#idm47310285097088"}
+						   };
 
 
 /* Measures */
