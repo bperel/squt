@@ -76,7 +76,7 @@ print $json->pretty->encode( \%sqlv_tables_final );
 
 sub handleOption {
 	my $optionName = $_[0];
-	if (grep $_ eq $optionName, qw/OPTION_BUFFER_RESULT SELECT_BIG_RESULT SELECT_DISTINCT SELECT_SMALL_RESULT SELECT_STRAIGHT_JOIN TL_READ_HIGH_PRIORITY/) {
+	if (grep $_ eq $optionName, qw/OPTION_BUFFER_RESULT OPTION_FOUND_ROWS OPTION_TO_QUERY_CACHE SELECT_BIG_RESULT SELECT_DISTINCT SELECT_SMALL_RESULT SELECT_STRAIGHT_JOIN SQL_NO_CACHE TL_READ_HIGH_PRIORITY/) {
 		$sqlv_tables{"Options"}{$optionName}=1;
 	}
 	elsif (grep $_ eq $optionName, qw/TL_READ/) {
