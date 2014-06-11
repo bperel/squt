@@ -21,15 +21,17 @@ var  OUTPUT_LABEL        = "OUTPUT"
 	,LIMITS_2_BOUNDARIES = "rows $1 to $2 only";
 
 var OPTIONS_LABELS       = {
-							 OPTION_BUFFER_RESULT : {text: "result put in temp table",          doc: "select.html#idm47310285071952"},
-							 OPTION_FOUND_ROWS    : {text: "row number (LIMIT ignored) stored", doc: "information-functions.html#function_found-rows"},
-							 OPTION_TO_QUERY_CACHE: {text: "result is cached",                  doc: "query-cache-in-select.html"},
-							 SELECT_BIG_RESULT    : {text: "uses sorting on groups",            doc: "select.html#idm47310285080320"},
-							 SELECT_DISTINCT      : {text: "distinct rows",                     doc: "select.html#idm47310285115104"},
-							 SELECT_SMALL_RESULT  : {text: "uses fast temp tables on groups",   doc: "select.html#idm47310285080320"},
-							 SELECT_STRAIGHT_JOIN : {text: "LTR table join",                    doc: "select.html#idm47310285097088"},
-							 SQL_NO_CACHE :         {text: "result is not cached",              doc: "query-cache-in-select.html"},
-							 TL_READ_HIGH_PRIORITY: {text: "forbid concurrent inserts",         doc: "select.html#idm47310285106592"}
+							 OPTION_BUFFER_RESULT      : {text: "result put in temp table",          doc: "select.html#idm47310285071952"},
+							 OPTION_FOUND_ROWS         : {text: "row number (LIMIT ignored) stored", doc: "information-functions.html#function_found-rows"},
+							 OPTION_TO_QUERY_CACHE     : {text: "result is cached",                  doc: "query-cache-in-select.html"},
+							 SELECT_BIG_RESULT         : {text: "uses sorting on groups",            doc: "select.html#idm47310285080320"},
+							 SELECT_DISTINCT           : {text: "distinct rows",                     doc: "select.html#idm47310285115104"},
+							 SELECT_SMALL_RESULT       : {text: "uses fast temp tables on groups",   doc: "select.html#idm47310285080320"},
+							 SELECT_STRAIGHT_JOIN      : {text: "LTR table join",                    doc: "select.html#idm47310285097088"},
+							 SQL_NO_CACHE              : {text: "result is not cached",              doc: "query-cache-in-select.html"},
+							 TL_READ_HIGH_PRIORITY     : {text: "forbid concurrent inserts",         doc: "select.html#idm47310285106592"},
+							 TL_READ_WITH_SHARED_LOCKS : {text: "lock in share mode",                doc: "innodb-locking-reads.html"},
+							 TL_WRITE                  : {text: "lock for update",                   doc: "innodb-locking-reads.html"}
 						   };
 
 
