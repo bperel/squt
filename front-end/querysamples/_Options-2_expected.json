@@ -1,0 +1,18 @@
+{
+	"Tables" : {
+		"b" : {
+			"b" : {
+				"OUTPUT" : {
+					"a" : {
+						"-1" : "a"
+					}
+				}
+			}
+		}
+	},
+	"Options" : {
+		"SQL_NO_CACHE" : 1,
+		"TL_READ_WITH_SHARED_LOCKS" : 1,
+		"SELECT_BIG_RESULT" : 1
+	}
+}

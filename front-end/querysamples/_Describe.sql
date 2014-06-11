@@ -1,0 +1,2 @@
+DESCRIBE SELECT t.f
+FROM a_table t;

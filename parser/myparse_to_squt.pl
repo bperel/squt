@@ -34,32 +34,38 @@ sub handleQuery($) {
 		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
 	}
 	else {
+		my $optionsReturnedError = 0;
 		foreach my $optionName (@{$curQuery->getOptions()}) {
-			handleOption($optionName);
-		}
-		foreach my $selectItem (@{$curQuery->getSelectItems()}) {
-			handleSelectItem($selectItem,"-1",1);
-		}
-		if (defined $curQuery->getTables()) {
-			foreach my $item (@{$curQuery->getTables()}) {
-				if ($item->getType() eq "JOIN_ITEM") {
-					handleJoin($item);
-				}
-				elsif ($item->getType() eq "SUBSELECT_ITEM") {
-					handleSubquery($item,0);
-				}
+			if (handleOption($optionName) eq 0) {
+				$optionsReturnedError = 1;
+				last; # Break on first error
 			}
 		}
-		if (defined $curQuery->getOrder()) {
-			foreach my $orderByItem (@{$curQuery->getOrder()}) {
-				handleOrderBy($orderByItem);
+		if ($optionsReturnedError eq 0) {
+			foreach my $selectItem (@{$curQuery->getSelectItems()}) {
+				handleSelectItem($selectItem,"-1",1);
 			}
-		}
-		if (defined $curQuery->getWhere()) {
-			handleWhere($curQuery->getWhere());
-		}
-		if (defined $curQuery->getLimit()) {
-			handleLimit($curQuery->getLimit());
+			if (defined $curQuery->getTables()) {
+				foreach my $item (@{$curQuery->getTables()}) {
+					if ($item->getType() eq "JOIN_ITEM") {
+						handleJoin($item);
+					}
+					elsif ($item->getType() eq "SUBSELECT_ITEM") {
+						handleSubquery($item,0);
+					}
+				}
+			}
+			if (defined $curQuery->getOrder()) {
+				foreach my $orderByItem (@{$curQuery->getOrder()}) {
+					handleOrderBy($orderByItem);
+				}
+			}
+			if (defined $curQuery->getWhere()) {
+				handleWhere($curQuery->getWhere());
+			}
+			if (defined $curQuery->getLimit()) {
+				handleLimit($curQuery->getLimit());
+			}
 		}
 	}
 	if ($subquery_id == -1) {
@@ -76,6 +82,10 @@ print $json->pretty->encode( \%sqlv_tables_final );
 
 sub handleOption {
 	my $optionName = $_[0];
+	if (grep $_ eq $optionName, qw/SELECT_DESCRIBE DESCRIBE_NORMAL SELECT_DESCRIBE/) {
+		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
+		return 0;
+	}
 	if (grep $_ eq $optionName, qw/OPTION_BUFFER_RESULT OPTION_FOUND_ROWS OPTION_TO_QUERY_CACHE SELECT_BIG_RESULT SELECT_DISTINCT SELECT_SMALL_RESULT SELECT_STRAIGHT_JOIN SQL_NO_CACHE TL_READ_HIGH_PRIORITY TL_READ_WITH_SHARED_LOCKS TL_WRITE/) {
 		$sqlv_tables{"Options"}{$optionName}=1;
 	}
@@ -85,6 +95,7 @@ sub handleOption {
 	else {
 		setWarning("Not supported","Option",$optionName);
 	}
+	return 1;
 }
 
 
