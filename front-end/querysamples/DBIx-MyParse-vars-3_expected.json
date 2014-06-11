@@ -2,9 +2,6 @@
    "Warning" : {
       "No alias" : {
          "get_system_var" : "SELECT"
-      },
-      "Not supported" : {
-         "Option" : "SQL_NO_CACHE"
       }
    },
    "Functions" : {
@@ -16,5 +13,8 @@
          "name" : "get_system_var",
          "alias" : "0"
       }
-   }
+   },
+	"Options" : {
+		"SQL_NO_CACHE" : 1
+	}
 }

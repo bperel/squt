@@ -2,9 +2,6 @@
    "Warning" : {
       "No alias" : {
          "set_user_var" : "SELECT"
-      },
-      "Not supported" : {
-         "Option" : "SQL_NO_CACHE"
       }
    },
    "Functions" : {
@@ -17,5 +14,8 @@
          "name" : "set_user_var",
          "alias" : "0"
       }
-   }
+   },
+	"Options" : {
+		"SQL_NO_CACHE" : 1
+	}
 }
