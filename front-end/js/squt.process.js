@@ -15,96 +15,16 @@ function processQuery(jsondata) {
 	var subqueryType=jsondata.SubqueryType;
 
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
-	tables[outputTableAlias]=({type: "table",
-		output: true,
-		name: outputTableAlias,
-		subqueryGroup: subqueryGroup});
+
 	tableAliases[outputTableAlias]={table: outputTableAlias,
 		name:  outputTableAlias};
 
 	subqueries[subqueryGroup]={type: "subquery",
 		name: subqueryGroup};
+
+	Table.addOutputTable(subqueryGroup, outputTableAlias);
 	d3.forEach(jsondata.Tables, function(tableInfo, tableName) {
-		tables[tableName]=({type: "table",
-			name:tableName,
-			subqueryGroup: subqueryGroup});
-
-		d3.forEach(tableInfo, function(actions, tableAlias) {
-			tableAliases[tableAlias]={table: tableName,name: tableAlias};
-
-			d3.forEach(actions, function(actionFields, type) {
-
-				d3.forEach(actionFields, function(data, field) {
-					var tableAliasField = [tableAlias, field].join('.');
-					if (!fields.filter(function(field) {
-						return field.fullName === tableAliasField;
-					}).length) {
-						fields.push({type: "field", tableAlias:tableAlias, name:field, fullName:tableAliasField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-					}
-					switch(type) {
-						case 'OUTPUT':
-							d3.forEach(data, function(outputAlias, functionAlias) {
-								if (functionAlias == -1) { // Directly to output
-									var fullName = [outputTableAlias, outputAlias].join('.');
-									linksToOutput.push({type: "link", from: "field", fieldName: tableAliasField, outputName: outputAlias, outputTableAlias: outputTableAlias});
-									fields.push({type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-								}
-								else { // To a function
-									linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: functionAlias});
-								}
-							});
-
-							break;
-						case 'CONDITION':
-							d3.forEach(data, function(conditionData, conditionType) {
-								switch(conditionType) {
-									case 'FUNCTION':
-										d3.forEach(d3.keys(conditionData), function(destinationFunctionAlias) {
-											linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: destinationFunctionAlias});
-										});
-										break;
-									case 'JOIN': case 'VALUE': case 'EXISTS':
-									d3.forEach(conditionData, function(join, otherField) {
-										if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-											if (!fields.filter(function(field) {
-												return field.fullName === otherField;
-											}).length) { // In case the joined table isn't referenced elsewhere
-												var tableAliasAndField=otherField.split('.');
-												fields.push({type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-											}
-											var joinType;
-											switch(join) {
-												case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
-												case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
-												case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
-												case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
-											}
-											links.push({source: tableAliasField, target: otherField, type: joinType});
-										}
-//											else { // It's a value
-//												fields[tableAliasField].filtered=true;
-//											}
-									});
-									break;
-									default:
-										if (d3.keys(SUBSELECT_TYPES).indexOf(conditionType) !== -1) {
-											links.push({source: tableAliasField, target: OUTPUT_PREFIX+conditionData, type: conditionType});
-										}
-										break;
-								}
-							});
-							break;
-						case 'SORT':
-							d3.forEach(fields, function(field) {
-								if (field.fullName === tableAliasField) {
-									field.sort = data;
-								}
-							});
-							break;
-					}
-				});
-			});
-		});
+		Table.process(tableInfo, tableName, subqueryGroup, subqueryType, outputTableAlias)
 	});
 
 	var functionCpt=0;

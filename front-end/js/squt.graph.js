@@ -52,6 +52,7 @@ var svg = d3.select("body").append("svg:svg")
 			svg.select("svg>g.main").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 		})
 	);
+var mainGroup;
 
 addDefs();
 
@@ -80,206 +81,18 @@ function buildGraph() {
 
 	cleanupGraph();
 	
-	var g = svg.append("svg:g").classed("main", true);
+	mainGroup = svg.append("svg:g").classed("main", true);
 
-	subqueryRects = g.selectAll("rect.subquery")
+	subqueryRects = mainGroup.selectAll("rect.subquery")
 		.data(tables.filter(function(table) {
 			return table.subqueryGroup !== MAIN_QUERY_ALIAS;
 		}))
 		.enter().insert("svg:rect", ":first-child")
 		.classed("subquery", true);
 	
-	tableGroups = g.append("svg:g").selectAll("g")
-		.data(tables)
-	  .enter().append("svg:g")
-		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
-		.call(node_drag)
-		.each(function(currentTable) {
-			var relatedAliases = tableAliases.filter(function(ta) { return ta.table == currentTable.name; });
-			var relatedFields = fields.filter(function(currentField) { 
-				return isFieldInTable(currentField, currentTable); 
-			});
-
-			var tableWidth=TABLE_NAME_PADDING.left
-	  		   			 + CHAR_WIDTH*d3.max([currentTable.name.length,
-	  		   			                      d3.max(relatedFields, function(field) { 
-	  		   			                    	  return field.name.length; 
-	  		   			                      })
-	  		   			                     ]);
-			var tableHeight=MIN_TABLE_HEIGHT + relatedFields.length * FIELD_LINEHEIGHT;
-
-			var currentTableElement = d3.select(this);
-			currentTableElement
-			  .append("svg:rect")
-				.classed({table: true, output: !!currentTable.output})
-				.attr("height", tableHeight)
-				.attr("width",  tableWidth );
-			
-			currentTableElement
-			  .append("svg:text")
-				.text(currentTable.output ? OUTPUT_LABEL : currentTable.name)
-				.classed({tablename: true, output: !!currentTable.output})
-				.attr("x", TABLE_NAME_PADDING.left)
-				.attr("y", currentTable.output ? TABLE_NAME_PADDING.output_top : TABLE_NAME_PADDING.top);
-			
-			currentTableElement
-			  .append("svg:line")
-				.classed("tableSeparator", true)
-				.attr("x1", 0)
-				.attr("x2", tableWidth)
-				.attr("y1", LINE_SEPARATOR_TOP)
-				.attr("y2", LINE_SEPARATOR_TOP);
-			
-			currentTableElement
-			  .selectAll("g.aliasGroup")
-			    .data(relatedAliases)
-			  .enter().append("svg:g")
-				.classed("aliasGroup", true)
-				.each(function(currentAlias) {
-					d3.select(this)
-					  .append("svg:text")
-						.text(currentTable.output ? "" : currentAlias.name)
-						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth)+ALIAS_NAME_PADDING.left)
-						.attr("y", ALIAS_NAME_PADDING.top);
-
-					d3.select(this)
-					  .append("svg:rect")
-						.classed({alias: true, output: !!currentTable.output})
-						.attr("x", getAliasPosX(relatedAliases, currentAlias.name, tableWidth))
-						.attr("y", ALIAS_BOX_MARGIN.top)
-						.attr("width", getAliasWidth(!!currentTable.output, currentAlias))
-						.attr("height",tableHeight-ALIAS_BOX_MARGIN.top);
-				});
-			
-			var fieldIndex = 0;
-			
-			currentTableElement
-			  .selectAll("g.fieldGroup")
-			    .data(relatedFields)
-			  .enter().append("svg:g")
-				.classed("fieldGroup", true)
-				.each(function(currentField,i) {
-					var sort = currentField.sort;
-					var isFiltered = currentField.filtered;
-					var preexistingField = fieldNodes.filter(function(fieldNode) {
-						return fieldNode.tableAlias === currentTable.name && fieldNode.name === currentField.name;
-					});
-					
-					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
-										  y: preexistingField.length
-											  ? parseInt(preexistingField[0].attr("cy"))
-											  : (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2)};
-
-					fieldNodes.push(
-						d3.select(this)
-							.append("svg:circle")
-							.attr("r",CIRCLE_RADIUS)
-							.attr("cx", circlePosition.x)
-							.attr("cy", circlePosition.y)
-							.classed("filtered", isFiltered)
-							.classed("sort_"+sort, !!sort)
-					);
-					
-					if (sort) {
-						d3.select(this)
-						  .append("svg:image")
-						    .attr("xlink:href", "images/sort_"+sort+".svg")
-							.attr("width", SORT_SIDE)
-							.attr("height",SORT_SIDE)
-							.attr("x", circlePosition.x)
-							.attr("y", circlePosition.y-SORT_SIDE/2)
-						    .classed("order", true);
-					}
-
-					if (!preexistingField.length) {
-						d3.select(this)
-						  .append("svg:text")
-						    .text(currentField.name)
-							.attr("x", FIELD_PADDING.left)
-							.attr("y", FIELD_PADDING.top + FIELD_LINEHEIGHT*fieldIndex);
-						
-						fieldIndex++;
-					}
-				});
-
-			if (!!currentTable.output) {
-				var infoboxSources = [
-					{ type: "options", data: options },
-					{ type: "limits" , data: limits  }
-				];
-
-				var currentYOffset = tableHeight;
-
-				d3.forEach(infoboxSources, function(infoboxSource) {
-					var dataForCurrentSubqueryGroup = infoboxSource.data.filter(function(currentData) {
-						return currentData.subqueryGroup === currentTable.subqueryGroup;
-					});
-
-					if (dataForCurrentSubqueryGroup.length) {
-						var currentData = dataForCurrentSubqueryGroup[0][infoboxSource.type];
-						var textLines = [];
-
-						switch(infoboxSource.type) {
-							case 'limits':
-								textLines.push(
-									(currentData.Begin ? LIMITS_2_BOUNDARIES : LIMITS_1_BOUNDARY)
-										.replace(/\$1/, currentData.Begin)
-										.replace(/\$2/, currentData.End)
-										.replace(/\$3/, (currentData.End - currentData.Begin > 1) ? 's' :'')
-								);
-							break;
-							case 'options':
-								d3.forEach(currentData, function(value, optionName) {
-									textLines.push(OPTIONS_LABELS[optionName]);
-								});
-							break;
-						}
-
-						var infoboxHeight = (1+textLines.length)*CHAR_HEIGHT;
-
-						currentTableElement
-							.append("svg:rect")
-							.attr("class", "infobox "+infoboxSource.type)
-							.attr("height", infoboxHeight)
-							.attr("y", currentYOffset);
-
-						var infoboxTextContainer = currentTableElement
-							.selectAll(".infoboxText."+infoboxSource.type)
-								.data(textLines)
-							.enter();
-						infoboxTextContainer
-							.append("svg:rect")
-								.attr("height", CHAR_HEIGHT)
-								.attr("width",  function(line) { return (line.text || line).length * CHAR_WIDTH; })
-								.attr("y", function(line, i) { return currentYOffset + i*CHAR_HEIGHT; })
-								.attr("class", "infoboxText "+infoboxSource.type)
-								.on("click", function(line) {
-									if (line.doc) {
-										window.open(DOC_ROOT_URL+line.doc);
-									}
-								});
-
-						infoboxTextContainer
-							.append("svg:text")
-								.text(function(line) { return line.text || line;})
-								.attr("x", OPTION_PADDING.left)
-								.attr("y", function(line, lineNumber) { return currentYOffset + OPTION_PADDING.top + lineNumber*CHAR_HEIGHT; });
-
-						currentYOffset += infoboxHeight;
-					}
-				});
-
-				d3.selectAll(".infobox").attr("width",
-					d3.max([tableWidth + getAliasWidth(true),
-						d3.max(d3.selectAll(".infoboxText").data(), function(infobox) {
-							return (infobox.text || infobox).length * CHAR_WIDTH;
-						})
-					])
-				);
-			}
-		});
+	tableGroups = Table.build(tables);
 	
-	paths = g.append("svg:g").selectAll("path.join")
+	paths = mainGroup.append("svg:g").selectAll("path.join")
 		.data(links)
 	  .enter().append("svg:path")
 		.classed("link", true)
@@ -305,7 +118,7 @@ function buildGraph() {
 		})
 		.each(function(d,i) {
 			if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
-				g
+				mainGroup
 				  .append("svg:text")
 				  	.append("textPath")
 				  	  .attr("startOffset","50%")
@@ -316,14 +129,14 @@ function buildGraph() {
 			}
 		});
 
-	pathsToOutput = g.append("svg:g").selectAll("path.output")
+	pathsToOutput = mainGroup.append("svg:g").selectAll("path.output")
 		.data(linksToOutput)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "outputpath"+i;})
 		.attr("marker-end", "url(#arrow)")
 		.classed({output: true, link: true});
 		
-	functionGroups  = g.append("svg:g").selectAll("g.functionGroup")
+	functionGroups  = mainGroup.append("svg:g").selectAll("g.functionGroup")
 		.data(d3.values(functions))
 	  .enter()
 	  	.append("svg:g")
@@ -345,7 +158,7 @@ function buildGraph() {
 	  	})
 		.call(node_drag);
 
-	pathsToFunctions = g.append("svg:g").selectAll("path.tofunction")
+	pathsToFunctions = mainGroup.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
 	  .enter().append("svg:path")
 	    .attr("id", function(d,i) { return "pathtofunction"+i;})
@@ -353,7 +166,7 @@ function buildGraph() {
 		.classed({link: true, tofunction: true});
 
 
-	constantGroups  = g.append("svg:g").selectAll("g.constantGroup")
+	constantGroups  = mainGroup.append("svg:g").selectAll("g.constantGroup")
 		.data(d3.values(constants))
 		.enter()
 		.append("svg:g")
@@ -382,7 +195,7 @@ function buildGraph() {
 		.call(node_drag);
 
 	if (is_debug) {
-		chargeForces = g.append("svg:g").selectAll("g.chargeForce")
+		chargeForces = mainGroup.append("svg:g").selectAll("g.chargeForce")
 			.data(n)
 			.enter()
 			.append("svg:circle")
@@ -591,9 +404,7 @@ function getNode(d, args) {
 	args = args || {};
 	switch (d.type) {
 		case "table":
-			return tableGroups.filter(function(table) {
-				return d.name == table.name;
-			});
+			return Table.findByDatum(d);
 			break;
 		case "function":
 			return functionGroups.filter(function(func) {
@@ -654,7 +465,7 @@ function getNodeCharge(d) {
 	var element = null;
 	switch(d.type) {
 		case "table":
-			element = tableGroups.filter(function(d2) { return d2.name === d.name;});
+			element = Table.findByDatum(d);
 		break;
 		
 		case "function":
@@ -709,7 +520,7 @@ function getGroupCenter(d, axis) {
 function positionAll() {
 	var subqueryBoundaries=[];
 	tableGroups.each(function(d,i) {
-		var tableBoundaries = positionTable.call(this,d,i);
+		var tableBoundaries = Table.position.call(this,d,i);
 		if (d.subqueryGroup !== undefined) {
 			if (!subqueryBoundaries[d.subqueryGroup]) {
 				subqueryBoundaries[d.subqueryGroup]=[];
@@ -751,28 +562,6 @@ function positionAll() {
 				return getGroupCenter(d, 'y');
 			});
 	}
-}
-
-function positionTable(d) {
-	var x = d.x || 0;
-	var y = d.y || 0;
-	
-	d3.select(this)
-	  .attr("transform", "translate("+x+" "+y+")");
-		
-	// Paths between fields
-	paths.attr("d", function(d) {
-	  var source = fieldNodes.filter(function(fieldNode) {
-			return fieldNode.datum().fullName === d.source;
-	  })[0];
-	  var target = fieldNodes.filter(function(fieldNode) {
-			return fieldNode.datum().fullName === d.target;
-	  })[0];
-	  
-	  return getPath(this, source, target);
-	});
-	
-	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};
 }
 
 function positionFunction(d) {
