@@ -164,7 +164,7 @@ Table.build = function(data) {
 				.data(relatedFields)
 				.enter().append("svg:g")
 				.classed("fieldGroup", true)
-				.each(function(currentField,i) {
+				.each(function(currentField) {
 					var sort = currentField.sort;
 					var isFiltered = currentField.filtered;
 					var preexistingField = fieldNodes.filter(function(fieldNode) {
