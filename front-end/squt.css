@@ -78,7 +78,7 @@ div#panel textarea#log, #query_sample, #actions {
 }
 
 div#panel textarea#log, .CodeMirror {
-	margin: 0em;
+	margin: 0;
 	background-color: white;
 }
 
@@ -104,7 +104,7 @@ pre#query {
 	margin: 4px 8px;
 	position: relative;
 	width: 75%;
-	padding: 1px 0px 0px 34px;
+	padding: 1px 0 0 34px;
 }
 
 #create_link input, #create_link a {
