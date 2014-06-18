@@ -386,7 +386,7 @@ function getLinkSourceId(link) {
 	var sourceId;
 	switch(link.from) {
 		case "field":
-			sourceId = parseInt(fieldNameToTableId(link.fieldName));
+			sourceId = parseInt(Field.getTableIdFromName(link.fieldName));
 			break;
 		case "function":
 			sourceId = parseInt(getFunctionId(link.sourceFunctionId));
@@ -580,43 +580,6 @@ function positionConstant(d) {
 
 	d3.select(this)
 		.attr("transform", "translate("+x+" "+y+")");
-}
-
-function isFieldInTable(field,table) {
-	return tableAliases.filter(function(tableAlias) { 
-		return tableAlias.name === field.tableAlias && tableAlias.table == table.name; 
-	}).length > 0;
-}
-
-function fieldNameToTableId(fieldname) {
-	return fieldNameToTable(fieldname, "index");
-}
-	
-function fieldNameToTable(fieldname, indexOrObject) {
-	for (var i in n) {
-		if (n[i].type === "table") {
-			var fieldAlias = tableAliases.filter(function(tableAlias) {
-				var currentField = 
-					d3.values(fields).filter(function(f) { 
-						return fieldname === f.fullName;
-					});
-				return currentField.length > 0 && tableAlias.name === currentField[0].tableAlias;
-			});
-			if (fieldAlias.length > 0 && fieldAlias[0].table === n[i].name) {
-				return indexOrObject === "index" ? i : n[i];
-			}
-		}
-	}
-	return null;
-}
-
-function getTableId(tablename) {
-	for (var i in n) {
-		if (n[i].type === "table" && n[i].name === tablename) {
-			return i;
-		}
-	}
-	return null;
 }
 
 function getOutputId(outputAlias) {

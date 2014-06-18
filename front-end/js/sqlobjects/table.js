@@ -3,83 +3,19 @@ var Table = function(){};
 Table.prototype = new Sqlobject();
 
 Table.process = function(tableInfo, tableName, subqueryGroup, subqueryType, outputTableAlias) {
-	tables[tableName]=({type: "table",
+	tables[tableName]=({
+		type: "table",
 		name:tableName,
-		subqueryGroup: subqueryGroup});
+		subqueryGroup: subqueryGroup
+	});
 
 	d3.forEach(tableInfo, function(actions, tableAlias) {
 		tableAliases[tableAlias]={table: tableName,name: tableAlias};
 
-		d3.forEach(actions, function(actionFields, type) {
+		d3.forEach(actions, function(actionFields, role) {
 
-			d3.forEach(actionFields, function(data, field) {
-				var tableAliasField = [tableAlias, field].join('.');
-				if (!fields.filter(function(field) {
-					return field.fullName === tableAliasField;
-				}).length) {
-					fields.push({type: "field", tableAlias:tableAlias, name:field, fullName:tableAliasField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-				}
-				switch(type) {
-					case 'OUTPUT':
-						d3.forEach(data, function(outputAlias, functionAlias) {
-							if (functionAlias == -1) { // Directly to output
-								var fullName = [outputTableAlias, outputAlias].join('.');
-								linksToOutput.push({type: "link", from: "field", fieldName: tableAliasField, outputName: outputAlias, outputTableAlias: outputTableAlias});
-								fields.push({type: "field", tableAlias:outputTableAlias, name:outputAlias, fullName: fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-							}
-							else { // To a function
-								linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: functionAlias});
-							}
-						});
-
-						break;
-					case 'CONDITION':
-						d3.forEach(data, function(conditionData, conditionType) {
-							switch(conditionType) {
-								case 'FUNCTION':
-									d3.forEach(d3.keys(conditionData), function(destinationFunctionAlias) {
-										linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: destinationFunctionAlias});
-									});
-									break;
-								case 'JOIN': case 'VALUE': case 'EXISTS':
-								d3.forEach(conditionData, function(join, otherField) {
-									if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-										if (!fields.filter(function(field) {
-											return field.fullName === otherField;
-										}).length) { // In case the joined table isn't referenced elsewhere
-											var tableAliasAndField=otherField.split('.');
-											fields.push({type: "field", tableAlias:tableAliasAndField[0], name:tableAliasAndField[1], fullName:otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-										}
-										var joinType;
-										switch(join) {
-											case 'JOIN_TYPE_LEFT': joinType='leftjoin'; break;
-											case 'JOIN_TYPE_RIGHT': joinType='rightjoin'; break;
-											case 'JOIN_TYPE_STRAIGHT': joinType='innerjoin'; break;
-											case 'JOIN_TYPE_NATURAL': joinType='innerjoin'; alert('Natural joins are not supported'); break;
-										}
-										links.push({source: tableAliasField, target: otherField, type: joinType});
-									}
-//											else { // It's a value
-//												fields[tableAliasField].filtered=true;
-//											}
-								});
-								break;
-								default:
-									if (d3.keys(SUBSELECT_TYPES).indexOf(conditionType) !== -1) {
-										links.push({source: tableAliasField, target: OUTPUT_PREFIX+conditionData, type: conditionType});
-									}
-									break;
-							}
-						});
-						break;
-					case 'SORT':
-						d3.forEach(fields, function(field) {
-							if (field.fullName === tableAliasField) {
-								field.sort = data;
-							}
-						});
-						break;
-				}
+			d3.forEach(actionFields, function(data, fieldName) {
+				Field.process(role, data, fieldName, tableAlias, subqueryGroup, outputTableAlias);
 			});
 		});
 	});
@@ -103,7 +39,7 @@ Table.build = function(data) {
 		.each(function(currentTable) {
 			var relatedAliases = tableAliases.filter(function(ta) { return ta.table == currentTable.name; });
 			var relatedFields = fields.filter(function(currentField) {
-				return isFieldInTable(currentField, currentTable);
+				return Field.isInTable(currentField, currentTable);
 			});
 
 			var tableWidth=TABLE_NAME_PADDING.left
@@ -159,54 +95,7 @@ Table.build = function(data) {
 
 			var fieldIndex = 0;
 
-			currentTableElement
-				.selectAll("g.fieldGroup")
-				.data(relatedFields)
-				.enter().append("svg:g")
-				.classed("fieldGroup", true)
-				.each(function(currentField) {
-					var sort = currentField.sort;
-					var isFiltered = currentField.filtered;
-					var preexistingField = fieldNodes.filter(function(fieldNode) {
-						return fieldNode.tableAlias === currentTable.name && fieldNode.name === currentField.name;
-					});
-
-					var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth)+ALIAS_NAME_PADDING.left,
-						y: preexistingField.length
-							? parseInt(preexistingField[0].attr("cy"))
-							: (FIELD_PADDING.top+FIELD_LINEHEIGHT*fieldIndex-CIRCLE_RADIUS/2)};
-
-					fieldNodes.push(
-						d3.select(this)
-							.append("svg:circle")
-							.attr("r",CIRCLE_RADIUS)
-							.attr("cx", circlePosition.x)
-							.attr("cy", circlePosition.y)
-							.classed("filtered", isFiltered)
-							.classed("sort_"+sort, !!sort)
-					);
-
-					if (sort) {
-						d3.select(this)
-							.append("svg:image")
-							.attr("xlink:href", "images/sort_"+sort+".svg")
-							.attr("width", SORT_SIDE)
-							.attr("height",SORT_SIDE)
-							.attr("x", circlePosition.x)
-							.attr("y", circlePosition.y-SORT_SIDE/2)
-							.classed("order", true);
-					}
-
-					if (!preexistingField.length) {
-						d3.select(this)
-							.append("svg:text")
-							.text(currentField.name)
-							.attr("x", FIELD_PADDING.left)
-							.attr("y", FIELD_PADDING.top + FIELD_LINEHEIGHT*fieldIndex);
-
-						fieldIndex++;
-					}
-				});
+			Field.build(relatedFields, fieldIndex, currentTableElement, currentTable, relatedAliases, tableWidth);
 
 			if (!!currentTable.output) {
 				var infoboxSources = [
@@ -291,6 +180,15 @@ Table.findByDatum = function(d) {
 	return tableGroups.filter(function(table) {
 		return d.name == table.name;
 	});
+};
+
+Table.getIdFromName = function(tablename) {
+	for (var i in n) {
+		if (n[i].type === "table" && n[i].name === tablename) {
+			return i;
+		}
+	}
+	return null;
 };
 
 Table.position = function(d) {

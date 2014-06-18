@@ -173,13 +173,13 @@ function processJsonData(jsondata) {
 	l = [];
 
 	d3.forEach(links, function(link) {
-		var sourceTableId = parseInt(fieldNameToTableId(link.source));
+		var sourceTableId = parseInt(Field.getTableIdFromName(link.source));
 		var targetTableId;
 		if (d3.keys(SUBSELECT_TYPES).indexOf(link.type) !== -1) {
-			targetTableId = parseInt(getTableId(link.target));
+			targetTableId = parseInt(Table.getIdFromName(link.target));
 		}
 		else {
-			targetTableId = parseInt(fieldNameToTableId(link.target));
+			targetTableId = parseInt(Field.getTableIdFromName(link.target));
 		}
 		addOrStrengthenLink(sourceTableId, targetTableId);
 	});
