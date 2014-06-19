@@ -176,6 +176,10 @@ Table.build = function(data) {
 	);
 };
 
+Table.getChargedElement = function(d) {
+	return Table.findByDatum(d);
+};
+
 Table.findByDatum = function(d) {
 	return tableGroups.filter(function(table) {
 		return d.name == table.name;

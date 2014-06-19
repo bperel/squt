@@ -83,12 +83,7 @@ function buildGraph() {
 	
 	mainGroup = svg.append("svg:g").classed("main", true);
 
-	subqueryRects = mainGroup.selectAll("rect.subquery")
-		.data(tables.filter(function(table) {
-			return table.subqueryGroup !== MAIN_QUERY_ALIAS;
-		}))
-		.enter().insert("svg:rect", ":first-child")
-		.classed("subquery", true);
+	subqueryRects = Subquery.build(tables);
 	
 	tableGroups = Table.build(tables);
 	
@@ -451,9 +446,7 @@ function getNode(d, args) {
 			});
 		break;
 		case "subquery":
-			return subqueryRects.filter(function(subquery) {
-				return d.name == subquery.name;
-			});
+			return Subquery.findByDatum(d);
 			break;
 	}
 
@@ -465,7 +458,7 @@ function getNodeCharge(d) {
 	var element = null;
 	switch(d.type) {
 		case "table":
-			element = Table.findByDatum(d);
+			element = Table.getChargedElement(d);
 		break;
 		
 		case "function":
@@ -477,9 +470,7 @@ function getNodeCharge(d) {
 		break;
 		
 		case "subquery":
-			if (d.name !== MAIN_QUERY_ALIAS) {
-				element = subqueryRects.filter(function(d2) { return d2.subqueryGroup == d.name; });
-			}
+			element = Subquery.getChargedElement(d);
 		break;
 	}
 	
@@ -518,28 +509,8 @@ function getGroupCenter(d, axis) {
 }
 
 function positionAll() {
-	var subqueryBoundaries=[];
-	tableGroups.each(function(d,i) {
-		var tableBoundaries = Table.position.call(this,d,i);
-		if (d.subqueryGroup !== undefined) {
-			if (!subqueryBoundaries[d.subqueryGroup]) {
-				subqueryBoundaries[d.subqueryGroup]=[];
-			}
-			subqueryBoundaries[d.subqueryGroup].push(tableBoundaries);
-		}
-	});
-	d3.forEach(subqueryBoundaries, function(boundaries, subqueryGroup) {
-		var topBoundary = 	 d3.min(boundaries, function(coord) { return coord.y1; }) - SUBQUERY_PADDING;
-		var rightBoundary =  d3.max(boundaries, function(coord) { return coord.x2; }) + SUBQUERY_PADDING;
-		var bottomBoundary = d3.max(boundaries, function(coord) { return coord.y2; }) + SUBQUERY_PADDING;
-		var leftBoundary = 	 d3.min(boundaries, function(coord) { return coord.x1; }) - SUBQUERY_PADDING;
-		
-		subqueryRects.filter(function(subquery) { return subquery.subqueryGroup === subqueryGroup; })
-			.attr("x",leftBoundary)
-			.attr("y",topBoundary)
-			.attr("width",rightBoundary-leftBoundary)
-			.attr("height",bottomBoundary-topBoundary);
-	});
+
+	Subquery.position(subqueryRects, tableGroups);
 	
 	functionGroups.each(function(d,i) {
 		positionFunction.call(this,d,i);

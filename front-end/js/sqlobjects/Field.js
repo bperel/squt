@@ -96,7 +96,8 @@ Field.build = function (data, fieldIndex, currentTableElement, currentTable, rel
 				return fieldNode.tableAlias === currentTable.name && fieldNode.name === currentField.name;
 			});
 
-			var circlePosition = {x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth) + ALIAS_NAME_PADDING.left,
+			var circlePosition = {
+				x: getAliasPosX(relatedAliases, currentField.tableAlias, tableWidth) + ALIAS_NAME_PADDING.left,
 				y: preexistingField.length
 					? parseInt(preexistingField[0].attr("cy"))
 					: (FIELD_PADDING.top + FIELD_LINEHEIGHT * fieldIndex - CIRCLE_RADIUS / 2)};
