@@ -2,6 +2,9 @@ var Field = function(){};
 
 Field.prototype = new Sqlobject();
 
+
+var fieldNodes;
+
 Field.process = function (role, data, fieldName, tableAlias, subqueryGroup, outputTableAlias) {
 	var tableAliasField = [tableAlias, fieldName].join('.');
 	if (!fields.filter(function (field) {
@@ -157,4 +160,17 @@ Field.getTableIdFromName = function(fieldname) {
 		}
 	}
 	return null;
+};
+
+Field.getByFullName = function(fullName) {
+	return fieldNodes.filter(function(fieldNode) {
+		return fieldNode.datum().fullName === fullName;
+	})[0];
+};
+
+Field.getOutputField = function(outputTableAlias, outputName) {
+	return fieldNodes.filter(function(fieldNode) {
+		var field = fieldNode.datum();
+		return field.tableAlias === outputTableAlias && field.name === outputName;
+	})[0];
 };

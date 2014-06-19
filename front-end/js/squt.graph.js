@@ -60,11 +60,8 @@ function cleanupGraph() {
 	svg.selectAll('image,svg>g.main').remove();
 }
 
-var tableGroups,
-	functionGroups,
+var functionGroups,
 	constantGroups,
-	subqueryRects,
-	fieldNodes,
 	
 	paths,
 	pathsToFunctions,
@@ -77,15 +74,14 @@ function buildGraph() {
 	tables = d3.values(tables);
 	tableAliases = d3.values(tableAliases);
 	fields = d3.values(fields);
-	fieldNodes = [];
 
 	cleanupGraph();
 	
 	mainGroup = svg.append("svg:g").classed("main", true);
 
-	subqueryRects = Subquery.build(tables);
+	Subquery.build(tables);
 	
-	tableGroups = Table.build(tables);
+	Table.build(tables);
 	
 	paths = mainGroup.append("svg:g").selectAll("path.join")
 		.data(links)
@@ -258,10 +254,7 @@ function positionPathsToOutput(origin,d) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
 	  var source = getNode(link);
-	  var target = fieldNodes.filter(function(fieldNode) {
-		  var field = fieldNode.datum();
-		  return field.tableAlias === link.outputTableAlias && field.name === link.outputName;
-	  })[0];
+	  var target = Field.getOutputField(link.outputTableAlias, link.outputName);
 	  
 	  return getPath(this, source, target);
   });
@@ -407,20 +400,14 @@ function getNode(d, args) {
 			}).datum().center;
 		break;
 		case "field":
-			return fieldNodes.filter(function(fieldNode) {
-				var field = fieldNode.datum();
-				return field.fullName === d.fieldName;
-			})[0];
+			return Field.getByFullName(d.fieldName);
 		break;
 		case "link":
 			args.role = args.role || "source";
 			if (args.role == "source") {
 				switch (d.from) {
 					case "field":
-						return fieldNodes.filter(function(fieldNode) {
-							var field = fieldNode.datum();
-							return field.fullName === d.fieldName;
-						})[0];
+						return Field.getByFullName(d.fieldName);
 					break;
 					case "function":
 						return functionGroups.filter(function(func) {
@@ -510,7 +497,7 @@ function getGroupCenter(d, axis) {
 
 function positionAll() {
 
-	Subquery.position(subqueryRects, tableGroups);
+	Subquery.position(tableGroups);
 	
 	functionGroups.each(function(d,i) {
 		positionFunction.call(this,d,i);
