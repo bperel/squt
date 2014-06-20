@@ -203,7 +203,7 @@ function positionPathsToOutput(origin,d) {
   pathsToOutput.filter(function(link) {
 	return filterPathOrigin(link,origin,d);
   }).attr("d", function(link) { 
-	  var source = getNode(link);
+	  var source = getNode(link, {role: "source"});
 	  var target = Field.getOutputField(link.outputTableAlias, link.outputName);
 	  
 	  return getPath(this, source, target);
@@ -213,9 +213,9 @@ function positionPathsToOutput(origin,d) {
 function positionPathsToFunctions(origin,d) {
 	pathsToFunctions.filter(function(link) {
 	  return filterPathOrigin(link,origin,d);
-	}).attr("d", function(d) {
-		var source = getNode(d, {role: "source"});
-		var target = getNode(d, {role: "target"});
+	}).attr("d", function(link) {
+		var source = getNode(link, {role: "source"});
+		var target = getNode(link, {role: "target"});
 		
 	    return getPath(this, source, target);
 	});
