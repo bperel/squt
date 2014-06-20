@@ -60,9 +60,7 @@ function cleanupGraph() {
 	svg.selectAll('image,svg>g.main').remove();
 }
 
-var constantGroups,
-	
-	paths,
+var paths,
 	pathsToFunctions,
 	pathsToOutput,
 
@@ -135,34 +133,7 @@ function buildGraph() {
 		.attr("marker-end", "url(#arrow)")
 		.classed({link: true, tofunction: true});
 
-
-	constantGroups  = mainGroup.append("svg:g").selectAll("g.constantGroup")
-		.data(d3.values(constants))
-		.enter()
-		.append("svg:g")
-		.classed("constantGroup", true)
-		.each(function(currentConstant) {
-			var rectDimensions = {
-				width:  CONSTANT_PADDING.leftright*2 + CHAR_WIDTH * currentConstant.name.length,
-				height: CONSTANT_PADDING.topbottom*2 + CHAR_HEIGHT
-			};
-
-			d3.select(this)
-				.append("svg:rect")
-					.classed("constant", true)
-					.attr("x", -rectDimensions.width/2)
-					.attr("y", -rectDimensions.height/2)
-					.attr("width", rectDimensions.width)
-					.attr("height",rectDimensions.height);
-
-			d3.select(this)
-				.append("svg:text")
-				.text(currentConstant.name)
-				.attr("x", -rectDimensions.width/2  + CONSTANT_PADDING.leftright)
-				.attr("y", -rectDimensions.height/2 + CONSTANT_PADDING.topbottom + CHAR_HEIGHT);
-
-		})
-		.call(node_drag);
+	Constant.build(constants);
 
 	if (is_debug) {
 		chargeForces = mainGroup.append("svg:g").selectAll("g.chargeForce")
@@ -390,9 +361,7 @@ function getNode(d, args) {
 						return Function.findByDatum(d, true).datum().center;
 					break;
 					case "constant":
-						return constantGroups.filter(function(c) {
-							return d.constantId == c.id;
-						});
+						return Constant.findByDatum(d, false);
 					break;
 				}
 			}
@@ -401,12 +370,10 @@ function getNode(d, args) {
 			}
 		break;
 		case "constant":
-			return constantGroups.filter(function(c) {
-				return d.name === c.name;
-			});
+			return Constant.findByDatum(d, true);
 		break;
 		case "subquery":
-			return Subquery.findByDatum(d);
+			return Subquery.findByDatum(d, true);
 			break;
 	}
 
@@ -418,7 +385,7 @@ function getNodeCharge(d) {
 	var element = null;
 	switch(d.type) {
 		case "table":
-			element = Table.getChargedElement(d);
+			element = Table.findByDatum(d);
 		break;
 		
 		case "function":
@@ -426,7 +393,7 @@ function getNodeCharge(d) {
 		break;
 
 		case "constant":
-			element = constantGroups.filter(function(d2) { return d2.name == d.name; });
+			element = Constant.findByDatum(d, true);
 		break;
 		
 		case "subquery":
@@ -474,9 +441,7 @@ function positionAll() {
 
 	Function.position();
 
-	constantGroups.each(function(d,i) {
-		positionConstant.call(this,d,i);
-	});
+	Constant.position();
 	
 	pathsToOutput.each(function(d) {
 		positionPathsToOutput(d.from,d);
@@ -491,14 +456,6 @@ function positionAll() {
 				return getGroupCenter(d, 'y');
 			});
 	}
-}
-
-function positionConstant(d) {
-	var x=d.x || 0;
-	var y=d.y || 0;
-
-	d3.select(this)
-		.attr("transform", "translate("+x+" "+y+")");
 }
 
 function getOutputId(outputAlias) {

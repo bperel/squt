@@ -37,24 +37,12 @@ function processQuery(jsondata) {
 		functionCpt++;
 	});
 
-	if (jsondata.Constants) {
-		d3.forEach(jsondata.Constants, function(constant) {
-			var constantId=constants.length;
-			var constantAlias = constant.alias;
-			var constantValue = constant.value;
-			var fullName = [outputTableAlias, constantValue].join('.');
-			constants.push({id: constantId, name: constantValue, value: constantValue, type: "constant" });
-			linksToOutput.push({type: "link", from: "constant", outputTableAlias: outputTableAlias, outputName: constantAlias, constantId: constantId});
-			fields.push({type: "field", tableAlias:outputTableAlias, name:constantAlias, fullName:fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-		});
-	}
+	Constant.process(jsondata.Constants, outputTableAlias, subqueryGroup);
 
 	// If we are in a subquery, the outputs must be transmitted to the superquery if included in the main query's SELECT
 	if (subqueryGroup !== MAIN_QUERY_ALIAS) {
 		d3.forEach(fields, function(field) {
 			if (field.tableAlias === OUTPUT_PREFIX + subqueryGroup) {
-				var fullName = [field.tableAlias, field.name].join('.');
-				var fullNameInMainSubquery;
 				var outputName;
 				if (subqueryType === "SINGLEROW_SUBS") {
 					outputName = subqueryGroup;
@@ -64,7 +52,8 @@ function processQuery(jsondata) {
 				}
 
 				if (!!outputName) {
-					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
+					var fullName = [field.tableAlias, field.name].join('.');
+					var fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
 					fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
 					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
 				}

@@ -17,7 +17,7 @@ Subquery.build = function (data) {
 Subquery.getChargedElement = function(d) {
 	return d.name === MAIN_QUERY_ALIAS
 		? null
-		: subqueryRects.filter(function(d2) { return d2.subqueryGroup == d.name; });
+		: Subquery.findByDatum(d, false);
 };
 
 Subquery.position = function(data) {
@@ -45,8 +45,8 @@ Subquery.position = function(data) {
 	});
 };
 
-Subquery.findByDatum = function(d) {
+Subquery.findByDatum = function(d, useAlias) {
 	return subqueryRects.filter(function(subquery) {
-		return d.name == subquery.name;
+		return d.name === (useAlias ? subquery.name : subquery.subqueryGroup);
 	});
 };
