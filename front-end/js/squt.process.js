@@ -56,19 +56,15 @@ function processQuery(jsondata) {
 				var fullName = [field.tableAlias, field.name].join('.');
 				var fullNameInMainSubquery;
 				var outputName;
-				var fieldId;
 				if (subqueryType === "SINGLEROW_SUBS") {
 					outputName = subqueryGroup;
-					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
-					fieldId = subqueryGroup;
 				}
 				else if (subqueryType === null) { // Derived table
 					outputName = field.name;
-					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
-					fieldId = fullNameInMainSubquery;
 				}
 
 				if (!!outputName) {
+					fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
 					fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
 					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
 				}
