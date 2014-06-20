@@ -79,3 +79,11 @@ Function.findByDatum = function(d, useSourceId) {
 		return func.functionAlias === (useSourceId ? d.sourceFunctionId : d.functionAlias);
 	});
 };
+
+Function.getId = function(d, as) {
+	for (var i in n) {
+		if ((as === "source" ? d.sourceFunctionId :d .functionAlias) === n[i].functionAlias)
+			return i;
+	}
+	return null;
+};

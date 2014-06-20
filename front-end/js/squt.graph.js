@@ -327,12 +327,10 @@ function getLinkSourceId(link) {
 			sourceId = parseInt(Field.getTableIdFromName(link.fieldName));
 			break;
 		case "function":
-			sourceId = parseInt(getFunctionId(link.sourceFunctionId));
+			sourceId = parseInt(Function.getId(link, "source"));
 			break;
 		case "constant":
-			sourceId = parseInt(getConstantId(link.constantId));
-			break;
-		default:
+			sourceId = parseInt(Constant.getId(link));
 			break;
 	}
 	return sourceId;
@@ -466,22 +464,6 @@ function getOutputId(outputAlias) {
 			}).length) {
 			return i;
 		}
-	}
-	return null;
-}
-
-function getFunctionId(funcName) {
-	for (var i in n) {
-		if (funcName == n[i].functionAlias)
-			return i;
-	}
-	return null;
-}
-
-function getConstantId(constantId) {
-	for (var i in n) {
-		if (constantId == n[i].id)
-			return i;
 	}
 	return null;
 }

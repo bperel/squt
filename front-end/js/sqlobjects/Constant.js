@@ -70,3 +70,11 @@ Constant.findByDatum = function(d, useAlias) {
 		}
 	});
 };
+
+Constant.getId = function(d) {
+	for (var i in n) {
+		if (d.constantId == n[i].id)
+			return i;
+	}
+	return null;
+};

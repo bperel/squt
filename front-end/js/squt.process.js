@@ -162,7 +162,7 @@ function processJsonData(jsondata) {
 
 	d3.forEach(linksToFunctions, function(link) {
 		var sourceId = getLinkSourceId(link);
-		var targetId = parseInt(getFunctionId(link.functionAlias));
+		var targetId = parseInt(Function.getId(link, "target"));
 		addOrStrengthenLink(sourceId, targetId);
 	});
 
