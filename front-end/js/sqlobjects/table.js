@@ -2,6 +2,9 @@ var Table = function(){};
 
 Table.prototype = new Sqlobject();
 
+
+var tableGroups;
+
 Table.process = function(tableInfo, tableName, subqueryGroup, subqueryType, outputTableAlias) {
 	tables[tableName]=({
 		type: "table",
@@ -31,7 +34,10 @@ Table.addOutputTable = function (subqueryGroup, outputTableAlias) {
 };
 
 Table.build = function(data) {
-	return mainGroup.append("svg:g").selectAll("g")
+
+	fieldNodes = [];
+
+	tableGroups = mainGroup.append("svg:g").selectAll("g")
 		.data(data)
 		.enter().append("svg:g")
 		.attr("class", function(currentTable) { return "tableGroup"+(currentTable.output ? " output":""); })
@@ -204,12 +210,8 @@ Table.position = function(d) {
 
 	// Paths between fields
 	paths.attr("d", function(d) {
-		var source = fieldNodes.filter(function(fieldNode) {
-			return fieldNode.datum().fullName === d.source;
-		})[0];
-		var target = fieldNodes.filter(function(fieldNode) {
-			return fieldNode.datum().fullName === d.target;
-		})[0];
+		var source = Field.getByFullName(d.source);
+		var target = Field.getByFullName(d.target);
 
 		return getPath(this, source, target);
 	});

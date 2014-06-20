@@ -16,11 +16,15 @@ function processQuery(jsondata) {
 
 	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
 
-	tableAliases[outputTableAlias]={table: outputTableAlias,
-		name:  outputTableAlias};
+	tableAliases[outputTableAlias]={
+		table: outputTableAlias,
+		name:  outputTableAlias
+	};
 
-	subqueries[subqueryGroup]={type: "subquery",
-		name: subqueryGroup};
+	subqueries[subqueryGroup]={
+		type: "subquery",
+		name: subqueryGroup
+	};
 
 	Table.addOutputTable(subqueryGroup, outputTableAlias);
 	d3.forEach(jsondata.Tables, function(tableInfo, tableName) {
@@ -29,30 +33,10 @@ function processQuery(jsondata) {
 
 	var functionCpt=0;
 	d3.forEach(jsondata.Functions, function(functionAliasInfo, functionAlias) {
-		var functionDestination=functionAliasInfo.to;
-		functions[functionAlias]={type: "function",
-			functionAlias: functionAlias,
-			name: subqueryGroup+".function_"+functionCpt,
-			value: functionAliasInfo.name,
-			isCondition: functionDestination === "NOWHERE"
-		};
-		if (functionDestination === "OUTPUT") {
-			linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias].functionAlias, outputTableAlias: outputTableAlias});
-			fields.push({type: "field", tableAlias:outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-		}
-		else if (functionDestination !== "NOWHERE") {
-			linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
-		}
-		var functionConstants = functionAliasInfo.Constants;
-		if (functionConstants !== undefined) {
-			d3.forEach(d3.keys(functionConstants), function(constant) {
-				var constantId=constants.length;
-				constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
-				linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
-			});
-		}
+		Function.process(functionAliasInfo, functionAlias, subqueryGroup, functionCpt, outputTableAlias);
 		functionCpt++;
 	});
+
 	if (jsondata.Constants) {
 		d3.forEach(jsondata.Constants, function(constant) {
 			var constantId=constants.length;

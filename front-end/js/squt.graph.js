@@ -60,8 +60,7 @@ function cleanupGraph() {
 	svg.selectAll('image,svg>g.main').remove();
 }
 
-var functionGroups,
-	constantGroups,
+var constantGroups,
 	
 	paths,
 	pathsToFunctions,
@@ -127,27 +126,7 @@ function buildGraph() {
 		.attr("marker-end", "url(#arrow)")
 		.classed({output: true, link: true});
 		
-	functionGroups  = mainGroup.append("svg:g").selectAll("g.functionGroup")
-		.data(d3.values(functions))
-	  .enter()
-	  	.append("svg:g")
-		.classed("functionGroup", true)
-	  	.each(function() {
-			d3.select(this).data()[0].center =
-				d3.select(this)
-		            .append("svg:ellipse")
-			            .classed("function", true)
-			            .classed("conditional", function(d) { return !!d.isCondition; })
-			            .attr("rx",function(d) { return d.value.length*CHAR_WIDTH+FUNCTION_ELLIPSE_PADDING.left*2; })
-			            .attr("ry",FUNCTION_BOX_RY+FUNCTION_ELLIPSE_PADDING.top*2);
-	  		
-	  		d3.select(this)
-		  		.append("svg:text")
-				.text(function(d) { return d.value; })
-				.attr("x", function(d) { return -1*d.value.length*CHAR_WIDTH/2;});
-	  			
-	  	})
-		.call(node_drag);
+	Function.build(functions);
 
 	pathsToFunctions = mainGroup.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
@@ -395,9 +374,7 @@ function getNode(d, args) {
 			return Table.findByDatum(d);
 			break;
 		case "function":
-			return functionGroups.filter(function(func) {
-				return func.functionAlias === d.functionAlias;
-			}).datum().center;
+			return Function.findByDatum(d, false).datum().center;
 		break;
 		case "field":
 			return Field.getByFullName(d.fieldName);
@@ -410,9 +387,7 @@ function getNode(d, args) {
 						return Field.getByFullName(d.fieldName);
 					break;
 					case "function":
-						return functionGroups.filter(function(func) {
-							return func.functionAlias === d.sourceFunctionId;
-						}).datum().center;
+						return Function.findByDatum(d, true).datum().center;
 					break;
 					case "constant":
 						return constantGroups.filter(function(c) {
@@ -422,9 +397,7 @@ function getNode(d, args) {
 				}
 			}
 			else {
-				return functionGroups.filter(function(func) {
-					return func.functionAlias === d.functionAlias;
-				}).datum().center;
+				return Function.findByDatum(d, false).datum().center;
 			}
 		break;
 		case "constant":
@@ -449,7 +422,7 @@ function getNodeCharge(d) {
 		break;
 		
 		case "function":
-			element = functionGroups.filter(function(d2) { return d2.functionAlias == d.functionAlias; });
+			element = Function.findByDatum(d, false);
 		break;
 
 		case "constant":
@@ -498,10 +471,8 @@ function getGroupCenter(d, axis) {
 function positionAll() {
 
 	Subquery.position(tableGroups);
-	
-	functionGroups.each(function(d,i) {
-		positionFunction.call(this,d,i);
-	});
+
+	Function.position();
 
 	constantGroups.each(function(d,i) {
 		positionConstant.call(this,d,i);
@@ -520,16 +491,6 @@ function positionAll() {
 				return getGroupCenter(d, 'y');
 			});
 	}
-}
-
-function positionFunction(d) {
-	var x=d.x || 0;
-	var y=d.y || 0;
-
-	d3.select(this)
-	  .attr("transform", "translate("+x+" "+y+")");
-
-	positionPathsToFunctions("function",d3.select(this).data()[0]);
 }
 
 function positionConstant(d) {
