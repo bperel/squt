@@ -33,9 +33,6 @@ var subqueries,
 	fields,
 	functions,
 	constants,
-
-	limits,
-	options,
 		 
 	links,
 	linksToFunctions,

@@ -34,40 +34,38 @@ Subquery.process = function processQuery(data) {
 
 	var functionCpt=0;
 	d3.forEach(data.Functions, function(functionAliasInfo, functionAlias) {
-		Function.process(functionAliasInfo, functionAlias, subqueryGroup, functionCpt, outputTableAlias);
-		functionCpt++;
+		Function.process(functionAliasInfo, functionAlias, subqueryGroup, functionCpt++, outputTableAlias);
 	});
 
 	Constant.process(data.Constants, outputTableAlias, subqueryGroup);
 
 	// If we are in a subquery, the outputs must be transmitted to the superquery if included in the main query's SELECT
 	if (subqueryGroup !== MAIN_QUERY_ALIAS) {
-		d3.forEach(fields, function(field) {
-			if (field.tableAlias === OUTPUT_PREFIX + subqueryGroup) {
-				var outputName;
-				if (subqueryType === "SINGLEROW_SUBS") {
-					outputName = subqueryGroup;
-				}
-				else if (subqueryType === null) { // Derived table
-					outputName = field.name;
-				}
+		Subquery.processOutputs(subqueryGroup, subqueryType);
+	}
 
-				if (!!outputName) {
-					var fullName = [field.tableAlias, field.name].join('.');
-					var fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
-					fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
-					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
-				}
+	OptionLimit.process(subqueryGroup, data);
+};
+
+Subquery.processOutputs = function (subqueryGroup, subqueryType) {
+	d3.forEach(fields, function (field) {
+		if (field.tableAlias === OUTPUT_PREFIX + subqueryGroup) {
+			var outputName;
+			if (subqueryType === "SINGLEROW_SUBS") {
+				outputName = subqueryGroup;
 			}
-		});
-	}
+			else if (subqueryType === null) { // Derived table
+				outputName = field.name;
+			}
 
-	if (!!data.Limits) {
-		limits.push({subqueryGroup: subqueryGroup, limits: data.Limits});
-	}
-	if (!!data.Options) {
-		options.push({subqueryGroup: subqueryGroup, options: data.Options});
-	}
+			if (!!outputName) {
+				var fullName = [field.tableAlias, field.name].join('.');
+				var fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
+				fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
+				linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
+			}
+		}
+	});
 };
 
 Subquery.build = function (data) {
