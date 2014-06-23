@@ -48,7 +48,7 @@ var svg = d3.select("body").append("svg:svg")
 	.attr("width", W)
 	.attr("height", H)
 	.call(d3.behavior.zoom()
-		.on("zoom",function(a,b) {
+		.on("zoom",function() {
 			svg.select("svg>g.main").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 		})
 	);

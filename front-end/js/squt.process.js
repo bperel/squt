@@ -1,74 +1,3 @@
-function addOrStrengthenLink(sourceId, targetId) {
-	var linkId = [sourceId, targetId].join('/');
-	var linkStrength;
-	if (l[linkId]) {
-		linkStrength = l[linkId].value + 1;
-	}
-	else {
-		linkStrength = 1;
-	}
-	l[linkId] = {source: sourceId, target: targetId, value: linkStrength};
-}
-
-function processQuery(jsondata) {
-	var subqueryGroup=jsondata.SubqueryAlias || MAIN_QUERY_ALIAS;
-	var subqueryType=jsondata.SubqueryType;
-
-	var outputTableAlias=OUTPUT_PREFIX+subqueryGroup;
-
-	tableAliases[outputTableAlias]={
-		table: outputTableAlias,
-		name:  outputTableAlias
-	};
-
-	subqueries[subqueryGroup]={
-		type: "subquery",
-		name: subqueryGroup
-	};
-
-	Table.addOutputTable(subqueryGroup, outputTableAlias);
-	d3.forEach(jsondata.Tables, function(tableInfo, tableName) {
-		Table.process(tableInfo, tableName, subqueryGroup, subqueryType, outputTableAlias)
-	});
-
-	var functionCpt=0;
-	d3.forEach(jsondata.Functions, function(functionAliasInfo, functionAlias) {
-		Function.process(functionAliasInfo, functionAlias, subqueryGroup, functionCpt, outputTableAlias);
-		functionCpt++;
-	});
-
-	Constant.process(jsondata.Constants, outputTableAlias, subqueryGroup);
-
-	// If we are in a subquery, the outputs must be transmitted to the superquery if included in the main query's SELECT
-	if (subqueryGroup !== MAIN_QUERY_ALIAS) {
-		d3.forEach(fields, function(field) {
-			if (field.tableAlias === OUTPUT_PREFIX + subqueryGroup) {
-				var outputName;
-				if (subqueryType === "SINGLEROW_SUBS") {
-					outputName = subqueryGroup;
-				}
-				else if (subqueryType === null) { // Derived table
-					outputName = field.name;
-				}
-
-				if (!!outputName) {
-					var fullName = [field.tableAlias, field.name].join('.');
-					var fullNameInMainSubquery = [MAIN_SUBQUERY_OUTPUT_ALIAS, outputName].join('.');
-					fields.push({type: "field", tableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS, name: outputName, fullName: fullNameInMainSubquery, filtered: false, sort: false, subqueryGroup: MAIN_QUERY_ALIAS});
-					linksToOutput.push({type: "link", from: "field", fieldName: fullName, outputName: outputName, outputTableAlias: MAIN_SUBQUERY_OUTPUT_ALIAS});
-				}
-			}
-		});
-	}
-
-	if (!!jsondata.Limits) {
-		limits.push({subqueryGroup: subqueryGroup, limits: jsondata.Limits});
-	}
-	if (!!jsondata.Options) {
-		options.push({subqueryGroup: subqueryGroup, options: jsondata.Options});
-	}
-}
-
 function processJsonData(jsondata) {
 
 	if (jsondata == null) {
@@ -123,10 +52,7 @@ function processJsonData(jsondata) {
 	linksToFunctions=[];
 	linksToOutput=	 [];
 
-	d3.forEach(jsondata.Subqueries, function(subquery) {
-		processQuery(subquery);
-	});
-	processQuery(jsondata);
+	Subquery.process(jsondata);
 
 	var fieldId = 0;
 	d3.forEach(d3.keys(fields), function(key) {
@@ -169,6 +95,18 @@ function processJsonData(jsondata) {
 	l = d3.values(l);
 
 	buildGraph();
+}
+
+function addOrStrengthenLink(sourceId, targetId) {
+	var linkId = [sourceId, targetId].join('/');
+	var linkStrength;
+	if (l[linkId]) {
+		linkStrength = l[linkId].value + 1;
+	}
+	else {
+		linkStrength = 1;
+	}
+	l[linkId] = {source: sourceId, target: targetId, value: linkStrength};
 }
 
 d3.forEach = function (obj, callback) {
