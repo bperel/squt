@@ -19,4 +19,3 @@ if (is_dir($sample_directory)) {
 else {
 	echo "Error : ".$sample_directory." is not a directory";
 }
-?>
