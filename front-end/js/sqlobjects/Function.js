@@ -82,7 +82,7 @@ Function.findByDatum = function(d, useSourceId) {
 
 Function.getId = function(d, as) {
 	for (var i in n) {
-		if ((as === "source" ? d.sourceFunctionId :d .functionAlias) === n[i].functionAlias)
+		if ((as === "source" ? d.sourceFunctionId : d.functionAlias) === n[i].functionAlias)
 			return i;
 	}
 	return null;
