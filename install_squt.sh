@@ -62,7 +62,7 @@ if $DEFAULT_MYSQL_PATH == true; then
 	MYSQL_FULL_ARCHIVE_NAME=$MYSQL_ARCHIVE_NAME.tar.gz
 	
 	cd $MYSQL_DL_DIR
-	wget http://downloads.mysql.com/archives/mysql-5.0/$MYSQL_FULL_ARCHIVE_NAME
+	wget https://dev.mysql.com/get/Downloads/MySQL-5.0/$MYSQL_FULL_ARCHIVE_NAME
 	OUT=$?
 	if [ $OUT -ne 0 ]; then
 		exit;
