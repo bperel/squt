@@ -63,6 +63,11 @@ sub handleQuery($) {
 			if (defined $curQuery->getWhere()) {
 				handleWhere($curQuery->getWhere());
 			}
+			if (defined $curQuery->getGroup()) {
+				foreach my $groupByItem (@{$curQuery->getGroup()}) {
+					handleGroupBy($groupByItem);
+				}
+			}
 			if (defined $curQuery->getLimit()) {
 				handleLimit($curQuery->getLimit());
 			}
@@ -220,17 +225,23 @@ sub handleSelectItem($$$) {
 			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
 		}
 	}
-	elsif ($itemType eq 'FUNC_ITEM') {
-		my $functionAlias=$item->getAlias();
+	elsif ($itemType eq 'FUNC_ITEM' || $itemType eq 'SUM_FUNC_ITEM') {
+		my $functionName = $itemType eq 'SUM_FUNC_ITEM' ? $item->getFuncType() : $item->getFuncName();
+		my $functionAlias = $item->getAlias();
+
 		if (!defined $functionAlias) {
 			if ($directOutput) {
-				setWarning("No alias",$item->getFuncName(),"SELECT");
+				setWarning("No alias",$functionName,"SELECT");
 			}
 			$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
 		}
-		$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$item->getFuncName();
+		if ($itemType eq 'SUM_FUNC_ITEM') {
+		    $sqlv_tables{"Functions"}{$functionAlias}{"group"}="1";
+        }
+
 		$sqlv_tables{"Functions"}{$functionAlias}{"alias"}=$functionAlias;
 		$sqlv_tables{"Functions"}{$functionAlias}{"to"}=($functionId eq "-1" ? "OUTPUT" : $functionId);
+		$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$functionName;
 		foreach my $argument (@{$item->getArguments()}) {
 			handleSelectItem($argument,$functionAlias,0);
 		}
@@ -356,7 +367,21 @@ sub handleOrderBy($) {
 		}
 	}
 	else {
-		setWarning("Not supported","Non-field items in ORDER BY CLAUSE", $orderByItem->getValue());
+		setWarning("Not supported","Non-field items in ORDER BY clause", $orderByItem->getValue());
+	}
+}
+
+sub handleGroupBy($) {
+	my ($groupByItem) = @_;
+	if ($groupByItem->getItemType() eq 'FIELD_ITEM') {
+		my $tableName = getItemTableName($groupByItem);
+		my $fieldAlias = $groupByItem->getAlias() || $groupByItem->getFieldName();
+		
+		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
+							  {"GROUP"}{$groupByItem->getFieldName()}=$groupByItem->getDirection();
+	}
+	else {
+		setWarning("Not supported","Non-field items in GROUP BY clause", $groupByItem->getValue());
 	}
 }
 

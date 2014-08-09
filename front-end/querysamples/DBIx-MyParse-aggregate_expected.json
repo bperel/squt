@@ -1,0 +1,32 @@
+{
+  "Tables" : {
+    "table_name" : {
+      "table_name" : {
+        "GROUP" : {
+          "non_count_field" : "ASC"
+        },
+        "OUTPUT" : {
+          "non_count_field" : {
+            "-1" : "non_count_field"
+          },
+          "count_field" : {
+            "0" : "count_field"
+          }
+        }
+      }
+    }
+  },
+  "Warning" : {
+    "No alias" : {
+      "COUNT_DISTINCT_FUNC" : "SELECT"
+    }
+  },
+  "Functions" : {
+    "0" : {
+      "group" : "1",
+      "alias" : "0",
+      "name" : "COUNT_DISTINCT_FUNC",
+      "to" : "OUTPUT"
+    }
+  }
+}
