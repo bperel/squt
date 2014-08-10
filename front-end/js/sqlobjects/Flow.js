@@ -71,15 +71,16 @@ Flow.buildPathToFunctions = function(data) {
 };
 
 Flow.position = function() {
-	pathsToOutput.each(function(d) {
-		Flow.positionPathsToOutput(d.from,d);
-	});
-};
 
-Flow.positionPathsToOutput = function(origin,d) {
-	pathsToOutput.filter(function(link) {
-		return Flow.filterPathOrigin(link,origin,d);
-	}).attr("d", function(link) {
+	// Paths between fields
+	paths.attr("d", function(d) {
+		var source = Field.getByFullName(d.source);
+		var target = Field.getByFullName(d.target);
+
+		return Flow.getPath(this, source, target);
+	});
+
+	pathsToOutput.attr("d", function(link) {
 		var source = getNode(link, {role: "source"});
 		var target = Field.getOutputField(link.outputTableAlias, link.outputName);
 
