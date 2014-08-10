@@ -125,11 +125,19 @@ function buildGraph() {
 
 	pathsToFunctions = mainGroup.append("svg:g").selectAll("path.tofunction")
 		.data(linksToFunctions)
-	  .enter().append("svg:path")
-	    .attr("id", function(d,i) { return "pathtofunction"+i;})
-		.attr("marker-end", "url(#arrow)")
-		.classed({link: true, tofunction: true});
+	  .enter().append("svg:g");
 
+	pathsToFunctions.each(function(d) {
+		var isAggregation = functions[d.functionAlias].isAggregation;
+		var loop = isAggregation ? 3 : 1;
+		for (var i = loop; i >= 1; i--) {
+			d3.select(this)
+				.append("svg:path")
+				.attr("marker-end", "url(#arrow)")
+				.attr("class", "width"+i)
+				.classed({link: true, tofunction: true});
+		}
+	});
 	Constant.build(constants);
 
 	if (is_debug) {
@@ -210,7 +218,7 @@ function positionPathsToOutput(origin,d) {
 function positionPathsToFunctions(origin,d) {
 	pathsToFunctions.filter(function(link) {
 	  return filterPathOrigin(link,origin,d);
-	}).attr("d", function(link) {
+	}).selectAll("path").attr("d", function(link) {
 		var source = getNode(link, {role: "source"});
 		var target = getNode(link, {role: "target"});
 		

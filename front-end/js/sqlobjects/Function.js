@@ -7,15 +7,18 @@ var functionGroups;
 
 Function.process = function (functionAliasInfo, functionAlias, subqueryGroup, functionCpt, outputTableAlias) {
 	var functionDestination = functionAliasInfo.to;
+	var isAggregation = functionAliasInfo.group === '1';
+
 	functions[functionAlias] = {type: "function",
 		functionAlias: functionAlias,
 		name: subqueryGroup + ".function_" + functionCpt,
 		value: functionAliasInfo.name,
-		isCondition: functionDestination === "NOWHERE"
+		isCondition: functionDestination === "NOWHERE",
+		isAggregation: isAggregation
 	};
 	if (functionDestination === "OUTPUT") {
 		linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias].functionAlias, outputTableAlias: outputTableAlias});
-		fields.push({type: "field", tableAlias: outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, aggregation: functionAliasInfo.group === '1', subqueryGroup: subqueryGroup});
+		fields.push({type: "field", tableAlias: outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, aggregation: isAggregation, subqueryGroup: subqueryGroup});
 	}
 	else if (functionDestination !== "NOWHERE") {
 		linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});

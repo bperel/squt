@@ -163,6 +163,17 @@ path.link {
   stroke-width: 1.5px;
 }
 
+path.width2 {
+    stroke-width: 3px;
+    stroke: white;
+    marker-end: none;
+}
+
+path.width3 {
+    stroke-width: 4.5px;
+    marker-end: none;
+}
+
 circle.filtered {
 	stroke: red;
 	stroke-width: 3px;
