@@ -38,6 +38,22 @@ var OPTIONS_LABELS       = {
 							 TL_WRITE                  : {text: "lock for update",                   doc: "innodb-locking-reads.html"}
 						   };
 
+var AGGREGATION_LABELS =   {
+							 COUNT_FUNC: "COUNT",
+							 COUNT_DISTINCT_FUNC: "COUNT DISTINCT",
+							 SUM_FUNC: "SUM",
+							 SUM_DISTINCT_FUNC: "SUM DISTINCT",
+							 AVG_FUNC: "AVG",
+							 MIN_FUNC: "MIN",
+							 MAX_FUNC: "MAX",
+	                         UNIQUE_USERS_FUNC: "Unknown group function",
+							 STD_FUNC: "STD",
+							 VARIANCE_FUNC: "VARIANCE",
+							 SUM_BIT_FUNC: "(BIT OPERATION)",
+							 UDF_SUM_FUNC: "SUM (User-defined)",
+							 GROUP_CONCAT_FUNC: "GROUP_CONTACT"
+						   };
+
 
 /* Measures */
 

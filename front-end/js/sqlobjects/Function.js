@@ -48,21 +48,23 @@ Function.build = function (functions) {
 						return !!d.isCondition;
 					})
 					.attr("rx", function (d) {
-						return d.value.length * CHAR_WIDTH + FUNCTION_ELLIPSE_PADDING.left * 2;
+						return Function.text(d).length * CHAR_WIDTH + FUNCTION_ELLIPSE_PADDING.left * 2;
 					})
 					.attr("ry", FUNCTION_BOX_RY + FUNCTION_ELLIPSE_PADDING.top * 2);
 
 			d3.select(this)
 				.append("svg:text")
-				.text(function (d) {
-					return d.value;
-				})
+				.text(Function.text)
 				.attr("x", function (d) {
-					return -1 * d.value.length * CHAR_WIDTH / 2;
+					return -1 * Function.text(d).length * CHAR_WIDTH / 2;
 				});
 
 		})
 		.call(node_drag);
+};
+
+Function.text = function(d) {
+	return (d.isAggregation && AGGREGATION_LABELS[d.value]) || d.value;
 };
 
 Function.position = function() {
