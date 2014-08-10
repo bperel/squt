@@ -101,7 +101,7 @@ function addDefs() {
 		.enter().append("marker")
 		.attr("id", String)
 		.attr("viewBox", "0 0 10 10")
-		.attr("refX", 10)
+		.attr("refX", 5)
 		.attr("refY", 5)
 		.attr("markerUnits", "strokeWidth")
 		.attr("markerWidth", 8)
