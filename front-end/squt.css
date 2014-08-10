@@ -147,7 +147,8 @@ svg#graph {
     fill: white;
 }
 
-marker#arrow polyline {
+marker#arrow polyline,
+marker#arrow_to_function polyline{
 	stroke: black;
 	fill: white;
 }

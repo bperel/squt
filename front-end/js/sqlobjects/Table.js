@@ -137,7 +137,7 @@ Table.position = function(d) {
 		var source = Field.getByFullName(d.source);
 		var target = Field.getByFullName(d.target);
 
-		return getPath(this, source, target);
+		return Flow.getPath(this, source, target);
 	});
 
 	return {x1: x, y1: y, x2: x+this.getBBox().width, y2: y+this.getBBox().height};

@@ -73,7 +73,7 @@ Function.position = function() {
 		d3.select(this)
 			.attr("transform", "translate("+x+" "+y+")");
 
-		positionPathsToFunctions("function",d3.select(this).data()[0]);
+		Flow.positionPathsToFunctions("function",d3.select(this).data()[0]);
 	});
 };
 

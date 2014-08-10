@@ -81,13 +81,13 @@ function processJsonData(jsondata) {
 
 
 	d3.forEach(linksToOutput, function(link) {
-		var sourceId = getLinkSourceId(link);
+		var sourceId = Flow.getSourceId(link);
 		var targetId = parseInt(getOutputId(link.outputTableAlias.replace(OUTPUT_PREFIX,'')));
 		addOrStrengthenLink(sourceId, targetId);
 	});
 
 	d3.forEach(linksToFunctions, function(link) {
-		var sourceId = getLinkSourceId(link);
+		var sourceId = Flow.getSourceId(link);
 		var targetId = parseInt(Function.getId(link, "target"));
 		addOrStrengthenLink(sourceId, targetId);
 	});

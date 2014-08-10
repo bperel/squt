@@ -97,11 +97,11 @@ function addDefs() {
 	svg.append("defs");
 
 	d3.select("defs").append("svg:g").selectAll("marker")
-		.data(["arrow"])
+		.data([{id: "arrow", refX: 10}, {id: "arrow_to_function", refX: 5}])
 		.enter().append("marker")
-		.attr("id", String)
+		.attr("id", function(d) { return d.id; })
 		.attr("viewBox", "0 0 10 10")
-		.attr("refX", 5)
+		.attr("refX", function(d) { return d.refX; })
 		.attr("refY", 5)
 		.attr("markerUnits", "strokeWidth")
 		.attr("markerWidth", 8)
@@ -176,7 +176,7 @@ function addLegend() {
 			.attr("class", function(d) { return d.className || ""; })
 			.classed("output link", true)
 			.attr("d", function(d) {
-				return getPathFromCoords({
+				return Flow.getPathFromCoords({
 						x: LEGEND_CONTENT_PADDING,
 						y: LEGEND_CONTENT_PADDING + d.row * LEGEND_LINEHEIGHT
 					},{
