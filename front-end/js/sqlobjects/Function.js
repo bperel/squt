@@ -23,14 +23,11 @@ Function.process = function (functionAliasInfo, functionAlias, subqueryGroup, fu
 	else if (functionDestination !== "NOWHERE") {
 		linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
 	}
-	var functionConstants = functionAliasInfo.Constants;
-	if (functionConstants !== undefined) {
-		d3.forEach(d3.keys(functionConstants), function (constant) {
-			var constantId = constants.length;
-			constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant" });
-			linksToFunctions.push({type: "link", from: "constant", constantId: constantId, functionAlias: functionAlias});
-		});
-	}
+	d3.forEach(d3.keys(functionAliasInfo.Constants),
+		function (constant) {
+			Constant.processFunctionConstant(constant, functionAlias);
+		}
+	);
 };
 
 Function.build = function (functions) {

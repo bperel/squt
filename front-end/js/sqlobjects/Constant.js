@@ -50,6 +50,17 @@ Constant.process = function(data, outputTableAlias, subqueryGroup) {
 	}
 };
 
+Constant.processFunctionConstant = function(constant, functionAlias) {
+	var constantId = constants.length;
+	constants.push({id: constantId, name: constant, functionAlias: functionAlias, type: "constant"});
+	linksToFunctions.push({
+		type: "link",
+		from: "constant",
+		constantId: constantId,
+		functionAlias: functionAlias
+	});
+};
+
 Constant.position = function() {
 	constantGroups.each(function(d) {
 		var x=d.x || 0;
