@@ -130,7 +130,7 @@ Field.build = function (data, fieldIndex, currentTableElement, currentTable, rel
 				d3.select(this)
 					.append("svg:text")
 					.text(currentField.name)
-					.attr("x", FIELD_PADDING.left)
+					.attr("x", FIELD_PADDING.left + (currentField.aggregation ? AGGREGATION_LEFT_PADDING : 0))
 					.attr("y", FIELD_PADDING.top + FIELD_LINEHEIGHT * fieldIndex);
 
 				fieldIndex++;

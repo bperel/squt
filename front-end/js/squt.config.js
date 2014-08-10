@@ -63,6 +63,7 @@ var CIRCLE_RADIUS 	   		 =  6
 								 left: 5,
 								 top: 35
 							   }
+   ,AGGREGATION_LEFT_PADDING = 10
    ,FIELD_LINEHEIGHT   		 = 20
    ,FUNCTION_BOX_RY			 = 20
    ,FUNCTION_ELLIPSE_PADDING = {

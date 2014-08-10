@@ -15,7 +15,7 @@ Function.process = function (functionAliasInfo, functionAlias, subqueryGroup, fu
 	};
 	if (functionDestination === "OUTPUT") {
 		linksToOutput.push({type: "link", from: "function", sourceFunctionId: functionAlias, outputName: functions[functionAlias].functionAlias, outputTableAlias: outputTableAlias});
-		fields.push({type: "field", tableAlias: outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, subqueryGroup: subqueryGroup});
+		fields.push({type: "field", tableAlias: outputTableAlias, name: functionAlias, fullName: functionAlias, filtered: false, sort: false, aggregation: functionAliasInfo.group === '1', subqueryGroup: subqueryGroup});
 	}
 	else if (functionDestination !== "NOWHERE") {
 		linksToFunctions.push({type: "link", from: "function", sourceFunctionId: functionAlias, functionAlias: functionDestination});
