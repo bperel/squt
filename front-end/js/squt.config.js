@@ -16,7 +16,7 @@ var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
 
 var JOIN_TYPES=     {INNER: "innerjoin",
 					 LEFT:  "leftjoin",
-					 RIGHT: "rightjoin"}
+					 RIGHT: "rightjoin"};
 
 /* Labels */
 

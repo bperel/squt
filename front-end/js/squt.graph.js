@@ -1,8 +1,6 @@
 var force = d3.layout.force()
 			.gravity(0.5)
-			.charge(function(d) {
-				return getNodeCharge(d);
-			})
+			.charge(getNodeCharge)
 			.size([W*2/3, H*2/3]);
 			
 function dragstart() {
@@ -177,7 +175,7 @@ function getAbsoluteCoords(element) {
 	return coords;
 }
 
-function getNode(d, args) {
+function getElement(d, args) {
 	args = args || {};
 	switch (d.type) {
 		case "table":
@@ -264,7 +262,7 @@ function getGroupCenter(d, axis) {
 	if (d.type === "subquery" && d.name === MAIN_QUERY_ALIAS) {
 		return null;
 	}
-	var element = getNode(d);
+	var element = getElement(d);
 	if (element.node()) {
 		var bbox = element.node().getBBox();
 		var pos = getAbsoluteCoords(element);

@@ -81,7 +81,7 @@ Flow.position = function() {
 	});
 
 	pathsToOutput.attr("d", function(link) {
-		var source = getNode(link, {role: "source"});
+		var source = getElement(link, {role: "source"});
 		var target = Field.getOutputField(link.outputTableAlias, link.outputName);
 
 		return Flow.getPath(this, source, target);
@@ -92,8 +92,8 @@ Flow.positionPathsToFunctions = function(origin,d) {
 	pathsToFunctions.filter(function(link) {
 		return Flow.filterPathOrigin(link,origin,d);
 	}).selectAll("path").attr("d", function(link) {
-		var source = getNode(link, {role: "source"});
-		var target = getNode(link, {role: "target"});
+		var source = getElement(link, {role: "source"});
+		var target = getElement(link, {role: "target"});
 
 		return Flow.getPath(this, source, target);
 	});
