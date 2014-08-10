@@ -142,7 +142,7 @@ function addDefs() {
 }
 
 function addLegend() {
-	var legendLabels = ["field", "data flow", "condition", "data transformation", "constant"];
+	var legendLabels = ["field", "data flow", "data flow with grouping", "condition", "data transformation", "constant"];
 	var legendFullWidth = LEGEND_PADDING + LEGEND_WIDTH + CHAR_WIDTH * d3.max(legendLabels, function(label) { return label.length; });
 
 	var legend = svg.append("svg:g")
@@ -163,20 +163,29 @@ function addLegend() {
 		.attr("width", legendFullWidth)
 		.attr("height", LEGEND_LINEHEIGHT * legendLabels.length);
 
-	legend.selectAll("circle")
-		.data([{cx: LEGEND_WIDTH/2, cy: LEGEND_CONTENT_PADDING}])
-		.enter().append("svg:circle")
+	legend.append("svg:circle")
 		.attr("r", CIRCLE_RADIUS)
-		.attr("cx", function(d) { return d.cx;})
-		.attr("cy", function(d) { return d.cy;});
+		.attr("cx", LEGEND_WIDTH/2)
+		.attr("cy", LEGEND_CONTENT_PADDING);
 
-	legend.append("svg:path")
-		.attr("marker-end", "url(#arrow)")
-		.classed("output link", true)
-		.attr("d", getPathFromCoords({x: LEGEND_CONTENT_PADDING,                y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT},
-									 {x: LEGEND_WIDTH - LEGEND_CONTENT_PADDING, y: LEGEND_CONTENT_PADDING + LEGEND_LINEHEIGHT}, true));
+	legend.selectAll("path")
+		.data([{row: 1}, {row: 2, className: "width3"}, {row: 2, className: "width2"}, {row: 2}])
+		.enter()
+			.append("svg:path")
+			.attr("marker-end", "url(#arrow)")
+			.attr("class", function(d) { return d.className || ""; })
+			.classed("output link", true)
+			.attr("d", function(d) {
+				return getPathFromCoords({
+						x: LEGEND_CONTENT_PADDING,
+						y: LEGEND_CONTENT_PADDING + d.row * LEGEND_LINEHEIGHT
+					},{
+						x: LEGEND_WIDTH - LEGEND_CONTENT_PADDING,
+						y: LEGEND_CONTENT_PADDING + d.row * LEGEND_LINEHEIGHT
+					}, true);
+			});
 
-	var legendRow = 1;
+	var legendRow = 2;
 
 	legend.selectAll("ellipse")
 		.data(["function conditional", "function"])
