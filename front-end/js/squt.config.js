@@ -14,6 +14,10 @@ var SUBSELECT_TYPES={SINGLEROW_SUBS: "SINGLEROW",
                      ANY_SUBS	   : "ANY",
                      ALL_SUBS	   : "ALL"};
 
+var JOIN_TYPES=     {INNER: "innerjoin",
+					 LEFT:  "leftjoin",
+					 RIGHT: "rightjoin"}
+
 /* Labels */
 
 var  OUTPUT_LABEL        = "OUTPUT"
@@ -182,7 +186,7 @@ function addLegend() {
 					},{
 						x: LEGEND_WIDTH - LEGEND_CONTENT_PADDING,
 						y: LEGEND_CONTENT_PADDING + d.row * LEGEND_LINEHEIGHT
-					}, true);
+					});
 			});
 
 	var legendRow = 2;

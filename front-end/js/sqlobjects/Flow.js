@@ -14,7 +14,7 @@ Flow.build = function(data) {
 		.classed("link", true)
 		.attr("id", function(d,i) { return "link"+i; })
 		.attr("marker-start", function(d) {
-			if (d.type == "innerjoin" || d.type == "leftjoin" || d.type == "rightjoin") {
+			if (d3.values(JOIN_TYPES).indexOf(d.type) !== -1) {
 				return "url(#solidlink1)";
 			}
 			else {
@@ -22,7 +22,7 @@ Flow.build = function(data) {
 			}
 		})
 		.attr("marker-end", function(d) {
-			if (d.type == "innerjoin") {
+			if (d.type === "innerjoin") {
 				return "url(#solidlink2)";
 			}
 			else if (d3.keys(SUBSELECT_TYPES).indexOf(d.type) !== -1) {
@@ -68,21 +68,6 @@ Flow.buildPathToFunctions = function(data) {
 				.classed({link: true, tofunction: true});
 		}
 	});
-};
-
-Flow.process = function(data, outputTableAlias, subqueryGroup) {
-	if (data) {
-		d3.forEach(data, function(Flow) {
-			var FlowId=Flows.length;
-			var FlowAlias = Flow.alias;
-			var FlowValue = Flow.value;
-			var fullName = [outputTableAlias, FlowValue].join('.');
-
-			Flows.push({id: FlowId, name: FlowValue, value: FlowValue, type: "Flow" });
-			linksToOutput.push({type: "link", from: "Flow", outputTableAlias: outputTableAlias, outputName: FlowAlias, FlowId: FlowId});
-			fields.push({type: "field", tableAlias:outputTableAlias, name:FlowAlias, fullName:fullName, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-		});
-	}
 };
 
 Flow.position = function() {
@@ -152,16 +137,14 @@ Flow.getSourceId = function(d) {
 Flow.getPath = function(pathElement, source, target) {
 	var sourceCoords = getAbsoluteCoords(source);
 	var targetCoords = getAbsoluteCoords(target);
-	var isArc = true;//!(source.data()[0].type === "constant" && target.data()[0].type === "function");
 
-	var pathCoords=Flow.getPathFromCoords(sourceCoords, targetCoords, isArc);
-	d3.select(pathElement).attr("d",pathCoords);
+	d3.select(pathElement).attr("d",Flow.getPathFromCoords(sourceCoords, targetCoords));
 	var pathObject = domElementToMyObject(pathElement);
 
 	sourceCoords = Flow.getCorrectedPathPoint(pathObject, source, sourceCoords, target, targetCoords);
 	targetCoords = Flow.getCorrectedPathPoint(pathObject, target, targetCoords, source, sourceCoords);
 
-	return Flow.getPathFromCoords(sourceCoords, targetCoords, isArc);
+	return Flow.getPathFromCoords(sourceCoords, targetCoords);
 };
 
 Flow.getCorrectedPathPoint = function(pathObject, element, elementCoords, otherElement, otherElementCoords) {
@@ -184,12 +167,7 @@ Flow.getCorrectedPathPoint = function(pathObject, element, elementCoords, otherE
 	return elementCoords;
 };
 
-Flow.getPathFromCoords = function(p1, p2, isArc) {
-	if (isArc) {
-		var dr = getDistance(p1.x, p1.y, p2.x, p2.y);
-		return "M" + p1.x + "," + p1.y + "A" + dr + "," + dr + " 0 0,1 " + p2.x + "," + p2.y;
-	}
-	else { // Line
-		return "M" + p1.x + "," + p1.y + "L" + p2.x + "," + p2.y;
-	}
+Flow.getPathFromCoords = function(p1, p2) {
+	var dr = getDistance(p1.x, p1.y, p2.x, p2.y);
+	return "M" + p1.x + "," + p1.y + "A" + dr + "," + dr + " 0 0,1 " + p2.x + "," + p2.y;
 };
