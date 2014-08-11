@@ -28,10 +28,10 @@ sub handleQuery($) {
 	$curQuery = dclone($queryToHandle);
 	
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
-		$sqlv_tables_final{"Error"}=$curQuery->getErrstr();
+		setError($curQuery->getErrstr());
 	}
 	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT" || $curQuery->getOrigCommand() ne "SQLCOM_END") {
-		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
+		setError("Only SELECT queries are supported for now");
 	}
 	else {
 		my $optionsReturnedError = 0;
@@ -88,7 +88,7 @@ print $json->pretty->encode( \%sqlv_tables_final );
 sub handleOption {
 	my $optionName = $_[0];
 	if (grep $_ eq $optionName, qw/SELECT_DESCRIBE DESCRIBE_NORMAL SELECT_DESCRIBE/) {
-		$sqlv_tables_final{"Error"}="Only SELECT queries are supported for now";
+		setError("Only SELECT queries are supported for now");
 		return 0;
 	}
 	if (grep $_ eq $optionName, qw/OPTION_BUFFER_RESULT OPTION_FOUND_ROWS OPTION_TO_QUERY_CACHE SELECT_BIG_RESULT SELECT_DISTINCT SELECT_SMALL_RESULT SELECT_STRAIGHT_JOIN SQL_NO_CACHE TL_READ_HIGH_PRIORITY TL_READ_WITH_SHARED_LOCKS TL_WRITE/) {
@@ -432,6 +432,11 @@ sub handleSubquery($$) {
 		}
 	}
 	$subquery_id=$superQuery_id;
+}
+
+sub setError {
+    my $message = $_[0];
+	$sqlv_tables_final{"Error"}=$message;
 }
 
 sub setWarning {

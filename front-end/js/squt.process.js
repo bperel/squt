@@ -1,12 +1,14 @@
 function processJsonData(jsondata) {
 
+	clearLog();
+
 	if (jsondata == null) {
-		d3.select('#log').text("Error ! Make sure your paths are properly configured");
+		log("Make sure your paths are properly configured", "Error");
 		cleanupGraph();
 		return;
 	}
 	if (jsondata.Error !== undefined) {
-		d3.select('#log').text("ERROR - " + jsondata.Error);
+		log(jsondata.Error, "Error");
 		cleanupGraph();
 		force.stop();
 		return;
@@ -20,24 +22,20 @@ function processJsonData(jsondata) {
 			d3.forEach(warnings, function(warning, relatedObject) {
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
-					warningText.push("WARNING - No named alias for field " + relatedObject + (warning ? " located in "+warning+" clause " : "")
+					warningText.push("Warning-No named alias for field " + relatedObject + (warning ? " located in "+warning+" clause " : "")
 						+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 
 					break;
 					case "Invalid":
-						warningText.push("WARNING - Invalid statement '" + relatedObject + "' in "+warning+" clause : the statement will be ignored");
+						warningText.push("Warning-Invalid statement '" + relatedObject + "' in "+warning+" clause : the statement will be ignored");
 						break;
 					case "Not supported":
-						warningText.push("WARNING - Not supported : " + relatedObject
-							+ (warning ? " ("+warning+")":""));
+						warningText.push("Warning-Not supported : " + relatedObject + (warning ? " ("+warning+")":""));
 						break;
 				}
 			});
 		});
-		d3.select('#log').text(warningText.join("\n"));
-	}
-	else {
-		d3.select('#log').text("");
+		log(warningText.join("\n"));
 	}
 
 	subqueries=		 [];

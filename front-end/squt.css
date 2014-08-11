@@ -10,7 +10,7 @@ html,body
 
 body {
 	margin: 0;
-	font-family: Verdana;
+	font-family: Verdana,serif;
 	font-size: 12px;
 	line-height: 17px;
     display:table;
@@ -55,9 +55,27 @@ div#panel {
 	z-index: 2;
 }
 
-div#panel textarea#log {
+div#panel div#log {
 	height: 100px;
-	font-family: Courier;
+    overflow-y: auto;
+    border:1px dashed gray;
+    color: #444;
+}
+
+div#panel div#log div {
+    padding-left: 20px;
+}
+
+div#panel div#log .Error {
+    background: transparent url("images/error.png") no-repeat;
+}
+
+div#panel div#log .Warning {
+    background: transparent url("images/warning.png") no-repeat;
+}
+
+div#panel div#log .Info {
+    background: transparent url("images/info.png") no-repeat;
 }
 
 .CodeMirror {
@@ -69,7 +87,7 @@ div#panel textarea#log {
 	border: 1px solid red;
 }
 
-div#panel textarea#log, #query_sample, #actions {
+div#panel div#log, #query_sample, #actions {
 	width: 97%;
 }
 
@@ -77,7 +95,7 @@ div#panel textarea#log, #query_sample, #actions {
 	width: 96%;
 }
 
-div#panel textarea#log, .CodeMirror {
+div#panel div#log, .CodeMirror {
 	margin: 0;
 	background-color: white;
 }
@@ -104,7 +122,7 @@ pre#query {
 	margin: 4px 8px;
 	position: relative;
 	width: 75%;
-	padding: 1px 0 0 34px;
+	padding: 1px 0 0 30px;
 }
 
 #create_link input, #create_link a {
@@ -180,10 +198,6 @@ circle.filtered {
 	stroke-width: 3px;
 }
 
-circle.sort {
-	background:url("images/sort.svg") no-repeat;
-}
-
 rect.table,
 rect.options,
 rect.limits {
@@ -250,8 +264,4 @@ text.shadow {
 circle.chargeForce {
     stroke: red;
     fill: none;
-}
-
-#error_texts {
-	display: none;
 }

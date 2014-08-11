@@ -54,6 +54,14 @@ var AGGREGATION_LABELS =   {
 							 GROUP_CONCAT_FUNC: "GROUP_CONTACT"
 						   };
 
+var LOG_LEVELS =           ["Error", "Warning", "Info"];
+
+var LOG_MESSAGES =         {
+							 QUERY_TOO_LONG: {
+								 type:    "Error",
+								 message: "For performance and security reasons, squt does not allow queries longer than 2000 characters."
+							 }
+						   };
 
 /* Measures */
 

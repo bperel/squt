@@ -5,11 +5,11 @@ var editor = CodeMirror.fromTextArea(document.getElementById("query"), {
 	onKeyEvent: function(editor) {
 		var new_query_is_too_long = editor.getValue().length > QUERY_MAX_LENGTH;
 		if (query_is_too_long && !new_query_is_too_long) {
-			d3.select("#log").text("");
+			clearLog();
 			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class").replace(/ error/g,""); });
 		}
 		if (!query_is_too_long && new_query_is_too_long) {
-			d3.select("#log").text(d3.select("#error_query_too_long").text());
+			log(LOG_MESSAGES.QUERY_TOO_LONG, "Error");
 			d3.select(".CodeMirror").attr("class",function() { return d3.select(this).attr("class")+" error"; });
 		}
 		query_is_too_long = new_query_is_too_long;
@@ -85,9 +85,7 @@ function analyzeAndBuild() {
 		parameters="query="+encodeURIComponent(query);
 	}
 	if (no_graph) {
-		d3.text(URL,function(data) {
-			d3.select('#log').text(data);
-		})
+		d3.text(URL, log)
 			.header("Content-Type","application/x-www-form-urlencoded")
 			.send("POST",parameters+"&debug=1"
 			);
@@ -116,6 +114,29 @@ function toggleLinkDisplay(toggle) {
 	if (toggle) {
 		input.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
 	}
+}
+
+function log(text, type) {
+	if (type) {
+		d3.select('#log')
+			.append("div")
+				.classed(type, true)
+				.text(text);
+	}
+	else {
+		text = text.split("\n");
+		d3.forEach(text, function (textLine) {
+			var type_and_message = textLine.split(/\-(.+)/);
+			if (LOG_LEVELS.indexOf(type_and_message[0]) === -1) {
+				type_and_message = ["Error", textLine];
+			}
+			log(type_and_message[1], type_and_message[0]);
+		});
+	}
+}
+
+function clearLog() {
+	d3.select('#log').text("");
 }
 
 function extractUrlParams(){
