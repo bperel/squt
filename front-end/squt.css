@@ -216,6 +216,11 @@ rect.alias {
     stroke: black;
 }
 
+.tableGroup.output rect.table,
+.tableGroup.output rect.alias {
+    stroke: #22f;
+}
+
 .tableGroup.output .table,
 .tableGroup.output .alias,
 .tableGroup.output .tableSeparator {
