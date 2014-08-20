@@ -1,0 +1,40 @@
+{
+	"Functions" : {
+		"nb_chapters" : {
+			"alias" : "nb_chapters",
+			"name" : "COUNT_DISTINCT_FUNC",
+			"group" : "1",
+			"to" : "OUTPUT"
+		}
+	},
+	"Tables" : {
+		"books" : {
+			"books" : {
+				"OUTPUT" : {
+					"name" : {
+						"-1" : "book_name"
+					}
+				},
+				"GROUP" : {
+					"name" : "ASC"
+				},
+				"CONDITION" : {
+					"id" : {
+						"JOIN" : {
+							"chapters.book_id" : "JOIN_TYPE_STRAIGHT"
+						}
+					}
+				}
+			}
+		},
+		"chapters" : {
+			"chapters" : {
+				"OUTPUT" : {
+					"name" : {
+						"nb_chapters" : "name"
+					}
+				}
+			}
+		}
+	}
+}
