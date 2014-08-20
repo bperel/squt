@@ -134,6 +134,11 @@ if [ $OUT -eq 0 ];then
 		mkdir /tmp/myparse/test
 		make test
 
-		chmod 666 $DIR/front-end/error_output.log
+		cd $DIR/front-end
+		chmod 666 error_output.log
+		
+		npm install
+		npm install grunt-cli
+		grunt
 	fi
 fi
