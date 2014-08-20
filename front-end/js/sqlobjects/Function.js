@@ -45,16 +45,17 @@ Function.build = function (functions) {
 						return !!d.isCondition;
 					})
 					.attr("rx", function (d) {
-						return Function.text(d).length * CHAR_WIDTH + FUNCTION_ELLIPSE_PADDING.left * 2;
+						return (Function.text(d).length * CHAR_WIDTH) / 2 + FUNCTION_ELLIPSE_PADDING.left;
 					})
-					.attr("ry", FUNCTION_BOX_RY + FUNCTION_ELLIPSE_PADDING.top * 2);
+					.attr("ry", FUNCTION_BOX_RY + FUNCTION_ELLIPSE_PADDING.top);
 
 			d3.select(this)
 				.append("svg:text")
 				.text(Function.text)
 				.attr("x", function (d) {
-					return -1 * Function.text(d).length * CHAR_WIDTH / 2;
-				});
+					return -1 * Function.text(d).length * CHAR_WIDTH / 2 + FUNCTION_ELLIPSE_PADDING.left;
+				})
+				.attr("y", CHAR_HEIGHT / 4);
 
 		})
 		.call(node_drag);
