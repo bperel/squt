@@ -68,6 +68,9 @@ sub handleQuery($) {
 					handleGroupBy($groupByItem);
 				}
 			}
+			if (defined $curQuery->getHaving()) {
+				handleHaving($curQuery->getHaving());
+			}
 			if (defined $curQuery->getLimit()) {
 				handleLimit($curQuery->getLimit());
 			}
@@ -253,7 +256,6 @@ sub handleWhere(\@) {
 	my $fieldname;
 	my $tablename;
 	my $value;
-	my $j=0;
 	if ($where->getItemType() eq 'FIELD_ITEM') {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
 		if (@fieldInfos) {
@@ -383,6 +385,11 @@ sub handleGroupBy($) {
 	else {
 		setWarning("Not supported","Non-field items in GROUP BY clause", $groupByItem->getValue());
 	}
+}
+
+sub handleHaving($) {
+	my ($havingItem) = @_;
+	handleSelectItem($havingItem, "NOWHERE", 0);
 }
 
 sub handleLimit($) {
