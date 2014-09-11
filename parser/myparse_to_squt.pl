@@ -229,15 +229,9 @@ sub handleSelectItem($$$) {
 		}
 	}
 	elsif ($itemType eq 'FUNC_ITEM' || $itemType eq 'SUM_FUNC_ITEM') {
-		my $functionName = $itemType eq 'SUM_FUNC_ITEM' ? $item->getFuncType() : $item->getFuncName();
-		my $functionAlias = $item->getAlias();
-
-		if (!defined $functionAlias) {
-			if ($directOutput) {
-				setWarning("No alias",$functionName,"SELECT");
-			}
-			$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
-		}
+		my $functionName = $itemType eq 'SUM_FUNC_ITEM' ? $item->getFuncType() : $item->getFuncName();		
+		my $functionAlias = getUniqueFunctionAlias($item, $directOutput);
+		
 		if ($itemType eq 'SUM_FUNC_ITEM') {
 		    $sqlv_tables{"Functions"}{$functionAlias}{"group"}="1";
         }
@@ -260,8 +254,13 @@ sub handleWhere(\@) {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
 		if (@fieldInfos) {
 			my($tablename, $fieldname) = @fieldInfos;
+			my $functionAlias = getUniqueFunctionAlias($where, 0);
+
 			$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
-						{"CONDITION"}{$fieldname}{"EXISTS"}="1";
+						{"CONDITION"}{$fieldname}{"EXISTS"}=$functionAlias;
+
+			$sqlv_tables{"Functions"}{$functionAlias}{"name"}="EXISTS";
+			$sqlv_tables{"Functions"}{$functionAlias}{"to"}= "NOWHERE";
 		}
 	}
 	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
@@ -306,10 +305,8 @@ sub handleWhere(\@) {
 
 sub handleFunctionInWhere($$) {
 	my ($function,$destination) = @_;
-	my $functionAlias = $function->getAlias();
-	if (!defined $functionAlias) {
-		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
-	}
+	my $functionAlias = getUniqueFunctionAlias($function, 0);
+	
 	my $tablename;
 	my $fieldname;
 	my $tablename2;
@@ -508,6 +505,22 @@ sub getSqlTableNameFromTable($$) {
 			return $table->getTableName();
 		}
 	}
+}
+
+sub getUniqueFunctionAlias($$) {
+	my ($function, $warningIfNotSpecified) = @_;
+	my $functionAlias = $function->getAlias();
+	if (!defined $functionAlias) {
+		if ($warningIfNotSpecified) {
+			my $functionName = $function->getType() eq 'SUM_FUNC_ITEM' 
+				? $function->getFuncType() 
+				: $function->getFuncName();
+			setWarning("No alias",$functionName,"SELECT");
+		}
+		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
+		$functionAlias=$functionAlias."";
+	}
+	return $functionAlias;
 }
 
 sub getUniqueSubqueryOutputField($) {

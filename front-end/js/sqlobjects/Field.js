@@ -34,38 +34,35 @@ Field.process = function (role, data, fieldName, tableAlias, subqueryGroup, outp
 							linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: destinationFunctionAlias});
 						});
 						break;
-					case 'JOIN':
 					case 'VALUE':
 					case 'EXISTS':
+						linksToFunctions.push({type: "link", from: "field", fieldName: tableAliasField, functionAlias: conditionData});
+					break;
+					case 'JOIN':
 						d3.forEach(conditionData, function (join, otherField) {
-							if (otherField.indexOf(".") != -1) { // condition is related to another field => it's a join
-								if (!fields.filter(function (field) {
-									return field.fullName === otherField;
-								}).length) { // In case the joined table isn't referenced elsewhere
-									var tableAliasAndField = otherField.split('.');
-									fields.push({type: "field", tableAlias: tableAliasAndField[0], name: tableAliasAndField[1], fullName: otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
-								}
-								var joinType;
-								switch (join) {
-									case 'JOIN_TYPE_LEFT':
-										joinType = 'leftjoin';
-										break;
-									case 'JOIN_TYPE_RIGHT':
-										joinType = 'rightjoin';
-										break;
-									case 'JOIN_TYPE_STRAIGHT':
-										joinType = 'innerjoin';
-										break;
-									case 'JOIN_TYPE_NATURAL':
-										joinType = 'innerjoin';
-										alert('Natural joins are not supported');
-										break;
-								}
-								links.push({source: tableAliasField, target: otherField, type: joinType});
+							if (!fields.filter(function (field) {
+								return field.fullName === otherField;
+							}).length) { // In case the joined table isn't referenced elsewhere
+								var tableAliasAndField = otherField.split('.');
+								fields.push({type: "field", tableAlias: tableAliasAndField[0], name: tableAliasAndField[1], fullName: otherField, filtered: false, sort: false, subqueryGroup: subqueryGroup});
 							}
-//							else { // It's a value
-//								fields[tableAliasField].filtered=true;
-//							}
+							var joinType;
+							switch (join) {
+								case 'JOIN_TYPE_LEFT':
+									joinType = 'leftjoin';
+									break;
+								case 'JOIN_TYPE_RIGHT':
+									joinType = 'rightjoin';
+									break;
+								case 'JOIN_TYPE_STRAIGHT':
+									joinType = 'innerjoin';
+									break;
+								case 'JOIN_TYPE_NATURAL':
+									joinType = 'innerjoin';
+									alert('Natural joins are not supported');
+									break;
+							}
+							links.push({source: tableAliasField, target: otherField, type: joinType});
 						});
 						break;
 					default:

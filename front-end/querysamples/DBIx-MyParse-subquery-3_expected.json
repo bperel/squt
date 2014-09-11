@@ -1,24 +1,30 @@
 {
-   "Subqueries" : {
-      "0" : {
-         "SubqueryType" : null,
-         "Tables" : {
-            "table1" : {
-               "table1" : {
-                  "OUTPUT" : {
-                     "field1" : {
-                        "-1" : "field1"
-                     }
-                  },
-                  "CONDITION" : {
-                     "cond1" : {
-                        "EXISTS" : "1"
-                     }
-                  }
-               }
-            }
-         },
-         "SubqueryAlias" : "derived1"
-      }
-   }
+	"Subqueries" : {
+		"0" : {
+			"SubqueryType" : null,
+			"Tables" : {
+				"table1" : {
+					"table1" : {
+						"CONDITION" : {
+							"cond1" : {
+								"EXISTS" : "0"
+							}
+						},
+						"OUTPUT" : {
+							"field1" : {
+								"-1" : "field1"
+							}
+						}
+					}
+				}
+			},
+			"SubqueryAlias" : "derived1",
+			"Functions" : {
+				"0" : {
+					"name" : "EXISTS",
+					"to" : "NOWHERE"
+				}
+			}
+		}
+	}
 }

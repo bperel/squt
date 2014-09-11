@@ -1,45 +1,51 @@
 {
-   "Subqueries" : {
-      "0" : {
-         "SubqueryAlias" : "0",
-         "SubqueryType" : "IN_SUBS",
-         "Tables" : {
-            "table1" : {
-               "table1" : {
-                  "OUTPUT" : {
-                     "field1" : {
-                        "-1" : "field1"
-                     }
-                  },
-                  "CONDITION" : {
-                     "cond1" : {
-                        "EXISTS" : "1"
-                     }
-                  }
-               }
-            }
-         }
-      }
-   },
-   "Tables" : {
-      "table2" : {
-         "table2" : {
-            "OUTPUT" : {
-               "field2" : {
-                  "-1" : "field2"
-               }
-            },
-            "CONDITION" : {
-               "field3" : {
-                  "IN_SUBS" : "0"
-               }
-            }
-         }
-      }
-   },
-   "Warning" : {
-      "No alias" : {
-         "subquery #0" : ""
-      }
-   }
+	"Warning" : {
+		"No alias" : {
+			"subquery #0" : ""
+		}
+	},
+	"Tables" : {
+		"table2" : {
+			"table2" : {
+				"OUTPUT" : {
+					"field2" : {
+						"-1" : "field2"
+					}
+				},
+				"CONDITION" : {
+					"field3" : {
+						"IN_SUBS" : "0"
+					}
+				}
+			}
+		}
+	},
+	"Subqueries" : {
+		"0" : {
+			"Tables" : {
+				"table1" : {
+					"table1" : {
+						"OUTPUT" : {
+							"field1" : {
+								"-1" : "field1"
+							}
+						},
+						"CONDITION" : {
+							"cond1" : {
+								"EXISTS" : "0"
+							}
+						}
+					}
+				}
+			},
+			"SubqueryAlias" : "0",
+			"SubqueryType" : "IN_SUBS",
+			"Functions" : {
+				"0" : {
+					"to" : "NOWHERE",
+					"name" : "EXISTS"
+				}
+			}
+		}
+	}
 }

@@ -1,19 +1,24 @@
 {
-   "Tables" : {
-      "table1" : {
-         "table1" : {
-            "OUTPUT" : {
-               "field1" : {
-                  "-1" : "field1"
-               }
-            },
-            "CONDITION" : {
-               "cond1" : {
-                  "EXISTS" : "1"
-               }
-            }
-         }
-      }
-   }
+	"Tables" : {
+		"table1" : {
+			"table1" : {
+				"OUTPUT" : {
+					"field1" : {
+						"-1" : "field1"
+					}
+				},
+				"CONDITION" : {
+					"cond1" : {
+						"EXISTS" : "0"
+					}
+				}
+			}
+		}
+	},
+	"Functions" : {
+		"0" : {
+			"name" : "EXISTS",
+			"to" : "NOWHERE"
+		}
+	}
 }
-
