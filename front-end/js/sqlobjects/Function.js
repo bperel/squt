@@ -53,7 +53,7 @@ Function.build = function (functions) {
 				.append("svg:text")
 				.text(Function.text)
 				.attr("x", function (d) {
-					return -1 * Function.text(d).length * CHAR_WIDTH / 2 + FUNCTION_ELLIPSE_PADDING.left;
+					return -1 * Function.text(d).length * CHAR_WIDTH / 2;
 				})
 				.attr("y", CHAR_HEIGHT / 4);
 
