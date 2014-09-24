@@ -1,7 +1,7 @@
 {
    "Warning" : {
       "No alias" : {
-         "get_user_var" : "SELECT"
+         "get_user_var" : ["function", "SELECT"]
       }
    },
    "Functions" : {

@@ -19,18 +19,18 @@ function processJsonData(jsondata) {
 	if (jsondata.Warning) {
 		var warningText=[];
 		d3.forEach(jsondata.Warning, function(warnings, warnType) {
-			d3.forEach(warnings, function(warning, relatedObject) {
+			d3.forEach(warnings, function(details, relatedObject) {
 				switch (warnType) {
 					case "No alias": case "No alias field ignored":
-					warningText.push("Warning-No named alias for field " + relatedObject + (warning ? " located in "+warning+" clause " : "")
-						+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
+						var objectType = details[0],
+							clause     = details[1],
+							objectName = AGGREGATION_LABELS[relatedObject] || relatedObject;
+						warningText.push("Warning-No named alias for "+objectType+" "+ objectName + (clause ? " located in "+clause+" clause " : "")
+										+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 
 					break;
-					case "Invalid":
-						warningText.push("Warning-Invalid statement '" + relatedObject + "' in "+warning+" clause : the statement will be ignored");
-						break;
 					case "Not supported":
-						warningText.push("Warning-Not supported : " + relatedObject + (warning ? " ("+warning+")":""));
+						warningText.push("Warning-Not supported : " + relatedObject + (details ? " ("+details+")":""));
 						break;
 				}
 			});

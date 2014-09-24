@@ -1,7 +1,7 @@
 {
   "Warning": {
     "No alias": {
-      "convert": "SELECT"
+      "convert": ["function", "SELECT"]
     }
   },
   "Functions": {

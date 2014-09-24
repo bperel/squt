@@ -1,7 +1,7 @@
 {
   "Warning": {
     "No alias": {
-      "cast_as_signed": "SELECT"
+      "cast_as_signed": ["function", "SELECT"]
     }
   },
   "Tables": {

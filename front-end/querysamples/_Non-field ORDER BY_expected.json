@@ -1,7 +1,7 @@
 {
 	"Warning" : {
 		"Not supported" : {
-			"Non-field items in ORDER BY CLAUSE" : "1"
+			"Non-field items in ORDER BY CLAUSE" : ["1"]
 		}
 	},
 	"Tables" : {

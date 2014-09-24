@@ -1,7 +1,7 @@
 {
    "Warning" : {
       "No alias" : {
-         "get_system_var" : "SELECT"
+         "get_system_var" : ["function", "SELECT"]
       }
    },
    "Functions" : {

@@ -1,7 +1,7 @@
 {
   "warning": {
-    "no alias": {
-      "date_add_interval": "select"
+    "No alias": {
+      "date_add_interval": ["function", "SELECT"]
     }
   },
   "functions": {

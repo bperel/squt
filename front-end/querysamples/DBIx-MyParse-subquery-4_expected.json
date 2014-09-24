@@ -1,7 +1,7 @@
 {
 	"Warning" : {
 		"No alias" : {
-			"subquery #0" : ""
+			"#0" : ["subquery"]
 		}
 	},
 	"Tables" : {

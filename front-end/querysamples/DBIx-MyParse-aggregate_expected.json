@@ -18,7 +18,7 @@
   },
   "Warning" : {
     "No alias" : {
-      "COUNT_DISTINCT_FUNC" : "SELECT"
+      "COUNT_DISTINCT_FUNC" : ["function", "SELECT"]
     }
   },
   "Functions" : {

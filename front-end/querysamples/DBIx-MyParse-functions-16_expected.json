@@ -1,7 +1,7 @@
 {
    "Warning" : {
       "No alias" : {
-         "coercibility" : "SELECT"
+         "coercibility" : ["function", "SELECT"]
       }
    },
    "Functions" : {

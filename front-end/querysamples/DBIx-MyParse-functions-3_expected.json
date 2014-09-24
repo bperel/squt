@@ -1,7 +1,7 @@
 {
   "Warning": {
     "No alias": {
-      "ltrim": "SELECT"
+      "ltrim": ["function", "SELECT"]
     }
   },
   "Functions": {

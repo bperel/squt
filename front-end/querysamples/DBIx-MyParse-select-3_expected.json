@@ -1,7 +1,7 @@
 {
    "Warning" : {
       "Not supported" : {
-         "Natural joins" : "between table1 and table2"
+         "Natural joins" : ["between table1 and table2"]
       }
    },
    "Tables" : {

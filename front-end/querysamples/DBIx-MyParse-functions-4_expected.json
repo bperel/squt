@@ -1,7 +1,7 @@
 {
    "Warning" : {
       "No alias" : {
-         "like" : "SELECT"
+         "like" : ["function", "SELECT"]
       }
    },
    "Tables" : {

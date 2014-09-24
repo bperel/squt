@@ -1,7 +1,7 @@
 {
    "warning": {
-      "no alias" : {
-         "=":"select"
+      "No alias" : {
+         "=": ["function", "SELECT"]
          }
       },
    "Functions" : {

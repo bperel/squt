@@ -181,7 +181,7 @@ sub handleSelectItem($$$) {
 				}
 				return;
 			}
-			setWarning("No alias field ignored",$item->getFieldName(),"SELECT");
+			setWarning("No alias field ignored",$item->getFieldName(),"field","SELECT");
 		}
 		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 							  {"OUTPUT"}{$item->getFieldName()}{$functionId}=$fieldAlias;
@@ -316,7 +316,7 @@ sub handleFunctionInWhere($$) {
 			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, $fieldname);
 			my $tableName = getItemTableName($functionArgument);
 			if ($tableName eq "?") {
-				setWarning("No alias field ignored",$functionArgument->getFieldName(),"SELECT");
+				setWarning("No alias field ignored",$functionArgument->getFieldName(),"field","WHERE");
 			}
 			$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 								  {"OUTPUT"}{$functionArgument->getFieldName()}{$functionAlias}
@@ -344,7 +344,7 @@ sub getInfosFromFieldInWhere($$) {
 	my @fieldInfos; # table name then field name if $fieldname doesn't already exist, full field name else
 	my $tableName = getItemTableName($whereArgument);
 	if ($tableName eq "?") {
-		setWarning("No alias field ignored",$whereArgument->getFieldName(),"WHERE or JOIN");
+		setWarning("No alias field ignored",$whereArgument->getFieldName(),"field","WHERE or JOIN");
 		$fieldInfos[0]="?";
 	}
 	else {
@@ -358,7 +358,7 @@ sub handleOrderBy($) {
 	my ($orderByItem) = @_;
 	if ($orderByItem->getItemType() eq 'FIELD_ITEM') {
 		if (!defined $orderByItem->getTableName()) {
-			setWarning("No alias field ignored",$orderByItem->getFieldName(),"ORDER");
+			setWarning("No alias field ignored",$orderByItem->getFieldName(),"field","ORDER BY");
 		}
 		else {
 			$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
@@ -413,7 +413,7 @@ sub handleSubquery($$) {
 	if (!defined $subquery_alias) {
 		my $uniqueSubqueryOutputField = getUniqueSubqueryOutputField($subquery_id);
 		if ($isWhere || !defined $uniqueSubqueryOutputField) {
-			setWarning("No alias","subquery #".$subquery_id);
+			setWarning("No alias","#".$subquery_id,"subquery");
 		}
 		else {
 			$subquery_alias = $uniqueSubqueryOutputField;
@@ -446,8 +446,11 @@ sub setError {
 sub setWarning {
 	my $warning_type = $_[0];
 	my $concerned_field = $_[1];
-	my $extra_info = $_[2] || "";
-	$sqlv_tables_final{"Warning"}{$warning_type}{$concerned_field}=$extra_info;
+	my @extra_info = ($_[2]);
+	if (defined $_[3]) {
+		push(@extra_info, $_[3]);
+	}
+	$sqlv_tables_final{"Warning"}{$warning_type}{$concerned_field}=\@extra_info;
 }
 
 sub getItemTableName($) {
@@ -515,7 +518,7 @@ sub getUniqueFunctionAlias($$) {
 			my $functionName = $function->getType() eq 'SUM_FUNC_ITEM' 
 				? $function->getFuncType() 
 				: $function->getFuncName();
-			setWarning("No alias",$functionName,"SELECT");
+			setWarning("No alias",$functionName,"function","SELECT");
 		}
 		$functionAlias=scalar keys %{$sqlv_tables{"Functions"}};
 		$functionAlias=$functionAlias."";

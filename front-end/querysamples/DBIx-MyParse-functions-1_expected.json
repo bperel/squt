@@ -1,7 +1,7 @@
 {
   "Warning": {
     "No alias": {
-      "case_switch": "SELECT"
+      "case_switch": ["function", "SELECT"]
     }
   },
   "Functions": {
