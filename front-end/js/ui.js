@@ -117,22 +117,10 @@ function toggleLinkDisplay(toggle) {
 }
 
 function log(text, type) {
-	if (type) {
-		d3.select('#log')
-			.append("div")
-				.classed(type, true)
-				.text(text);
-	}
-	else {
-		text = text.split("\n");
-		d3.forEach(text, function (textLine) {
-			var type_and_message = textLine.split(/\-(.+)/);
-			if (LOG_LEVELS.indexOf(type_and_message[0]) === -1) {
-				type_and_message = ["Error", textLine];
-			}
-			log(type_and_message[1], type_and_message[0]);
-		});
-	}
+	d3.select('#log')
+		.append("div")
+			.classed(type, true)
+			.text(text);
 }
 
 function clearLog() {

@@ -25,17 +25,19 @@ function processJsonData(jsondata) {
 						var objectType = details[0],
 							clause     = details[1],
 							objectName = AGGREGATION_LABELS[relatedObject] || relatedObject;
-						warningText.push("Warning-No named alias for "+objectType+" "+ objectName + (clause ? " located in "+clause+" clause " : "")
+						warningText.push("No named alias for "+objectType+" "+ objectName + (clause ? " located in "+clause+" clause " : "")
 										+(warnType === "No alias field ignored" ? ": field will be ignored" : ""));
 
 					break;
 					case "Not supported":
-						warningText.push("Warning-Not supported : " + relatedObject + (details ? " ("+details+")":""));
+						warningText.push("Not supported : " + relatedObject + (details ? " ("+details+")":""));
 						break;
 				}
 			});
 		});
-		log(warningText.join("\n"));
+		while(warningText.length) {
+			log(warningText.shift(), "Warning");
+		}
 	}
 
 	subqueries=		 [];
