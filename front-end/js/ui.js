@@ -59,19 +59,19 @@ if (query_param !== undefined) {
 var no_parser=false;
 var query;
 
-d3.json(URL, function(data) {
-	if (data === undefined || data === null || data === "") {
-		no_parser=true;
-		editor.setOption('readOnly',true);
-		d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
-		d3.select('#no-parser').attr("class","");
-	}
-	else {
-		d3.select('#mysql_version .version').text(d3.values(data.Constants)[0].value);
-	}
-})
-	.header("Content-Type","application/x-www-form-urlencoded")
-	.send("POST","query=SELECT VERSION()");
+d3.json(URL)
+	.header("Content-Type", "application/x-www-form-urlencoded")
+	.post("query=SELECT VERSION()", function(error, data) {
+		if (data === undefined || data === null || data === "") {
+			no_parser=true;
+			editor.setOption('readOnly',true);
+			d3.select('.CodeMirror').attr("style","background-color:rgb(220,220,220)");
+			d3.select('#no-parser').attr("class","");
+		}
+		else {
+			d3.select('#mysql_version .version').text(d3.values(data.Constants)[0].value);
+		}
+	});
 
 d3.select("#OK").on("click", analyzeAndBuild);
 
@@ -85,15 +85,20 @@ function analyzeAndBuild() {
 		parameters="query="+encodeURIComponent(query);
 	}
 	if (no_graph) {
-		d3.text(URL, log)
+		d3.text(URL)
 			.header("Content-Type","application/x-www-form-urlencoded")
-			.send("POST",parameters+"&debug=1"
-			);
-		return;
+			.post(parameters+"&debug=1", function(error, data) {
+				clearLog();
+				log(data, "Info");
+			});
 	}
-	d3.json(URL,processJsonData)
-		.header("Content-Type","application/x-www-form-urlencoded")
-		.send("POST",parameters);
+	else {
+		d3.json(URL)
+			.header("Content-Type", "application/x-www-form-urlencoded")
+			.post(parameters, function(error, data) {
+				processJsonData(data);
+			});
+	}
 }
 
 d3.select('#create_link a').on('click', function() {
