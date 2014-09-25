@@ -21,7 +21,7 @@ module.exports = function(grunt) {
 				}]
 			},
 			options: {
-				banner: '/*! Generated <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */\n'
+				banner: '/*! <%= pkg.name %> <%=pkg.version %> - Generated <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */\n'
 			}
 		}
 	});
