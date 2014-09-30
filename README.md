@@ -5,10 +5,35 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 ![squt example](https://raw.github.com/wiki/bperel/squt/images/squt_example.png)
 
 
-Want to know more and install it ? Have a look at the [Installation guide](../../wiki/Installation Guide) !
+## Installation
 
-Want some intel about how that system works ? Head over to the [How it works](../../wiki/How-it-works) and [Features](../../wiki/Features) pages.
+Use our Vagrant box :
+```
+vagrant init bperel/squt-wheezy
+vagrant up
+```
 
-... Or play with the online [demo](http://62.210.239.25//squt/master/front-end/squt.html) :-)
+squt will then be available through port 8000 of your machine : [http://localhost:8000/squt/front-end/squt.html](http://localhost:8000/squt/front-end/squt.html)
+
+If you prefer a step-by-step installation have a look at the [Installation guide](../../wiki/Installation Guide).
+
+
+## Features
+
+Basically, squt works with most SELECT queries. It doesn't like nested subqueries that much though.
+
+Head over to the [Features](../../wiki/Features) page for more details.
+
+## Demo
+
+[Here is the demo](http://62.210.239.25/squt/master/front-end/squt.html) :-)
+
+
+## Understanding and collaborating
+
+Head over to the [How it works](../../wiki/How-it-works) page for a quick explanation of architecture of squt.
+
+Pull requests are always appreciated.
+
 
 [<img alt="Licence Creative Commons" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/fr/88x31.png" />](http://creativecommons.org/licenses/by-sa/3.0/legalcode)
