@@ -149,8 +149,8 @@ if [ $OUT -eq 0 ];then
 			chmod 666 error_output.log
 
 			npm install
-			npm install -g grunt
 			npm install -g grunt-cli
+			npm install grunt
 			grunt
 			OUT=$?
 			if [ $OUT -eq 0 ];then
