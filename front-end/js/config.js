@@ -74,7 +74,8 @@ var CHAR_WIDTH = 8,
 var CIRCLE_RADIUS 	   		 =  6
    ,SORT_SIDE	  	   		 = 30
    ,MIN_TABLE_HEIGHT   		 = 35
-   ,TABLE_NAME_PADDING 		 = { left:        3,
+   ,TABLE_NAME_PADDING 		 = { left:        5,
+								 right:       5,
 								 top:        12,
 								 output_top: 13
 							   }

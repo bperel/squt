@@ -48,12 +48,13 @@ Table.build = function(data) {
 				return Field.isInTable(currentField, currentTable);
 			});
 
-			var tableWidth=TABLE_NAME_PADDING.left
-				+ CHAR_WIDTH*d3.max([currentTable.name.length,
+			var tableWidth=
+				TABLE_NAME_PADDING.left
+			  + CHAR_WIDTH*d3.max([currentTable.name.length,
 				d3.max(relatedFields, function(field) {
 					return field.name.length;
-				})
-			]);
+				})])
+			  + TABLE_NAME_PADDING.right;
 			var tableHeight=MIN_TABLE_HEIGHT + relatedFields.length * FIELD_LINEHEIGHT;
 
 			var currentTableElement = d3.select(this);
