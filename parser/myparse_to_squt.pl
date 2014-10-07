@@ -528,21 +528,28 @@ sub getUniqueFunctionAlias($$) {
 
 sub getUniqueSubqueryOutputField($) {
 	my ($subquery_id) = @_;
-	if (!defined $sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}) {
-		return undef;
-	}
-	my %subqueryTables = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}{"Tables"}};
- 	if (scalar %subqueryTables == 1) {
- 		my @subqueryTableNames = keys(%subqueryTables);
- 		my %subqueryTableAliases = %{$subqueryTables{$subqueryTableNames[0]}};
-		if (scalar %subqueryTableAliases == 1) {
- 			my @subqueryTableFieldNames = keys(%subqueryTableAliases);
- 			my %subqueryTableFields = %{$subqueryTableAliases{$subqueryTableFieldNames[0]}{"OUTPUT"}};
-			if (scalar %subqueryTableFields == 1) {
- 				my @tableFields = keys(%subqueryTableFields);
- 				return $tableFields[0];
+	my %subqueryData = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}};
+	if (defined $subqueryData{"Tables"}) {
+		my %subqueryTables = %{$subqueryData{"Tables"}};
+	 	if (scalar %subqueryTables == 1) {
+	 		my @subqueryTableNames = keys(%subqueryTables);
+	 		my %subqueryTableAliases = %{$subqueryTables{$subqueryTableNames[0]}};
+			if (scalar %subqueryTableAliases == 1) {
+	 			my @subqueryTableFieldNames = keys(%subqueryTableAliases);
+	 			my %subqueryTableFields = %{$subqueryTableAliases{$subqueryTableFieldNames[0]}{"OUTPUT"}};
+				if (scalar %subqueryTableFields == 1) {
+	 				my @tableFields = keys(%subqueryTableFields);
+	 				return $tableFields[0];
+				}
 			}
 		}
+	}
+	elsif (defined $subqueryData{"Constants"}) {
+		my %subqueryConstants = %{$subqueryData{"Constants"}};
+	 	if (scalar (keys %subqueryConstants) == 1) {
+	 		my %constant = %{$subqueryConstants{(keys %subqueryConstants)[0]}};
+	 		return $constant{"alias"};
+	 	}
 	}
 	return undef;
 }

@@ -1,0 +1,15 @@
+{
+  "Subqueries" : {
+    "0" : {
+      "SubqueryType" : "SINGLEROW_SUBS",
+      "SubqueryAlias" : "1",
+      "Constants" : {
+        "0" : {
+          "value" : "1",
+          "alias" : "1",
+          "to" : "OUTPUT"
+        }
+      }
+    }
+  }
+}
