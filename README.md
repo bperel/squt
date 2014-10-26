@@ -7,6 +7,8 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 
 ## Installation
 
+#### Using Vagrant (64-bit hosts only)
+
 Use our Vagrant box :
 ```
 vagrant init bperel/squt-wheezy
@@ -14,6 +16,8 @@ vagrant up
 ```
 
 squt will then be available through port 8000 of your machine : [http://localhost:8000/squt/front-end/squt.html](http://localhost:8000/squt/front-end/squt.html)
+
+#### Directly on a Debian/Ubuntu system or through Cygwin
 
 If you prefer a step-by-step installation have a look at the [Installation guide](../../wiki/Installation Guide).
 
