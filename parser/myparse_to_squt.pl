@@ -357,11 +357,12 @@ sub getInfosFromFieldInWhere($$) {
 sub handleOrderBy($) {
 	my ($orderByItem) = @_;
 	if ($orderByItem->getItemType() eq 'FIELD_ITEM') {
-		if (!defined $orderByItem->getTableName()) {
+		my $tableName = getItemTableName($orderByItem);
+		if ($tableName eq "?") {
 			setWarning("No alias field ignored",$orderByItem->getFieldName(),"field","ORDER BY");
 		}
 		else {
-			$sqlv_tables{"Tables"}{getSqlTableName($orderByItem->getTableName())}{$orderByItem->getTableName()}
+			$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 						{"SORT"}{$orderByItem->getFieldName()}=$orderByItem->getDirection();
 		}
 	}
