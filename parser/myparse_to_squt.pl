@@ -228,7 +228,7 @@ sub handleSelectItem($$$) {
 			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
 		}
 	}
-	elsif ($itemType eq 'FUNC_ITEM' || $itemType eq 'SUM_FUNC_ITEM') {
+	elsif (grep $_ eq $itemType, qw/FUNC_ITEM SUM_FUNC_ITEM/) {
 		my $functionName = $itemType eq 'SUM_FUNC_ITEM' ? $item->getFuncType() : $item->getFuncName();		
 		my $functionAlias = getUniqueFunctionAlias($item, $directOutput);
 		
@@ -250,7 +250,8 @@ sub handleWhere(\@) {
 	my $fieldname;
 	my $tablename;
 	my $value;
-	if ($where->getItemType() eq 'FIELD_ITEM') {
+	my $itemType = $where->getItemType();
+	if ($itemType eq 'FIELD_ITEM') {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
 		if (@fieldInfos) {
 			my($tablename, $fieldname) = @fieldInfos;
@@ -263,18 +264,19 @@ sub handleWhere(\@) {
 			$sqlv_tables{"Functions"}{$functionAlias}{"to"}= "NOWHERE";
 		}
 	}
-	elsif ($where->getItemType() eq 'SUBSELECT_ITEM') {
+	elsif ($itemType eq 'SUBSELECT_ITEM') {
 		handleSubquery($where, 1);
 	}
-	elsif ($where->getItemType() eq 'FUNC_ITEM') {
+	elsif ($itemType eq 'FUNC_ITEM') {
 		handleFunctionInWhere($where);
 	}
-	elsif ($where->getItemType() eq 'COND_ITEM') {
+	elsif ($itemType eq 'COND_ITEM') {
 		foreach my $whereArgument (@{$where->getArguments()}) {
-			if ($whereArgument->getType() eq 'FUNC_ITEM') {
+			my $argumentType = $whereArgument->getType();
+			if ($argumentType eq 'FUNC_ITEM') {
 				handleFunctionInWhere($whereArgument);
 			}
-			elsif ($whereArgument->getType() eq 'FIELD_ITEM') {
+			elsif ($argumentType eq 'FIELD_ITEM') {
 				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, $fieldname);
 				if (! @fieldInfos) {
 					return;
@@ -287,9 +289,7 @@ sub handleWhere(\@) {
 					$value=$fieldInfos[0].".".$fieldInfos[1];
 				}
 			}
-			elsif ($whereArgument->getType() eq 'INT_ITEM' || $whereArgument->getType() eq 'DECIMAL_ITEM'|| $whereArgument->getType() eq 'REAL_ITEM'
-				|| $whereArgument->getType() eq 'STRING_ITEM') {
-				
+			elsif (grep $_ eq $argumentType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM/) {
 				$value=$whereArgument->getValue();
 			}
 			#	foreach my $sub_item (@{$whereArgument->getCondItems()}) {
@@ -312,7 +312,8 @@ sub handleFunctionInWhere($$) {
 	my $tablename2;
 	my $fieldname2;
 	foreach my $functionArgument (@{$function->getArguments()}) {
-		if ($functionArgument->getType() eq 'FIELD_ITEM') {
+		my $argumentType = $functionArgument->getType();
+		if ($argumentType eq 'FIELD_ITEM') {
 			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, $fieldname);
 			my $tableName = getItemTableName($functionArgument);
 			if ($tableName eq "?") {
@@ -323,13 +324,10 @@ sub handleFunctionInWhere($$) {
 								 =$functionArgument->getAlias() 
 							   || $functionArgument->getFieldName();
 		}
-		elsif ($functionArgument->getType() eq 'INT_ITEM' 
-			|| $functionArgument->getType() eq 'DECIMAL_ITEM'
-			|| $functionArgument->getType() eq 'REAL_ITEM'
-			|| $functionArgument->getType() eq 'STRING_ITEM') {
+		elsif (grep $_ eq $argumentType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM/) {
 			$sqlv_tables{"Functions"}{$functionAlias}{"Constants"}{$functionArgument->getValue()}=$functionArgument->getValue();
 		}
-		elsif ($functionArgument->getType() eq 'FUNC_ITEM') {
+		elsif ($argumentType eq 'FUNC_ITEM') {
 			handleFunctionInWhere($functionArgument,$functionAlias);
 		}
 	}
