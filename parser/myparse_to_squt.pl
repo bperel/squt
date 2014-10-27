@@ -307,14 +307,10 @@ sub handleFunctionInWhere($$) {
 	my ($function,$destination) = @_;
 	my $functionAlias = getUniqueFunctionAlias($function, 0);
 	
-	my $tablename;
-	my $fieldname;
-	my $tablename2;
-	my $fieldname2;
 	foreach my $functionArgument (@{$function->getArguments()}) {
 		my $argumentType = $functionArgument->getType();
 		if ($argumentType eq 'FIELD_ITEM') {
-			my @fieldInfos = getInfosFromFieldInWhere($functionArgument, $fieldname);
+			my @fieldInfos = getInfosFromFieldInWhere($functionArgument);
 			my $tableName = getItemTableName($functionArgument);
 			if ($tableName eq "?") {
 				setWarning("No alias field ignored",$functionArgument->getFieldName(),"field","WHERE");
@@ -337,8 +333,8 @@ sub handleFunctionInWhere($$) {
 
 }
 
-sub getInfosFromFieldInWhere($$) {
-	my ($whereArgument,$fieldname) = @_;
+sub getInfosFromFieldInWhere($) {
+	my ($whereArgument) = @_;
 	my @fieldInfos; # table name then field name if $fieldname doesn't already exist, full field name else
 	my $tableName = getItemTableName($whereArgument);
 	if ($tableName eq "?") {
@@ -421,7 +417,7 @@ sub handleSubquery($$) {
 	my $subselectExpr=$item->getSubselectExpr();
 	if ($isWhere && defined $subselectExpr) {
 		if ($subselectExpr->getType() eq 'FIELD_ITEM') {
-			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr, undef);
+			my @fieldInfos = getInfosFromFieldInWhere($subselectExpr);
 			if (@fieldInfos) {
 				my($tablename, $fieldname) = @fieldInfos;
 				$sqlv_tables{"Tables"}{getSqlTableName($tablename)}{$tablename}
