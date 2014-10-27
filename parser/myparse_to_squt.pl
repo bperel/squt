@@ -390,13 +390,8 @@ sub handleHaving($) {
 
 sub handleLimit($) {
 	my ($limitItem) = @_;
-	my $value1 = 0;
-	my $value2 = @{$limitItem}[0]->getValue()+0;
-	if (defined(@{$limitItem}[1])) {
-		$value1 = @{$limitItem}[1]->getValue()+0;
-	}
-	$sqlv_tables{"Limits"}{"Begin"}=$value1;
-	$sqlv_tables{"Limits"}{"End"}=$value2;
+	$sqlv_tables{"Limits"}{"Begin"} = defined(@{$limitItem}[1]) ? @{$limitItem}[1]->getValue()+0 : 0;
+	$sqlv_tables{"Limits"}{"End"} = @{$limitItem}[0]->getValue()+0;
 }
 
 sub handleSubquery($$) {
