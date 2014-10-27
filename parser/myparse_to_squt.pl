@@ -89,7 +89,7 @@ handleQuery($query);
 print $json->pretty->encode( \%sqlv_tables_final );
 
 sub handleOption {
-	my $optionName = $_[0];
+	my ($optionName) = @_;
 	if (grep $_ eq $optionName, qw/SELECT_DESCRIBE DESCRIBE_NORMAL SELECT_DESCRIBE/) {
 		setError("Only SELECT queries are supported for now");
 		return 0;
@@ -108,7 +108,7 @@ sub handleOption {
 
 
 sub handleJoin {
-	my $item = $_[0];
+	my ($item) = @_;
 	if ($item->getType() eq "JOIN_ITEM") {
 		my $two_tables = 1;
 		foreach my $sub_item (@{$item->getJoinItems()}) {
