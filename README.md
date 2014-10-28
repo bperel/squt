@@ -30,7 +30,7 @@ Head over to the [Features](../../wiki/Features) page for more details.
 
 ## Demo
 
-[Here is the demo](http://62.210.239.25/squt/master/front-end/squt.html) :-)
+[Here is the demo](http://62.210.239.25/squt/squt.html) :-)
 
 
 ## Understanding and collaborating
