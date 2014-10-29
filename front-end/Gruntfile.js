@@ -9,7 +9,7 @@ module.exports = function(grunt) {
 			},
 			target: {
 				files: {
-					'squt.html': 'squt.html'
+					'index.html': 'index.html'
 				}
 			}
 		},
