@@ -59,7 +59,7 @@ var LOG_LEVELS =           ["Error", "Warning", "Info"];
 var LOG_MESSAGES =         {
 							 QUERY_TOO_LONG: {
 								 type:    "Error",
-								 message: "For performance and security reasons, squt does not allow queries longer than 2000 characters."
+								 message: "For performance and security reasons, squt does not allow queries longer than "+QUERY_MAX_LENGTH+" characters."
 							 }
 						   };
 
