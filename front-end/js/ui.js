@@ -110,14 +110,22 @@ d3.select('#create_link input').on('click', function() {
 });
 
 function toggleLinkDisplay(toggle) {
-	d3.select('#create_link a')
-		.classed('invisible', toggle);
+	var urlRegex = /^([^\?]+)(?:\?query=[^&\n]*(.*)$)?/g;
+	var urlMatch = urlRegex.exec(document.URL);
+	if (toggle && !urlMatch) {
+		alert('An error occurred while generating the link');
+	}
+	else {
+		d3.select('#create_link a')
+			.classed('invisible', toggle);
 
-	var input = d3.select('#create_link input');
-	input.classed('invisible', !toggle);
+		var input = d3.select('#create_link input');
+		input.classed('invisible', !toggle);
 
-	if (toggle) {
-		input.attr('value',document.URL.match(/^.*\.html/g)[0]+'?query='+encodeURIComponent(query));
+		if (toggle) {
+			var urlWithQuery = urlMatch[1] + '?query=' + encodeURIComponent(query) + (urlMatch[2] || '');
+			input.attr('value', urlWithQuery);
+		}
 	}
 }
 
