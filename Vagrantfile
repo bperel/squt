@@ -17,7 +17,7 @@ sh install_squt.sh
 if [ $? -ne 0 ]; then
 exit 1;
 fi
-echo "squt has successfully been installed. You can now go to http://localhost:[port]/squt/front-end/squt.html , replacing [port] by the forwarded port configured in your Vagrantfile (8000 is the default port)."
+echo "squt has successfully been installed. You can now go to http://localhost:[port]/squt/, replacing [port] by the forwarded port configured in your Vagrantfile (8000 is the default port)."
 SCRIPT
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
