@@ -15,7 +15,7 @@ vagrant init bperel/squt-wheezy
 vagrant up
 ```
 
-squt will then be available through port 8000 of your machine : [http://localhost:8000/squt/front-end/squt.html](http://localhost:8000/squt/front-end/squt.html)
+squt will then be available through port 8000 of your machine : [http://localhost:8000/squt/front-end/squt.html](http://localhost:8000/squt/)
 
 #### Directly on a Debian/Ubuntu system or through Cygwin
 
@@ -30,7 +30,7 @@ Head over to the [Features](../../wiki/Features) page for more details.
 
 ## Demo
 
-[Here is the demo](http://62.210.239.25/squt/squt.html) :-)
+[Here is the demo](http://62.210.239.25/squt/) :-)
 
 
 ## Understanding and collaborating
