@@ -198,11 +198,11 @@ function addLegend() {
 		.attr("cy", LEGEND_CONTENT_PADDING);
 
 	legend.selectAll("path")
-		.data([{row: 1}, {row: 2, className: "width3"}, {row: 2, className: "width2"}, {row: 2}])
+		.data([{row: 1}, {row: 2, className: "width3"}, {row: 2, className: "width2"}, {row: 2, className: "width1"}])
 		.enter()
 			.append("svg:path")
-			.attr("marker-end", "url(#arrow)")
-			.attr("class", function(d) { return d.className || ""; })
+			.attr("marker-end", function(d) { return d.row === 1 ? "url(#arrow)" : (d.className === 'width1' ? 'url(#arrow_to_function)' : null); })
+			.attr("class", function(d) { return d.className || null; })
 			.classed("output link", true)
 			.attr("d", function(d) {
 				return Flow.getPathFromCoords({

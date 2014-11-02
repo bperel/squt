@@ -63,7 +63,7 @@ Flow.buildPathToFunctions = function(data) {
 		for (var i = isAggregation ? 3 : 1; i >= 1; i--) {
 			d3.select(this)
 				.append("svg:path")
-				.attr("marker-end", "url(#arrow_to_function)")
+				.attr("marker-end", i === 1 ? "url(#arrow_to_function)" : null)
 				.attr("class", "width"+i)
 				.classed({link: true, tofunction: true});
 		}
@@ -131,6 +131,8 @@ Flow.getSourceId = function(d) {
 		case "constant":
 			sourceId = Constant.getId(d);
 			break;
+		default:
+			sourceId = null;
 	}
 	return parseInt(sourceId);
 };
@@ -164,6 +166,9 @@ Flow.getCorrectedPathPoint = function(pathObject, element, elementCoords, otherE
 //					return getIntersection(pathObject, elementObject, otherElementCoords) || elementCoords;
 //				}
 //			}
+			break;
+		default:
+			return null;
 	}
 	return elementCoords;
 };
