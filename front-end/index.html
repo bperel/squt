@@ -4,52 +4,98 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <title>Squt</title>
 
-    <link rel="stylesheet" type="text/css" href="squt.css" />
-    <link rel="stylesheet" type="text/css" href="forkme.css" />
-	<link rel="stylesheet" href="lib/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/squt.css" />
+    <link rel="stylesheet" type="text/css" href="css/forkme.css" />
+  <link rel="stylesheet" href="lib/codemirror/lib/codemirror.css">
 
     <script type="text/javascript" src="lib/d3.v3/d3.js"></script>
     <script type="text/javascript" src="lib/js-intersections/samples/2D.js"></script>
 
-	<script type="text/javascript" src="lib/codemirror/lib/codemirror.js"></script>
-	<script type="text/javascript" src="lib/codemirror/mode/mysql/mysql.js"></script>
+  <script type="text/javascript" src="lib/codemirror/lib/codemirror.js"></script>
+  <script type="text/javascript" src="lib/codemirror/mode/mysql/mysql.js"></script>
+
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="css/styles.css" rel="stylesheet">
 
   </head>
   <body>
-  	<div id="header">
-		<span id="forkongithub">
-			<a target="_blank" href="https://github.com/ducksmanager/squt">Fork me on GitHub</a>
-		</span>
-	  	<div id="mysql_version">
-	  		<span>MySQL version : </span>
-	  		<span class="version"></span>
-	  	</div>
-  		<h3 id="title">
-  			squt — it's like SQL, but cUTe
-  		</h3>
-	</div>
-	<div id="panel">Load a sample query
-		<select id="query_sample">
-			<option name="dummy">Pick a query</option>
-		</select>
-		<br />
-		or type a custom one :<br />
-		<textarea id="query"></textarea>
-		<div id="actions">
-			<button id="OK">OK</button>
-			<div id="create_link">
-				<a href="javascript:void(0)" class="invisible">Create link</a>
-				<input type="text" class="invisible" readonly="readonly" />
-            </div>
-			<div id="no-parser" class="invisible">The MySQL parser is not available.<br />
-			This means that you can only use one of the sample queries listed above (for which the parsing results are known),
-			but not write a custom query.</div>
-		</div>
-		<div id="log"></div>
-	</div>
 
-    <!-- include: "type": "js", "files": "js/**/*.js" -->
-        <script type="text/javascript" src="build/squt.js"></script>
-    <!-- /include -->
+    <div id="header" class="navbar navbar-default navbar-fixed-top">
+      <div class="navbar-header">
+        <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+          <i class="icon-reorder"></i>
+        </button>
+        <a class="navbar-brand" href="#">
+          squt
+        </a>
+      </div>
+      <nav class="collapse navbar-collapse">
+      <div class="nav navbar-nav pull-center">
+      squt — it's like SQL, but cUTe
+      </div>
+        <div class="nav navbar-nav pull-right">
+        <div id="mysql_version">
+          <span>MySQL version : </span>
+          <span class="version"></span>
+        </div>
+        </div>
+      </nav>
+    </div>
+  
+    <!--<div id="header">-->
+    <!--<span id="forkongithub">-->
+      <!--<a target="_blank" href="https://github.com/ducksmanager/squt">Fork me on GitHub</a>-->
+    <!--</span>-->
+      <!--<div id="mysql_version">-->
+        <!--<span>MySQL version : </span>-->
+        <!--<span class="version"></span>-->
+      <!--</div>-->
+      <!--<h3 id="title">-->
+        <!--squt — it's like SQL, but cUTe-->
+      <!--</h3>-->
+  <!--</div>-->
+
+    <div id="wrapper">
+
+      <div id="sidebar-wrapper" class="col-md-3 pull-right">
+        <div id="sidebar">
+          <div id="panel-and-actions" class="col-sm-9 col-md-12">
+            <div id="panel">Load a sample query
+              <select id="query_sample">
+                <option name="dummy">Pick a query</option>
+              </select>
+              <br />
+              or type a custom one :<br />
+              <textarea id="query"></textarea>
+              <div id="actions">
+                <button id="OK" class="col-sm-1 col-md-2">OK</button>
+                <div class="col-sm-1 no-padding">&nbsp;</div>
+                <div id="create_link" class="col-sm-10 col-md-9">
+                  <a href="javascript:void(0)" class="invisible">Create link</a>
+                  <input type="text" class="invisible" readonly="readonly" />
+                </div>
+                <div id="no-parser" class="invisible">The MySQL parser is not available.<br />
+                  This means that you can only use one of the sample queries listed above (for which the parsing results are known),
+                  but not write a custom query.</div>
+              </div>
+            </div>
+          </div>
+          <div id="log-container" class="col-sm-3 col-md-12">
+            <div id="log"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="main-wrapper" class="col-md-9 pull-right">
+        <div id="main">
+        </div>
+      </div>
+    </div>
+  <!-- include: "type": "js", "files": "js/**/*.js" -->
+      <script type="text/javascript" src="build/squt.js"></script>
+  <!-- /include -->
   </body>
 </html>

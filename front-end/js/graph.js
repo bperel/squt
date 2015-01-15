@@ -38,7 +38,7 @@ var subqueries,
 
 var n=[],l=[];
 
-var svg = d3.select("body").append("svg:svg")
+var svg = d3.select("#main").append("svg:svg")
 	.attr("id","graph")
 	.attr("width", W)
 	.attr("height", H)

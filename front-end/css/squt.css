@@ -22,7 +22,11 @@ body > div, body > svg {
 }
 
 .invisible {
-	display: none;
+	display: none !important;
+}
+
+.no-padding {
+    padding: 0;
 }
 
 div#header {
@@ -32,50 +36,42 @@ div#header {
 	border-bottom: 1px solid gray;
 }
 
-div#mysql_version, h3#title {
-	margin-top: 4px;
-}
-
 div#mysql_version {
 	float: right;
-	margin-right: 10px;
+    margin: 15px;
 }
 
 div#main {
     height:100%;
 }
 
-div#panel {
-	width: 400px;
-	position: fixed;
-	top: 40px;
-	right: 10px;
-	bottom: 10px;
+div#sidebar div#panel {
+    margin-top: 10px;
 	overflow-y: auto;
 	z-index: 2;
 }
 
-div#panel div#log {
-	height: 100px;
+div#sidebar div#log {
     overflow-y: auto;
-    border:1px dashed gray;
+    border:1px dotted gray;
     color: #444;
+    padding: 5px;
 }
 
-div#panel div#log div {
+div#sidebar div#log div {
     padding-left: 20px;
 }
 
-div#panel div#log .Error {
-    background: transparent url("images/error.png") no-repeat;
+div#sidebar div#log .Error {
+    background: transparent url("../images/error.png") no-repeat;
 }
 
-div#panel div#log .Warning {
-    background: transparent url("images/warning.png") no-repeat;
+div#sidebar div#log .Warning {
+    background: transparent url("../images/warning.png") no-repeat;
 }
 
-div#panel div#log .Info {
-    background: transparent url("images/info.png") no-repeat;
+div#sidebar div#log .Info {
+    background: transparent url("../images/info.png") no-repeat;
 }
 
 .CodeMirror {
@@ -88,11 +84,7 @@ div#panel div#log .Info {
 }
 
 div#panel div#log, #query_sample, #actions {
-	width: 97%;
-}
-
-.CodeMirror {
-	width: 96%;
+	width: 100%;
 }
 
 div#panel div#log, .CodeMirror {
@@ -108,21 +100,15 @@ pre#query {
 	display: none;
 }
 
-#OK, #create_link {
-	margin: 4px 8px;
-}
-
 #OK {
-	float: left;
+    float: left;
+	margin: 4px 0;
 	padding: 2px;
 }
 
 #create_link {
-	float: left;
-	margin: 4px 8px;
-	position: relative;
-	width: 75%;
-	padding: 1px 0 0 30px;
+	margin: 3px 0;
+	padding: 1px 0 0 0;
 }
 
 #create_link input, #create_link a {
@@ -135,8 +121,13 @@ pre#query {
 
 #create_link input {
 	width: 100%;
-	border: 0;
-	outline: 1px solid black;
+	border: 1px solid gray;
+}
+
+#no-parser {
+    display: block;
+    clear: both;
+    color: red;
 }
 
 #collision {
@@ -144,9 +135,8 @@ pre#query {
 }
 
 svg#graph {
-	outline:1px solid gray;
-	height: 100%;
-	position: fixed;
+    width: 99%;
+	height: 99%;
 }
 
 #legend .title {
