@@ -69,7 +69,7 @@ d3.json(URL)
 			d3.select('#no-parser').attr("class","");
 		}
 		else {
-			d3.select('#mysql_version .version').text(d3.values(data.Constants)[0].value);
+			log("MySQL version : " + d3.values(data.Constants)[0].value, "Info");
 		}
 	});
 

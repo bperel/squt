@@ -1,10 +1,5 @@
 @CHARSET "ISO-8859-1";
 
-#forkongithub {
-	position: fixed;
-	top: 0;
-	left: 0;	
-}
 
 #forkongithub
 a {
@@ -15,10 +10,8 @@ a {
 	text-align: center;
 	font-weight: bold;
 	padding: 5px 40px;
-	font-size: 1rem;
 	line-height: 2rem;
 	position: relative;
-	transition: 0.5s;
 }
  
 #forkongithub

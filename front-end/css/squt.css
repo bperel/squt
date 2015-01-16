@@ -31,11 +31,6 @@ div#header {
 	border-bottom: 1px solid gray;
 }
 
-div#mysql_version {
-	float: right;
-    margin: 15px;
-}
-
 div#main {
     height:100%;
 }
