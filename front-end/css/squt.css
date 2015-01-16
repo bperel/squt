@@ -16,11 +16,6 @@ body {
     display:table;
 }
 
-body > div, body > svg {
-    width: 100%;
-    display:table-row;
-}
-
 .invisible {
 	display: none !important;
 }
@@ -90,14 +85,6 @@ div#panel div#log, #query_sample, #actions {
 div#panel div#log, .CodeMirror {
 	margin: 0;
 	background-color: white;
-}
-
-pre#query {
-	white-space: normal;
-}
-
-.samplequery {
-	display: none;
 }
 
 #OK {
@@ -259,4 +246,29 @@ text.shadow {
 circle.chargeForce {
     stroke: red;
     fill: none;
+}
+
+@media (min-width: 992px) {
+
+    #sidebar #log-container {
+        clear: both;
+    }
+
+    #sidebar #log-container #log {
+        height: 100px;
+    }
+}
+
+@media (max-width: 992px) {
+    #sidebar .CodeMirror-scroll {
+        height: 200px;
+    }
+
+    #sidebar #log-container {
+        margin-top: 64px;
+    }
+
+    #sidebar #log-container #log {
+        height: 200px;
+    }
 }

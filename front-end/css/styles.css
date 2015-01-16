@@ -57,24 +57,9 @@ body {
     overflow-y: auto;
 }
 
-#sidebar .list-group-item {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-}
-
 @media (min-width: 992px) {
     #main-wrapper {
         float:right;
-    }
-
-    #sidebar #log-container {
-        clear: both;
-    }
-
-    #sidebar #log-container #log {
-        height: 100px;
     }
 }
 
@@ -96,17 +81,5 @@ body {
         height: auto;
         border-right:0;
         border-bottom: 1px solid gray;
-    }
-
-    #sidebar .CodeMirror-scroll {
-        height: 200px;
-    }
-
-    #sidebar #log-container {
-        margin-top: 64px;
-    }
-
-    #sidebar #log-container #log {
-        height: 200px;
     }
 }
