@@ -1,6 +1,6 @@
 {
   "name": "squt",
-  "version": "0.1.2.2",
+  "version": "0.1.3",
   "files": {
     "src": "js/**/*.js"
   },
