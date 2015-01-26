@@ -14,7 +14,7 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 
 Both of them should be in your PATH environment variable.
 
-Then se our Vagrant box :
+Then use our Vagrant box :
 ```
 vagrant init bperel/squt-wheezy
 vagrant up
