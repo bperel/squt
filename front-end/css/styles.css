@@ -16,6 +16,8 @@ body {
     float: none;
     display: inline-block;
     margin: 16px;
+    font-variant: small-caps;
+    font-size: 13px;
 }
 
 .navbar-collapse .nav.navbar-nav.pull-right {
