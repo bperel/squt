@@ -9,7 +9,12 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 
 #### Using Vagrant (64-bit hosts only)
 
-Use our Vagrant box :
+* Download and install [Virtualbox](https://www.virtualbox.org/wiki/Downloads) if not already done
+* Download and install [Vagrant](https://www.vagrantup.com/downloads.html) if not already done.
+
+Both of them should be in your PATH environment variable.
+
+Then use our Vagrant box :
 ```
 vagrant init bperel/squt-wheezy
 vagrant up
