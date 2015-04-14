@@ -4,7 +4,7 @@
 $npm_install = <<SCRIPT
 echo "deb http://ftp.us.debian.org/debian wheezy-backports main" >> /etc/apt/sources.list
 apt-get update && apt-get install -y git unzip zlib1g zlib1g-dev g++ perl libncurses5-dev wget cmake make openssl patch autoconf nodejs-legacy apache2 php5 libapache2-mod-php5
-curl --insecure https://www.npmjs.org/install.sh | bash
+curl --insecure https://www.npmjs.com/install.sh | bash
 if [ $? -ne 0 ]; then
 exit 1;
 fi
