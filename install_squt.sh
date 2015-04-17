@@ -162,7 +162,7 @@ if [ $OUT -eq 0 ];then
 						cat >> $APACHE_CONF_FILE <<-APACHE_ALIAS
 
 						Alias /squt "$SQUT_DIR/front-end"
-						<Directory "$SQUT_DIR/">
+						<Directory "$SQUT_DIR/front-end">
 							Options FollowSymLinks MultiViews
 							AllowOverride all
 							Order Allow,Deny
