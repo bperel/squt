@@ -169,6 +169,8 @@ if [ $OUT -eq 0 ];then
 							Allow from all
 						</Directory>
 						APACHE_ALIAS
+						
+						sudo service apache2 restart
 					fi
 				else
 					echo "The apache configuration $APACHE_CONF_FILE file does not exist or is not writeable, aborting the alias creation"
