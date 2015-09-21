@@ -60,7 +60,7 @@ Table.build = function(data) {
 			var currentTableElement = d3.select(this);
 			currentTableElement
 				.append("svg:rect")
-				.classed({table: true, output: !!currentTable.output})
+				.classed({sqltable: true, output: !!currentTable.output})
 				.attr("height", tableHeight)
 				.attr("width",  tableWidth );
 
