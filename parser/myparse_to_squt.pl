@@ -27,13 +27,11 @@ sub handleQuery($) {
 	my ($queryToHandle) = @_;
 	$curQuery = dclone($queryToHandle);
 	
+	my $queryType = $curQuery->getCommand();
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
 		setError($curQuery->getErrstr());
 	}
-	elsif ($curQuery->getCommand() ne "SQLCOM_SELECT" || $curQuery->getOrigCommand() ne "SQLCOM_END") {
-		setError("Only SELECT queries are supported for now");
-	}
-	else {
+	elsif (grep $_ eq $queryType, qw/SQLCOM_SELECT SQLCOM_UPDATE SQLCOM_END/) {
 		my $optionsReturnedError = 0;
 		foreach my $optionName (@{$curQuery->getOptions()}) {
 			if (handleOption($optionName) eq 0) {
@@ -42,9 +40,23 @@ sub handleQuery($) {
 			}
 		}
 		if ($optionsReturnedError eq 0) {
-			foreach my $selectItem (@{$curQuery->getSelectItems()}) {
-				handleSelectItem($selectItem,"-1",1);
+			if ($queryType eq "SQLCOM_SELECT") {
+				foreach my $selectItem (@{$curQuery->getSelectItems()}) {
+					handleSelectItem($selectItem,"-1",1);
+				}
 			}
+			elsif ($queryType eq "SQLCOM_UPDATE") {
+				my @updateFields = @{$curQuery->getUpdateFields()};
+				my @updateFieldsValues = @{$curQuery->getUpdateValues()};
+				for my $i (0 .. $#updateFields) {
+					my $updateField = $updateFields[$i];
+					my $updateValue = $updateFieldsValues[$i];
+					my $tableName = getItemTableName($updateField);
+					$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
+						{"INPUT"}{$updateField->getFieldName()}=$updateValue->getFieldName();
+				}
+			}
+				
 			if (defined $curQuery->getTables()) {
 				foreach my $item (@{$curQuery->getTables()}) {
 					if ($item->getType() eq "JOIN_ITEM") {
@@ -76,6 +88,10 @@ sub handleQuery($) {
 			}
 		}
 	}
+	else {
+		setError("Only SELECT queries are supported for now");
+	}
+	
 	if ($subquery_id == -1) {
 		%sqlv_tables_final = (%sqlv_tables_final, %{dclone(\%sqlv_tables)});
 	}
@@ -97,7 +113,7 @@ sub handleOption {
 	if (grep $_ eq $optionName, qw/OPTION_BUFFER_RESULT OPTION_FOUND_ROWS OPTION_TO_QUERY_CACHE SELECT_BIG_RESULT SELECT_DISTINCT SELECT_SMALL_RESULT SELECT_STRAIGHT_JOIN SQL_NO_CACHE TL_READ_HIGH_PRIORITY TL_READ_WITH_SHARED_LOCKS TL_WRITE/) {
 		$sqlv_tables{"Options"}{$optionName}=1;
 	}
-	elsif (grep $_ eq $optionName, qw/TL_READ/) {
+	elsif (grep $_ eq $optionName, qw/TL_READ TL_WRITE_DEFAULT/) {
 		# Ignore : internal option
 	}
 	else {
