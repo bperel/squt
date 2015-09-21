@@ -114,7 +114,7 @@
 										ifr.d3.forEach(graphLinks, function(link) {
 											graphLinksTotalForce+=link.value;
 										});
-										var queryLinksNumber = ifr.links.length + ifr.linksToFunctions.length + ifr.linksToOutput.length;
+										var queryLinksNumber = (ifr.links || []).length + (ifr.linksToFunctions || []).length + (ifr.linksToOutput || []).length;
 										equal(graphLinksTotalForce, queryLinksNumber, "Inconsistent link force : "+graphLinksTotalForce+" vs "+queryLinksNumber+" expected");
 									}
 								});

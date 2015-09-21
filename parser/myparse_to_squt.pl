@@ -28,8 +28,13 @@ sub handleQuery($) {
 	$curQuery = dclone($queryToHandle);
 	
 	my $queryType = $curQuery->getCommand();
+	my $queryOrigType = $curQuery->getOrigCommand();
+	
 	if ($curQuery->getCommand() eq "SQLCOM_ERROR") {
 		setError($curQuery->getErrstr());
+	}
+	elsif (grep $_ eq $queryOrigType, qw/SQLCOM_SHOW_FIELDS SQLCOM_SHOW_TABLES SQLCOM_SHOW_TABLE_STATUS SQLCOM_SHOW_DATABASES/) {
+		setError("Only SELECT queries are supported for now");
 	}
 	elsif (grep $_ eq $queryType, qw/SQLCOM_SELECT SQLCOM_UPDATE SQLCOM_END/) {
 		my $optionsReturnedError = 0;
@@ -212,37 +217,7 @@ sub handleSelectItem($$$) {
 		}
 	}
 	elsif( grep $_ eq $itemType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM NULL_ITEM INTERVAL_ITEM USER_VAR_ITEM SYSTEM_VAR_ITEM/) {
-		my $value;
-		if ($itemType eq 'INTERVAL_ITEM') {
-			$value=$item->getInterval();
-		}
-		elsif ($itemType eq 'USER_VAR_ITEM') {
-			$value=$item->getVarName();
-		}
-		elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
-			$value=$item->getVarComponent().".".$item->getVarName()
-		}
-		
-		else {
-			$value=$item->getValue();
-		}
-		if ($functionId eq "-1") { # direct output
-			my $constantAlias=$item->getAlias();
-			if (!defined $value) {
-				$value="NULL";
-			}
-			if (!defined $constantAlias) {
-				$constantAlias=$value;
-			}
-			
-			my $constantKey = scalar keys %{$sqlv_tables{"Constants"}};
-			$sqlv_tables{"Constants"}{$constantKey}{"value"}=$value;
-			$sqlv_tables{"Constants"}{$constantKey}{"alias"}=$constantAlias;
-			$sqlv_tables{"Constants"}{$constantKey}{"to"}="OUTPUT";
-		}
-		else {
-			$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
-		}
+		handleConstant($item, $functionId);
 	}
 	elsif (grep $_ eq $itemType, qw/FUNC_ITEM SUM_FUNC_ITEM/) {
 		my $functionName = $itemType eq 'SUM_FUNC_ITEM' ? $item->getFuncType() : $item->getFuncName();		
@@ -258,6 +233,43 @@ sub handleSelectItem($$$) {
 		foreach my $argument (@{$item->getArguments()}) {
 			handleSelectItem($argument,$functionAlias,0);
 		}
+	}
+}
+
+sub handleConstant($$) {
+	my ($item, $functionId) = @_;
+	my $itemType = $item->getType();
+	my $value;
+	
+	if ($itemType eq 'INTERVAL_ITEM') {
+		$value=$item->getInterval();
+	}
+	elsif ($itemType eq 'USER_VAR_ITEM') {
+		$value=$item->getVarName();
+	}
+	elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
+		$value=$item->getVarComponent().".".$item->getVarName()
+	}
+	
+	else {
+		$value=$item->getValue();
+	}
+	if ($functionId eq "-1") { # direct output
+		my $constantAlias=$item->getAlias();
+		if (!defined $value) {
+			$value="NULL";
+		}
+		if (!defined $constantAlias) {
+			$constantAlias=$value;
+		}
+		
+		my $constantKey = scalar keys %{$sqlv_tables{"Constants"}};
+		$sqlv_tables{"Constants"}{$constantKey}{"value"}=$value;
+		$sqlv_tables{"Constants"}{$constantKey}{"alias"}=$constantAlias;
+		$sqlv_tables{"Constants"}{$constantKey}{"to"}="OUTPUT";
+	}
+	else {
+		$sqlv_tables{"Functions"}{$functionId}{"Constants"}{$value}=$value;
 	}
 }
 
@@ -337,7 +349,7 @@ sub handleFunctionInWhere($$) {
 							   || $functionArgument->getFieldName();
 		}
 		elsif (grep $_ eq $argumentType, qw/INT_ITEM DECIMAL_ITEM REAL_ITEM STRING_ITEM/) {
-			$sqlv_tables{"Functions"}{$functionAlias}{"Constants"}{$functionArgument->getValue()}=$functionArgument->getValue();
+			handleConstant($functionArgument, $functionAlias);
 		}
 		elsif ($argumentType eq 'FUNC_ITEM') {
 			handleFunctionInWhere($functionArgument,$functionAlias);
