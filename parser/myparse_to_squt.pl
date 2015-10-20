@@ -14,7 +14,6 @@ our $query = $parser->parse($ARGV[0]);
 our $curQuery;
 our $debug = defined $ARGV[1] && $ARGV[1] eq "debug";
 our %sqlv_tables_final; # Includes sub-selects
-our %outputAliases;
 our %sqlv_tables;
 our $subquery_id=-1;
 
@@ -247,9 +246,6 @@ sub handleSelectItem($$$) {
 
 sub handleWhere(\@) {
 	my ($where) = @_;
-	my $fieldname;
-	my $tablename;
-	my $value;
 	my $itemType = $where->getItemType();
 	if ($itemType eq 'FIELD_ITEM') {
 		my @fieldInfos = getInfosFromFieldInWhere($where, undef);
@@ -271,13 +267,17 @@ sub handleWhere(\@) {
 		handleFunctionInWhere($where);
 	}
 	elsif ($itemType eq 'COND_ITEM') {
+		my $tablename;
+		my $fieldname;
+		my $value;
+
 		foreach my $whereArgument (@{$where->getArguments()}) {
 			my $argumentType = $whereArgument->getType();
 			if ($argumentType eq 'FUNC_ITEM') {
 				handleFunctionInWhere($whereArgument);
 			}
 			elsif ($argumentType eq 'FIELD_ITEM') {
-				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, $fieldname);
+				my @fieldInfos = getInfosFromFieldInWhere($whereArgument, undef);
 				if (! @fieldInfos) {
 					return;
 				}
@@ -310,7 +310,6 @@ sub handleFunctionInWhere($$) {
 	foreach my $functionArgument (@{$function->getArguments()}) {
 		my $argumentType = $functionArgument->getType();
 		if ($argumentType eq 'FIELD_ITEM') {
-			my @fieldInfos = getInfosFromFieldInWhere($functionArgument);
 			my $tableName = getItemTableName($functionArgument);
 			if ($tableName eq "?") {
 				setWarning("No alias field ignored",$functionArgument->getFieldName(),"field","WHERE");
@@ -369,8 +368,7 @@ sub handleGroupBy($) {
 	my ($groupByItem) = @_;
 	if ($groupByItem->getItemType() eq 'FIELD_ITEM') {
 		my $tableName = getItemTableName($groupByItem);
-		my $fieldAlias = $groupByItem->getAlias() || $groupByItem->getFieldName();
-		
+
 		$sqlv_tables{"Tables"}{getSqlTableName($tableName)}{$tableName}
 							  {"GROUP"}{$groupByItem->getFieldName()}=$groupByItem->getDirection();
 	}
@@ -517,8 +515,8 @@ sub getUniqueFunctionAlias($$) {
 }
 
 sub getUniqueSubqueryOutputField($) {
-	my ($subquery_id) = @_;
-	my %subqueryData = %{$sqlv_tables_final{"Subqueries"}{$subquery_id}};
+	my ($current_subquery_id) = @_;
+	my %subqueryData = %{$sqlv_tables_final{"Subqueries"}{$current_subquery_id}};
 	if (defined $subqueryData{"Tables"}) {
 		my %subqueryTables = %{$subqueryData{"Tables"}};
 	 	if (scalar %subqueryTables == 1) {
