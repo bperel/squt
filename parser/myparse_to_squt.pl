@@ -237,22 +237,8 @@ sub handleSelectItem($$$) {
 
 sub handleConstant($$) {
 	my ($item, $functionId) = @_;
-	my $itemType = $item->getType();
-	my $value;
-	
-	if ($itemType eq 'INTERVAL_ITEM') {
-		$value=$item->getInterval();
-	}
-	elsif ($itemType eq 'USER_VAR_ITEM') {
-		$value=$item->getVarName();
-	}
-	elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
-		$value=$item->getVarComponent().".".$item->getVarName()
-	}
-	
-	else {
-		$value=$item->getValue();
-	}
+	my $value=getConstantValue($item);
+
 	if ($functionId eq "-1") { # direct output
 		my $constantAlias=$item->getAlias();
 		if (!defined $value) {
@@ -261,7 +247,7 @@ sub handleConstant($$) {
 		if (!defined $constantAlias) {
 			$constantAlias=$value;
 		}
-		
+
 		my $constantKey = scalar keys %{$sqlv_tables{"Constants"}};
 		$sqlv_tables{"Constants"}{$constantKey}{"value"}=$value;
 		$sqlv_tables{"Constants"}{$constantKey}{"alias"}=$constantAlias;
@@ -358,6 +344,25 @@ sub handleFunctionInWhere($$) {
 	$sqlv_tables{"Functions"}{$functionAlias}{"name"}=$function->getFuncName();
 	$sqlv_tables{"Functions"}{$functionAlias}{"to"}= $destination || "NOWHERE";
 
+}
+
+sub getConstantValue($) {
+	my ($item) = @_;
+	my $itemType = $item->getType();
+
+	if ($itemType eq 'INTERVAL_ITEM') {
+		return $item->getInterval();
+	}
+	elsif ($itemType eq 'USER_VAR_ITEM') {
+		return $item->getVarName();
+	}
+	elsif ($itemType eq 'SYSTEM_VAR_ITEM') {
+		return $item->getVarComponent().".".$item->getVarName()
+	}
+
+	else {
+		return $item->getValue();
+	}
 }
 
 sub getInfosFromFieldInWhere($) {
