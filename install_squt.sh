@@ -164,9 +164,7 @@ if [ $OUT -eq 0 ];then
 						Alias /squt "$SQUT_DIR/front-end"
 						<Directory "$SQUT_DIR/front-end">
 							Options FollowSymLinks MultiViews
-							AllowOverride all
-							Order Allow,Deny
-							Allow from all
+              Require all granted
 						</Directory>
 						APACHE_ALIAS
 						

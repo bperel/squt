@@ -7,20 +7,13 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 
 ## Installation
 
-#### Using Vagrant (64-bit hosts only)
+#### Using Docker
 
-* Download and install [Virtualbox](https://www.virtualbox.org/wiki/Downloads) if not already done
-* Download and install [Vagrant](https://www.vagrantup.com/downloads.html) if not already done.
-
-Both of them should be in your PATH environment variable.
-
-Then use our Vagrant box :
 ```
-vagrant init bperel/squt-wheezy
-vagrant up
+docker run -d --name squt-box -p 8010:80 bperel/squt
 ```
 
-squt will then be available through port 8000 of your machine : [http://localhost:8000/squt/front-end/squt.html](http://localhost:8000/squt/)
+squt will then be available through port 8010 of your machine : [http://localhost:8010/squt/front-end/squt.html](http://localhost:8010/squt/)
 
 #### Directly on a Debian/Ubuntu system or through Cygwin
 
@@ -35,7 +28,7 @@ Head over to the [Features](../../wiki/Features) page for more details.
 
 ## Demo
 
-[Here is the demo](http://62.210.239.25/squt/) :-)
+[Here is the demo](http://dedibox2-bperel.ddns.net:8010/squt/) :-)
 
 
 ## Understanding and collaborating
