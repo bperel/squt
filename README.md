@@ -9,8 +9,8 @@ squt is a Perl and PHP/JS Web application aiming at graphically representing MyS
 
 #### Using Docker
 
-```
-docker run -d --name squt-box -p 8010:80 bperel/squt
+```bash
+docker run -d --name squt-box -p 8010:80 bperel/squt /usr/sbin/apache2ctl -D FOREGROUND
 ```
 
 squt will then be available through port 8010 of your machine : [http://localhost:8010/squt/front-end/squt.html](http://localhost:8010/squt/)
