@@ -17,7 +17,7 @@ squt will then be available through port 8010 of your machine : [http://localhos
 
 #### Directly on a Debian/Ubuntu system or through Cygwin
 
-If you prefer a step-by-step installation have a look at the [Installation guide](../../wiki/Installation Guide).
+If you prefer a step-by-step installation have a look at the [Installation guide](../../wiki/Installation-Guide).
 
 
 ## Features
