@@ -17,7 +17,7 @@ while :
 do
     case $1 in
         --mysql-path=*)
-            MYSQL_FULL_DIR=${1#*=} 
+            MYSQL_FULL_DIR=${1#*=}
         	MYSQL_FULL_DIR=${MYSQL_FULL_DIR%/}
         	MYSQL_ARCHIVE_NAME=${MYSQL_FULL_DIR##*/}
 			DEFAULT_MYSQL_PATH=false
@@ -62,7 +62,7 @@ if $DEFAULT_MYSQL_PATH == true; then
 	MYSQL_ARCHIVE_NAME=$MYSQL_ARCHIVE_PREFIX$MYSQL_VERSION
 	MYSQL_FULL_DIR=$MYSQL_DL_DIR$MYSQL_ARCHIVE_NAME
 	MYSQL_FULL_ARCHIVE_NAME=$MYSQL_ARCHIVE_NAME.tar.gz
-	
+
 	cd $MYSQL_DL_DIR
 	wget https://dev.mysql.com/get/Downloads/MySQL-5.0/$MYSQL_FULL_ARCHIVE_NAME
 	OUT=$?
@@ -100,13 +100,13 @@ OLD_CXX=$CXX
 if $DO_MYSQL_MAKE == true; then
 	export CC="gcc -fPIC"
 	export CXX="g++ -fPIC"
-	
+
 	./configure --with-embedded-server --enable-shared
 	OUT=$?
 	if [ $OUT -ne 0 ]; then
 		exit;
 	fi
-	make
+	make -j${NPROC}
 	OUT=$?
 	if [ $OUT -ne 0 ]; then
 		exit;
@@ -167,7 +167,7 @@ if [ $OUT -eq 0 ];then
               Require all granted
 						</Directory>
 						APACHE_ALIAS
-						
+
 						service apache2 restart
 					fi
 				else

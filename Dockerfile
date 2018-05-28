@@ -6,6 +6,6 @@ RUN apt-get update && \
                        git unzip perl wget openssl patch autoconf \
                        nodejs-legacy npm apache2 php7.0 libapache2-mod-php7.0
 
-RUN cd /usr/src && git clone --recursive https://github.com/bperel/squt.git
+COPY ./ /usr/src/squt
 
 RUN cd /usr/src/squt && sh install_squt.sh
