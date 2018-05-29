@@ -5,13 +5,13 @@ usage(){
 	exit 1
 }
 
-SQUT_DIR=$PWD
+SQUT_DIR_FRONTEND=/var/www/public
+SQUT_DIR_PARSER=/usr/src/squt
 
 DEFAULT_MYSQL_PATH=true
 DO_PATCH=true
 DO_MYSQL_MAKE=true
 MYSQL_VERSION="5.0.96"
-APACHE_CONF_FILE="/etc/apache2/apache2.conf"
 
 while :
 do
@@ -84,7 +84,7 @@ fi
 
 cd $MYSQL_FULL_DIR
 if $DO_PATCH == true; then
-	PATCH_FILE=$SQUT_DIR/parser/DBIx-MyParse-0.88/patches/$MYSQL_ARCHIVE_NAME.patch
+	PATCH_FILE=$SQUT_DIR_PARSER/DBIx-MyParse-0.88/patches/$MYSQL_ARCHIVE_NAME.patch
 	if [ ! -f "$PATCH_FILE" ]; then
 		echo "FATAL : required patch file $PATCH_FILE doesn't exist !">&2
 		exit;
@@ -121,7 +121,7 @@ fi
 
 # Generate the parser's Makefile
 
-cd $SQUT_DIR/parser/DBIx-MyParse-0.88/
+cd $SQUT_DIR_PARSER/DBIx-MyParse-0.88/
 PERL_MM_USE_DEFAULT=1 perl -MCPAN -e 'install JSON::PP'
 OUT=$?
 if [ $OUT -ne 0 ]; then
@@ -145,38 +145,17 @@ if [ $OUT -eq 0 ];then
 		make test
 		OUT=$?
 		if [ $OUT -eq 0 ];then
-			cd $SQUT_DIR/front-end
+			cd $SQUT_DIR_FRONTEND
 			chmod 666 error_output.log
 
+			ln -s /usr/bin/nodejs /usr/bin/node
 			npm install
 			npm install -g grunt-cli
 			npm install grunt
 			grunt
-			OUT=$?
-			if [ $OUT -eq 0 ];then
-				# Add an alias in the Apache config
-				if [ -e $APACHE_CONF_FILE ]; then
-					if grep -q squt $APACHE_CONF_FILE; then
-					  "It looks like squt already has an Apache alias, skipping the alias creation"
-					else
-						cat >> $APACHE_CONF_FILE <<-APACHE_ALIAS
-
-						Alias /squt "$SQUT_DIR/front-end"
-						<Directory "$SQUT_DIR/front-end">
-							Options FollowSymLinks MultiViews
-              Require all granted
-						</Directory>
-						APACHE_ALIAS
-
-						service apache2 restart
-					fi
-				else
-					echo "The apache configuration $APACHE_CONF_FILE file does not exist or is not writeable, aborting the alias creation"
-				fi
-			fi
 		else
 			echo "The parser tests failed, aborting."
-			exit
+			exit 1
 		fi
 	fi
 fi

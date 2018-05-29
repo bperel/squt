@@ -19,21 +19,21 @@ else {
 	}
 	$is_debug = isset($_POST['debug']) && $_POST['debug'] == 1;
 	$path_to_perl = ($os == 'Windows' ? $conf['path_to_cygwin'].'/bin/' : '');
-	
+
 	if (!file_exists($error_output_file)) {
 		echo json_encode(array('Error'=>'The file '.$error_output_file.' has not been found in the /front-end directory.'));
 		exit(0);
 	}
 	ob_start();
 	$command = '"'.$path_to_perl.'perl" '
-			  .'"'.$conf['path_to_squt'].'parser/myparse_to_squt.pl" '
+			  .'"'.$conf['path_to_squt'].'myparse_to_squt.pl" '
 			  .'"'.$query.'" '
 			  .($is_debug ? '"debug" ':'')
 			  .($is_win ? ('2> '.$error_output_file) : ('2>&1'));
 	if ($is_debug) {
 		echo $command."\n\n";
 	}
-	
+
 	if ($is_win) {
 		$WshShell = new COM("WScript.Shell");
 		$result = $WshShell->Exec($command)->StdOut->ReadAll;

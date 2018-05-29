@@ -1,11 +1,13 @@
-FROM ubuntu:16.04
+FROM ttaranto/docker-nginx-php7
 MAINTAINER Bruno Perel
 
-RUN apt-get update && \
-    apt-get install -y g++ cmake make libncurses5-dev zlib1g zlib1g-dev \
+RUN apt-get update
+RUN apt-get install -y g++ cmake make libncurses5-dev zlib1g zlib1g-dev \
                        git unzip perl wget openssl patch autoconf \
-                       nodejs-legacy npm apache2 php7.0 libapache2-mod-php7.0
+                       npm
 
-COPY ./ /usr/src/squt
+COPY ./install_squt.sh /home
+COPY ./parser /usr/src/squt
+COPY ./front-end /var/www/public
 
-RUN cd /usr/src/squt && sh install_squt.sh
+RUN cd /home && sh install_squt.sh
