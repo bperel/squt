@@ -30,7 +30,7 @@ Head over to the [Features](../../wiki/Features) page for more details.
 
 ## Demo
 
-[Here is the demo](http://dedibox2-bperel.ddns.net:8010/squt/) :-)
+[Here is the demo](http://dedibox2-bperel.ddns.net:8010/) :-)
 
 
 ## Understanding and collaborating
