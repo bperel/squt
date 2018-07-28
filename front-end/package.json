@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "grunt": "~1.0.2",
-    "grunt-contrib-uglify": "~3.3.0",
+    "grunt-contrib-uglify": "~3.4.0",
     "grunt-include-source": "~1.1.0"
   }
 }
