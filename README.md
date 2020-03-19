@@ -1,6 +1,6 @@
 ## squt (it's like SQL, but cUTe)
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/bperel/squt.svg)](https://greenkeeper.io/)
+
 
 squt is a Perl and PHP/JS Web application aiming at graphically representing MySQL queries in a graph form.
 
