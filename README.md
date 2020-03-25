@@ -28,10 +28,6 @@ Basically, squt works with most SELECT queries. It doesn't like nested subquerie
 
 Head over to the [Features](../../wiki/Features) page for more details.
 
-## Demo
-
-[Check the website to test squt!](http://squt.ddns.net) :-)
-
 
 ## Understanding and collaborating
 
